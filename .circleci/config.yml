@@ -3,8 +3,10 @@ jobs:
   build:
     docker:
       - image: circleci/buildpack-deps:stretch
-    macos:
-      xcode: "8.3.3"
+# MacOS plans cost some money.  If we are sponsored, it would
+# be nice to enable this.
+#    macos:
+#      xcode: "8.3.3"
     steps:
       - checkout
       - run:
