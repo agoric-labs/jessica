@@ -39,7 +39,6 @@ const Jessie = makeJessie(mutableEnv);
 
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
-import globalEnv from './globalEnv.mjs';
 repl(Jessie, (1,Jessie).loadAsset(MODULE))
   .catch(e => {
       console.error(`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`);
