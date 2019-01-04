@@ -1,0 +1,3 @@
+[submodule "lang/nodejs/quasiParserGenerator"]
+	path = lang/nodejs/quasiParserGenerator
+	url = https://github.com/erights/quasiParserGenerator
