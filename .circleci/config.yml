@@ -3,6 +3,8 @@ jobs:
   build:
     docker:
       - image: circleci/buildpack-deps:stretch
+    macos:
+      xcode: "8.3.3"
     steps:
       - checkout
       - run:

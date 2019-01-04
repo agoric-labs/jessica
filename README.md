@@ -1,4 +1,6 @@
-# Jessica - Jessie Compiler Architecture
+# Jessica - Jessie (secure Javascript subset) Compiler Architecture
+
+[![CircleCI](https://circleci.com/gh/michaelfig/jessica.svg?style=svg)](https://circleci.com/gh/michaelfig/jessica)
 
 Jessica is a library for interpreting the [Jessie](https://github.com/Agoric/Jessie) secure subset of Javascript.  Jessica's `lib` directory contains its entire implementation, composed of modules written in Jessie.  That makes the implementation as a whole secure through Jessie's guarantees.
 
