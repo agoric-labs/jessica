@@ -41,7 +41,7 @@ const Jessie = makeJessie(mutableEnv);
 import repl from '../../lib/repl.mjs';
 // FIXME: update the scriptName.
 const doEval = (src) => (1, Jessie).confine(src, Jessie, {scriptName: MODULE});
-repl(doEval, (1,Jessie).loadAsset(MODULE))
+repl(doEval, (1,Jessie).loadAsset(MODULE), ARGV)
   .catch(e => {
       console.error(`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`);
       process.exit(1);
