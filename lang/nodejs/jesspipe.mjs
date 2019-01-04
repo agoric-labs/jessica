@@ -6,16 +6,14 @@
 
 // The following endowments are added to mutableEnv:
 
-import './globalSesShim';
-const mutableEnv = {
-    // console.log for stdout, and console.error for stderr.
-    console: harden({
-        error: harden((...args) => console.error(...args)),
-        log: harden((...args) => console.log(...args)),
-    }),
-    // The SES def function to DEFensively DEFine an object.
-    def,
-};
+import mutableEnv from './globalEnv.mjs';
+
+// console.log for stdout, and console.error for stderr.
+const oldConsole = console;
+mutableEnv.console = harden({
+    error: harden((...args) => oldConsole.error(...args)),
+    log: harden((...args) => oldConsole.log(...args)),
+});
 
 // Read and evaluate the specified module,
 if (process.argv.length < 3) {
@@ -26,7 +24,7 @@ const ARGV = process.argv.slice(2);
 
 // Make a confined file loader specified by the arguments.
 const dashdash = ARGV.indexOf('--');
-const CAN_LOAD_ASSETS = new Set([MODULE]);
+const CAN_LOAD_ASSETS = makeSet([MODULE]);
 if (dashdash >= 0) {
     ARGV.slice(dashdash + 1).forEach(file => CAN_LOAD_ASSETS.add(file));
 }
@@ -41,5 +39,6 @@ const Jessie = makeJessie(mutableEnv);
 
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
+import globalEnv from './globalEnv.mjs';
 repl(Jessie, (1,Jessie).loadAsset(MODULE))
   .catch(e => {throw Error(`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`)});
