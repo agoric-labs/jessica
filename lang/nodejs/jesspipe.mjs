@@ -9,9 +9,9 @@
 import './globalSesShim';
 const mutableEnv = {
     // console.log for stdout, and console.error for stderr.
-    console: def({
-        error: def((...args) => console.error(...args)),
-        log: def((...args) => console.log(...args)),
+    console: harden({
+        error: harden((...args) => console.error(...args)),
+        log: harden((...args) => console.log(...args)),
     }),
     // The SES def function to DEFensively DEFine an object.
     def,

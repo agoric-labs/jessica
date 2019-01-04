@@ -8,6 +8,9 @@
 import sesshim from './quasiParserGenerator/src/sesshim';
 (function (global) {
     for (const vname in sesshim) {
+        if (vname === 'def') {
+            global.harden = sesshim[vname];
+        }
         global[vname] = sesshim[vname];
     }
 })(typeof global === 'undefined' ? window : global);

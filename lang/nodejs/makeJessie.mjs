@@ -15,4 +15,4 @@ function makeJessie(endowments) {
     return bootEnv(endowments, bootbnf, sc);
 }
 
-export default def(makeJessie);
+export default harden(makeJessie);

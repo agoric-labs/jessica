@@ -1,6 +1,6 @@
 # Jessica - Jessie Compiler Architecture
 
-Jessica is a library for interpreting [Jessie](https://github.com/Agoric/Jessie) secure subset of Javascript.  Jessica's `lib` directory contains its entire implementation, composed of modules written in Jessie.  That makes the implementation as a whole secure through Jessie's guarantees.
+Jessica is a library for interpreting the [Jessie](https://github.com/Agoric/Jessie) secure subset of Javascript.  Jessica's `lib` directory contains its entire implementation, composed of modules written in Jessie.  That makes the implementation as a whole secure through Jessie's guarantees.
 
 `lib` is designed to be interpreted by or translated into other, non-Jessie language implementations.  This mechanism provides multiple independent implementations all capable of evaluating Jessie scripts.  This diversity forms an interlocking trusted computing base (TCB) that provides all of Jessie's safety guarantees to the modules that run on it.
 
