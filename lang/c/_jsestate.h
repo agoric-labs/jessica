@@ -1,14 +1,13 @@
 #define JSE_PASTE(a, b) a ## b
 typedef struct JSE_PASTE(_, JSEState) {
     JSE *stack;
-    size_t stackSize;
-    size_t tos;
 #if JSESTATE_OBJTABLE
     JSEObjHeader *objTable;
+    void **objFreeList;
 #endif
+    size_t stackSize;
+    size_t tos;
 } *JSEState;
-
-#define JSEState_new() 0
 
 // Drop N values from top of stack.
 // Pick Nth from stack.

@@ -61,7 +61,7 @@ implementation from a related language (or itself):
 
 1. Create a new `./lib/emit-NEWLANG.mjs` file, based off of an existing similar `./lib/emit-OLDLANG.mjs`.
 
-2. Run your existing `jesspipe` to execute your emitter to translate theJessica `./lib` master sources into a single-file library in your new language's syntax, where `SRC` is the source file suffix for your language:
+2. Run your existing `jesspipe` to execute your emitter to translate the Jessica `./lib` master sources into a single-file library in your new language's syntax, where `SRC` is the source file suffix for your language:
 
 ```sh
 $ mkdir ./lang/NEWLANG
@@ -75,7 +75,7 @@ $ ./lang/OLDLANG/jesspipe.bat ./lib/emit-NEWLANG.mjs -- ./lib/*.mjs > ./lang/NEW
 5. Be sure to check all the `./lang/NEWLANG/*.SRC` source files into version control (including `jessica.SRC` but not compiler output files), so that you can provide these bootstrap files to people who only have your language's compiler to bootstrap Jessica.
 
 
-= Acknowledgements
+# Acknowledgements
 
 Much appreciation to Mark S. Miller (@erights) and the [Agoric team](https://agoric.com/) for spearheading the work on secure Javascript standards and Jessie in particular.
 
