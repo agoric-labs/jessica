@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  build-buildpack:
     docker:
       - image: circleci/buildpack-deps:stretch
     steps:
@@ -8,3 +8,12 @@ jobs:
       - run:
           name: Check that all the languages interlock
           command: ./check.bat
+  build-node:
+    docker:
+      - image: circleci/node
+    steps:
+      - checkout
+      - run:
+          name: Check that all the languages interlock
+          command: ./check.bat
+
