@@ -33,15 +33,15 @@ import fs from 'fs';
 import makeLoadAsset from '../../lib/loadAsset.mjs';
 mutableEnv.loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, fs);
 
-// Create a Jessie bootstrap environment for the endowments.
-import makeJessie from './makeJessie.mjs';
-const Jessie = makeJessie(mutableEnv);
+// Create a Jessica bootstrap environment for the endowments.
+import bootEnv from '../../lib/boot-env.mjs';
+const Jessica = bootEnv(mutableEnv);
 
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
 // FIXME: update the scriptName.
-const doEval = (src) => (1, Jessie).confine(src, Jessie, {scriptName: MODULE});
-repl(doEval, (1,Jessie).loadAsset(MODULE), ARGV)
+const doEval = (src) => (1, Jessica).confine(src, Jessica, {scriptName: MODULE});
+repl(doEval, (1,Jessica).loadAsset(MODULE), ARGV)
   .catch(e => {
       console.error(`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`);
       process.exit(1);
