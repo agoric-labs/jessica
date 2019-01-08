@@ -5,7 +5,7 @@
 // NOTE: Don't ever do this in a library module, it's only allowed when
 // we are a main program, and we're changing global state for the
 // entire process.
-import sesshim from './quasiParserGenerator/src/sesshim';
+import sesshim from './sesshim';
 
 const harden = sesshim.def || sesshim.harden;
 
