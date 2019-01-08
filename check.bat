@@ -12,6 +12,10 @@
 :;    echo "==== Run $lang's jesspipe $emitter to generate $out";
 :;    "$thisdir/lang/$lang/jesspipe.bat" "$emitter" -- "$thisdir"/lib/*.mjs > "$out" || { status=$?; break; }
 :;    diff -u "$thisdir/lang/$target/jessica.$sfx" "$out" || { status=$?; break; }
+:;    out="$thisdir/checkout/m${lang}2$target.$sfx"
+:;    echo "==== Run $lang's meta jesspipe $emitter to generate ${out}"
+:;    "$thisdir/lang/$lang/jesspipe.bat" "$thisdir/lib/main-jesspipe.mjs" -- "$emitter" -- "$thisdir"/lib/*.mjs > "$out" || { status=$?; break; }
+:;    diff -u "$thisdir/lang/$target/jessica.$sfx" "$out" || { status=$?; break; }
 :;  done
 :; done
 :; exit $status

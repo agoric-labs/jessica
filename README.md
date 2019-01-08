@@ -1,22 +1,26 @@
-# Jessica - Jessie (secure Javascript subset) Compiler Architecture
+# Jessica - Jessie (secure distributed Javascript) Compiler Architecture
 
 [![CircleCI](https://circleci.com/gh/michaelfig/jessica.svg?style=svg)](https://circleci.com/gh/michaelfig/jessica)
 
-Jessica is a library for interpreting the [Jessie](https://github.com/Agoric/Jessie) secure subset of Javascript.  Jessica's `lib` directory contains its entire implementation, composed of modules written in Jessie.  That makes the implementation as a whole secure through Jessie's guarantees.
+NOTE: Not yet production ready.  Jessica is still being bootstrapped now, but you are welcome to contribute!
 
-`lib` is designed to be interpreted by or translated into other, non-Jessie language implementations.  This mechanism provides multiple independent implementations all capable of evaluating Jessie scripts.  This diversity forms an interlocking trusted computing base (TCB) that provides all of Jessie's safety guarantees to the modules that run on it.
+Jessica implements Jessie.  Please refer to the [Jessie](https://github.com/Agoric/Jessie) repository for details on what Jessie is.  In short, Jessie is a secure subset of Javascript made to enable interconnected distributed applications between different targets (such as other threads, OS processes, device drivers, networked hosts).  It does this without granting excess authority to any Jessie module.
+
+Jessica is a metacircular Jessie: it is a library designed to compile or interpret itself.  Jessica consists of is its own Jessie submodules in `lib`, and the language-specific infrastructure in `lang/*` needed to run the Jessie module infrastructure on other language platforms.  That makes Jessica an idiomatic extension language library for Jessie syntax, as well as a `jesspipe`, a native interpreter (based on the Jessica library) for running Jessie modules.
+
+The goal of Jessica is to stay minimal, but useful, especially as a reference for people seeking to understand Jessie, or implement their own Jessica targets.
 
 ## Implementations
 
 It is intended for you to use Jessica's extension language library in your favourite language to add Jessie scripting capabilities in an idiomatic way.
 
-Jessica is a Jessie runtime environment created using only Jessie modules, containing also translators from Jessie to other languages.  `jesspipe` is the command-line tool (implemented by hand for different language platforms) that allows you to invoke standalone Jessie modules, such as the Jessie translators.
+Try running `check.bat` to verify all the combinations of Jessica that are supported by your operating system and build tools.
 
-Here are notes for how to use the Jessica API (TODO: document when settled) on your language system, including how to develop the Jessica library using the `jesspipe` interpreter.
+Here are notes for how to use the Jessica API for a given language platform, including how to develop the Jessica library using its source code and the `jesspipe` interpreter.
 
 ### Node.js 8.5+
 
-Node.js 8.5 and above can use Jessica directly as an ES Module library (since Jessie is a subset of Javascript, with some additional libraries).
+Node.js 8.5 and above can use Jessica directly as ES Modules (since Jessie is a subset of Javascript, with some additional endowed modules).
 
 Until Node.js API documents are completed, you can read `lang/nodejs/jesspipe.mjs` for an example of how to use the Jessie API.
 
@@ -52,11 +56,21 @@ See the next sections for instructions on how to bootstrap Jessica for a new lan
 
 ## Bootstrapping Jessica for Interpreted Languages
 
-FIXME: not yet
+This is how to bootstrap Jessica for an interpreted language:
+
+1. Create a new `./lang/NEWLANG` directory, and adapt all the files in a similar `./lang/OLDLANG` directory.
+
+2. Edit the main entry point, `./lang/NEWLANG/jesspipe.bat`.
+
+3. Run the combinatorial `check.bat` to verify that your new implementation works with all the Jessica features:
+
+```sh
+$ ./check.bat NEWLANG
+```
+
+4. Commit all the files in `./lang/NEWLANG` to version control.
 
 ## Bootstrapping Jessica for Compiled Languages
-
-FIXME: not yet
 
 This is how to bootstrap Jessica for a compiled language
 implementation from a related language (or itself):
@@ -74,7 +88,13 @@ $ ./lang/OLDLANG/jesspipe.bat ./lib/emit-NEWLANG.mjs -- ./lib/*.mjs > ./lang/NEW
 
 4. Create an executable `./lang/NEWLANG/jesspipe.bat` script to compile and link the`./lang/NEWLANG/jesspipe.exe` main program from `./lang/NEWLANG/*.SRC` using your new language's default compiler if the executable it is out-of-date, and then have `jesspipe.bat` run it.
 
-5. Be sure to check all the `./lang/NEWLANG/*.SRC` source files into version control (including `jessica.SRC` but not compiler output files), so that you can provide these bootstrap files to people who only have your language's compiler to bootstrap Jessica.
+5. Run the combinatorial `check.bat` to verify that your new implementation works with all the Jessica features:
+
+```sh
+$ ./check.bat
+```
+
+6. Be sure to commit all the `./lang/NEWLANG/*.SRC` source files into version control (including `jessica.SRC` but not compiler output files), so that you can provide these bootstrap files to people who only have your language's compiler to bootstrap Jessica.
 
 
 # Acknowledgements
