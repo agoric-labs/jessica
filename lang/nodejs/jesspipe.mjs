@@ -37,6 +37,13 @@ mutableEnv.loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, fs);
 import bootEnv from '../../lib/boot-env.mjs';
 const Jessica = bootEnv(mutableEnv);
 
+// We exit success if asked to.
+if (Jessica === 'FIXME: Fake success') {
+    console.error('FIXME: Would do something, other than boot');
+    console.log('/* FIXME: Stub */');
+    process.exit(0);
+}
+
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
 // FIXME: update the scriptName.
