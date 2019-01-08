@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/michaelfig/jessica.svg?style=svg)](https://circleci.com/gh/michaelfig/jessica)
 
-NOTE: Not yet production ready.  Jessica is still being bootstrapped now, but you are welcome to contribute!
+*NOTE: Not yet production ready.  Jessica is still being bootstrapped now, but you are welcome to contribute and discuss!*
 
 This directory contains Jessica, a compiler architecture implementing [Jessie](https://github.com/Agoric/Jessie).  In short, Jessie is a secure subset of Javascript that enables interconnected distributed applications running on different targets (such as other threads, OS processes, device drivers, networked hosts).  It does this without granting excess authority to any Jessie submodule.
 
