@@ -6,4 +6,6 @@
 
 * Refactor and clean up boot-peg.mjs.  peg-utils.mjs is a possibility.
 
+* Use full SES!
+
 
