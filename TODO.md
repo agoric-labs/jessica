@@ -1,18 +1,5 @@
 * Use full SES!
 
-* See [Jessie this-capture issue](https://github.com/Agoric/Jessie/issues/19) and excise:
-
-```javascript
-foo.bar = other.obj.index;
-(1,foo.bar)(baz)
-```
-
-in callers avoiding `this`-capture in favour of protecting callees:
-```javascript
-foo.bar = bond(other.obj, 'index');
-foo.bar(baz)
-``` 
-
 * Endow `slog` instead of `console.log` and `console.error`.  Also change `jesspipe` to use a `loadAsset` and `outputStream`.
 
 * Snarf the whitelist.js libraries.

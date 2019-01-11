@@ -31,7 +31,14 @@ if (dashdash >= 0) {
 
 import fs from 'fs';
 import makeLoadAsset from '../../lib/loadAsset.mjs';
-mutableEnv.loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, fs);
+mutableEnv.loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, fs.readFile);
+
+// We need a `bond` implementation for Jessie to be usable
+// within a SES compartment.
+import makeBond from '../../lib/bond.mjs';
+mutableEnv.bond = makeBond(
+    (obj, index) => obj[index],
+    (boundThis, method, ...args) => method.call(boundThis, ...args));
 
 // Create a Jessica bootstrap environment for the endowments.
 import bootEnv from '../../lib/boot-env.mjs';
@@ -47,8 +54,8 @@ if (Jessica === 'FIXME: Fake success') {
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
 // FIXME: update the scriptName.
-const doEval = (src) => (1, Jessica).confine(src, Jessica, {scriptName: MODULE});
-repl(doEval, (1,Jessica).loadAsset(MODULE), ARGV)
+const doEval = (src) => Jessica.confine(src, Jessica, {scriptName: MODULE});
+repl(doEval, Jessica.loadAsset(MODULE), ARGV)
   .catch(e => {
       console.error(`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`);
       process.exit(1);
