@@ -13,6 +13,8 @@ foo.bar = bond(other.obj, 'index');
 foo.bar(baz)
 ``` 
 
+* Endow `slog` instead of `console.log` and `console.error`.  Also change `jesspipe` to use a `loadAsset` and `outputStream`.
+
 * Snarf the whitelist.js libraries.
 
 * boot-peg doesn't identify syntax errors correctly.  Problem with tokenTypeList, which needs to match literals.
