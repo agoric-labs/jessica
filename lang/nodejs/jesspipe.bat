@@ -1,5 +1,5 @@
 :; thisdir=`dirname "$0"`;
-:; test -d "$thisdir/node_modules/esm" && test -d "$thisdir/node_modules/ses" || { cd "$thisdir" && npm install; }
+:; test -d "$thisdir/node_modules/esm" && test -d "$thisdir/node_modules/ses" || { cd "$thisdir" && npm install 1>&2; }
 :; athisdir=`cd "$thisdir" && pwd`
 :; curdir=`pwd`
 :; reldir=`echo "$athisdir" | sed -e "s!^$curdir/!!;"' s!\(.\)$!\1/!'`
