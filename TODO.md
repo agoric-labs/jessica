@@ -1,6 +1,6 @@
 * Use full SES!
 
-* Endow `slog` instead of `console.log` and `console.error`.  Also change `jesspipe` to use a `loadAsset` and `outputStream`.
+* Consider allowing `writeOutput` to create files if they are whitelisted in the `jesspipe` command line options.
 
 * Snarf the whitelist.js libraries.
 
