@@ -1,0 +1,24 @@
+{
+  "name": "jessica-nodejs",
+  "version": "0.0.1",
+  "description": "NodeJS implementation of Jessica",
+  "main": "jesspipe.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Michael FIG <michael@fig.org>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "esm": "^3.2.0",
+    "ses": "^0.2.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michaelfig/jessica.git"
+  },
+  "bugs": {
+    "url": "https://github.com/michaelfig/jessica/issues"
+  },
+  "homepage": "https://github.com/michaelfig/jessica#readme"
+}
