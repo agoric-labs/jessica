@@ -19,7 +19,7 @@ const contextArg = (context, a) => {
     }
     else if (a.length !== undefined) {
         // Take the value as the (anonymous) array.
-        arg = a;
+        return a;
     }
     // Deconstruct the argument object.
     let format, val;
@@ -45,32 +45,26 @@ const contextArg = (context, a) => {
 
 // Create a logger.
 const slog = makeSlog(
-    (priority, context, template, args) => {
+    (level, names, levels, context, template, args) => {
         const reduced = args.reduce((prior, a, i) => {
             prior.push(contextArg(context, a), template[i + 1].replace(startWs, ''));
             return prior;
-        }, [slog.NAMES[priority] + ': ' + template[0].replace(endWs, '')]);
-        if (priority <= slog.LEVELS.trace) {
-            console.trace(...reduced);
-        }
-        else if (priority <= slog.LEVELS.debug) {
-            console.debug(...reduced);
+        }, [names[level] + ': ' + template[0].replace(endWs, '')]);
+        if (level > levels.get('warn')) {
+            console.error(...reduced);
         }
         else {
+            // Record an location, too.
             const at = new Error('at:');
-            if (priority <= slog.LEVELS.warn) {
-                console.warn(...reduced, at);
-            }
-            else {
-                console.error(...reduced, at);
-            }
+            console.error(...reduced, at);
         }
     },
     (map, obj) => {
         Object.keys(obj).forEach((v) => map.set(v, obj[v]));
     });
-    
+
 mutableEnv.slog = slog;
+global.slog = slog;
 
 // Read and evaluate the specified module,
 if (process.argv.length < 3) {
