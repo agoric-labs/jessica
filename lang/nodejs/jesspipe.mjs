@@ -8,12 +8,69 @@
 
 import mutableEnv from './globalEnv.mjs';
 
-// console.log for stdout, and console.error for stderr.
-const oldConsole = console;
-mutableEnv.console = harden({
-    error: harden((...args) => oldConsole.error(...args)),
-    log: harden((...args) => oldConsole.log(...args)),
-});
+// slog writes to console
+import makeSlog from '../../lib/slog.mjs';
+const startWs = /^\s+/;
+const endWs = /\s+$/;
+const contextArg = (context, a) => {
+    if (typeof a !== 'object' || a === null) {
+        // Just stringify the argument.
+        return '' + a;
+    }
+    else if (a.length !== undefined) {
+        // Take the value as the (anonymous) array.
+        arg = a;
+    }
+    // Deconstruct the argument object.
+    let format, val;
+    Object.keys(a).forEach((vname) => {
+        if (vname === 'format') {
+            format = a[vname];
+        }
+        else if (val === undefined) {
+            val = a[vname];
+            if (context.has(vname)) {
+                const oval = context.get(vname);
+                if (val !== oval) {
+                    throw Error(`Context value ${vname} mismatch: ${JSON.stringify(val)} vs. ${JSON.stringify(oval)}`);
+                }
+            }
+            else {
+                context.set(vname, val);
+            }
+        }
+    });
+    return val;
+};
+
+// Create a logger.
+const slog = makeSlog(
+    (priority, context, template, args) => {
+        const reduced = args.reduce((prior, a, i) => {
+            prior.push(contextArg(context, a), template[i + 1].replace(startWs, ''));
+            return prior;
+        }, [slog.NAMES[priority] + ': ' + template[0].replace(endWs, '')]);
+        if (priority <= slog.LEVELS.trace) {
+            console.trace(...reduced);
+        }
+        else if (priority <= slog.LEVELS.debug) {
+            console.debug(...reduced);
+        }
+        else {
+            const at = new Error('at:');
+            if (priority <= slog.LEVELS.warn) {
+                console.warn(...reduced, at);
+            }
+            else {
+                console.error(...reduced, at);
+            }
+        }
+    },
+    (map, obj) => {
+        Object.keys(obj).forEach((v) => map.set(v, obj[v]));
+    });
+    
+mutableEnv.slog = slog;
 
 // Read and evaluate the specified module,
 if (process.argv.length < 3) {
@@ -31,24 +88,38 @@ if (dashdash >= 0) {
 
 import fs from 'fs';
 import makeLoadAsset from '../../lib/loadAsset.mjs';
-mutableEnv.loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, fs);
+const loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, fs.readFile);
 
-// Create a Jessica bootstrap environment for the endowments.
+// Make a confined file writer.
+const writeOutput = (fname, str) => {
+    if (fname !== '-') {
+        throw Error(`Cannot write to ${fname}: must be -`);
+    }
+    process.stdout.write(str);
+};
+
+// We need a `bond` implementation for Jessie to be usable
+// within SES.
+import makeBond from '../../lib/bond.mjs';
+mutableEnv.bond = makeBond(
+    (obj, index) => obj[index],
+    (boundThis, method, args) => method.apply(boundThis, args));
+
+// Create a Jessie bootstrap environment for the endowments.
 import bootEnv from '../../lib/boot-env.mjs';
-const Jessica = bootEnv(mutableEnv);
+const Jessie = bootEnv(mutableEnv);
 
 // We exit success if asked to.
-if (Jessica === 'FIXME: Fake success') {
+if (Jessie === 'FIXME: Fake success') {
     console.error('FIXME: Would do something, other than boot');
-    console.log('/* FIXME: Stub */');
+    writeOutput('-', '/* FIXME: Stub */\n')
     process.exit(0);
 }
 
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
-// FIXME: update the scriptName.
-const doEval = (src) => (1, Jessica).confine(src, Jessica, {scriptName: MODULE});
-repl(doEval, (1,Jessica).loadAsset(MODULE), ARGV)
+const doEval = (src) => Jessie.confine(src, Jessie, {scriptName: MODULE});
+repl(loadAsset(MODULE), doEval, (s) => writeOutput('-', s + '\n'), ARGV)
   .catch(e => {
       console.error(`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`);
       process.exit(1);
