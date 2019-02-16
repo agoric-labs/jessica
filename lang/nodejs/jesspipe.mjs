@@ -98,6 +98,7 @@ import makeBond from '../../lib/bond.mjs';
 mutableEnv.bond = makeBond(
     (obj, index) => obj[index],
     (boundThis, method, args) => method.apply(boundThis, args));
+global.bond = mutableEnv.bond;
 
 // Create a Jessie bootstrap environment for the endowments.
 import bootEnv from '../../lib/boot-env.mjs';
