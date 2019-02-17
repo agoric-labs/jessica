@@ -133,5 +133,6 @@ import repl from '../../lib/repl.mjs';
 const doEval = (src) => Jessie.confine(src, Jessie, {scriptName: MODULE});
 repl(loadAsset(MODULE), doEval, (s) => writeOutput('-', s + '\n'), ARGV)
   .catch(e => {
+      writeOutput('-', '/* FIXME: Stub */\n');
       slog.error`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
   });
