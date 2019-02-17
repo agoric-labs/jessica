@@ -22,41 +22,65 @@ const contextArg = (context, a) => {
         return a;
     }
     // Deconstruct the argument object.
-    let format, val;
-    Object.keys(a).forEach((vname) => {
+    let format, valname, val;
+    for (const vname of Object.keys(a)) {
         if (vname === 'format') {
             format = a[vname];
         }
-        else if (val === undefined) {
-            val = a[vname];
-            if (context.has(vname)) {
-                const oval = context.get(vname);
-                if (val !== oval) {
-                    throw Error(`Context value ${vname} mismatch: ${JSON.stringify(val)} vs. ${JSON.stringify(oval)}`);
-                }
-            }
-            else {
-                context.set(vname, val);
-            }
+        else if (valname !== undefined || typeof a[vname] === 'function') {
+            // Too many members or seems to be an active object.
+            return a;
         }
-    });
+        else {
+            // We have at least one non-format member.
+            valname = vname;
+            val = a[vname];
+        }
+    }
+
+    if (valname === undefined) {
+        // No non-format arguments.
+        return a;
+    }
+
+    if (context.has(valname)) {
+        const oval = context.get(valname);
+        if (val !== oval) {
+            throw Error(`Context value ${valname} mismatch: ${JSON.stringify(val)} vs. ${JSON.stringify(oval)}`);
+        }
+    }
+    else {
+        context.set(valname, val);
+    }
     return val;
 };
 
 // Create a logger.
 const slog = makeSlog(
     (level, names, levels, context, template, args) => {
+        let ca;
         const reduced = args.reduce((prior, a, i) => {
-            prior.push(contextArg(context, a), template[i + 1].replace(startWs, ''));
+            ca = contextArg(context, a);
+            if (typeof ca === 'object') {
+                prior.push(ca, template[i + 1].replace(startWs, ''));
+            }
+            else {
+                const last = prior[prior.length - 1];
+                prior[prior.length - 1] = last + String(ca) + template[i + 1];
+            }
             return prior;
         }, [names[level] + ': ' + template[0].replace(endWs, '')]);
-        if (level > levels.get('warn')) {
+        if (level > levels.get('warn') || ca instanceof Error) {
             console.error(...reduced);
         }
         else {
-            // Record an location, too.
+            // Record a location, too.
             const at = new Error('at:');
             console.error(...reduced, at);
+        }
+        if (level <= levels.get('panic')) {
+            // At least allow turns to finish.
+            process.exitCode = 99;
         }
     },
     (map, obj) => {
@@ -104,18 +128,11 @@ global.bond = mutableEnv.bond;
 import bootEnv from '../../lib/boot-env.mjs';
 const Jessie = bootEnv(mutableEnv);
 
-// We exit success if asked to.
-if (Jessie === 'FIXME: Fake success') {
-    console.error('FIXME: Would do something, other than boot');
-    writeOutput('-', '/* FIXME: Stub */\n')
-    process.exit(0);
-}
-
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
 const doEval = (src) => Jessie.confine(src, Jessie, {scriptName: MODULE});
 repl(loadAsset(MODULE), doEval, (s) => writeOutput('-', s + '\n'), ARGV)
   .catch(e => {
-      console.error(`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`);
-      process.exit(1);
+      writeOutput('-', '/* FIXME: Stub */\n');
+      slog.error`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
   });
