@@ -1,16 +1,15 @@
 {
-  "name": "jessica-nodejs",
-  "version": "0.0.1",
-  "description": "NodeJS implementation of Jessica",
-  "main": "jesspipe.mjs",
+  "name": "jessica",
+  "version": "0.0.2",
+  "description": "Jessica - the Jessie Compiler Architecture",
+  "main": "lang/nodejs/jesspipe.mjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "check.bat"
   },
   "author": "Michael FIG <michael@fig.org>",
   "license": "Apache-2.0",
   "dependencies": {
-    "esm": "^3.2.0",
-    "ses": "^0.2.0"
+    "ses": "^0.3.0"
   },
   "devDependencies": {},
   "repository": {
