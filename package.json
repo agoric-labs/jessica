@@ -4,6 +4,7 @@
   "description": "Jessica - the Jessie Compiler Architecture",
   "main": "lang/nodejs/jesspipe.mjs",
   "scripts": {
+    "build": "tsc",
     "test": "check.bat"
   },
   "author": "Michael FIG <michael@fig.org>",
@@ -11,7 +12,9 @@
   "dependencies": {
     "ses": "^0.3.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "typescript": "^3.3.3"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/michaelfig/jessica.git"

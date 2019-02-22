@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "es6",
+        //"noImplicitAny": true,
+        "typeRoots": ["./typings"],
+        "alwaysStrict": true,
+        "isolatedModules": true,
+        "noLib": true,
+        "baseUrl": "./lib",
+        "types": [
+            "./lib/jessie",
+        ],
+        "noEmit": true,
+        "moduleResolution": "mjs",
+    },
+    "include": [
+        "lib/**/*",
+    ],
+    "exclude": [
+        "**/*.spec.mjs",
+    ],
+}
