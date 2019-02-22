@@ -1,0 +1,6 @@
+{
+    "javascript.suggest.names": false,
+    "javascript.suggest.autoImports": false,
+    "tslint.jsEnable": true,
+    "typescript.suggest.autoImports": false,
+}

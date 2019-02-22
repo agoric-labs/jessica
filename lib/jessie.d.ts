@@ -49,8 +49,7 @@ declare const Infinity: number;
 declare const NaN: number;
 
 // TODO: Don't export Symbols.
-interface Symbol {
-}
+interface Symbol {}
 
 interface SymbolConstructor {
     readonly iterator: symbol;
@@ -68,14 +67,8 @@ interface Iterator<T> {
   throw?(e?: any): IteratorResult<T>;
 }
 
-interface Function {
-  // FIXME: Nothing, just to satisfy Typescript.
-}
-
-interface RegExp {
-  // FIXME: Nothing, just to satisfy Typescript.
-}
-
+interface Function {}
+interface RegExp {}
 
 interface IArguments {
   [index: number]: any;
@@ -180,20 +173,16 @@ interface ObjectConstructor {
 
 declare const Object: ObjectConstructor;
 
-interface Boolean {
-  // FIXME: Nothing, just to satisfy Typescript.
-}
+interface Boolean {}
 
 interface BooleanConstructor {
     (value?: any): boolean;
-    readonly prototype: BooleanConstructor;
+    readonly prototype: Boolean;
 }
 declare const Boolean: BooleanConstructor;  // 19.3
   
       // 20 Numbers and Dates
-interface Number {
-  // FIXME: Nothing, just to satisfy Typescript.
-}
+interface Number {}
       
 interface NumberConstructor { // 20.1
     (value?: any): number;
