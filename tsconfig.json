@@ -8,7 +8,6 @@
         "noImplicitAny": true,
         "typeRoots": ["./lib"],
         "alwaysStrict": true,
-        "isolatedModules": true,
         "noLib": true,
         "types": [],
     },
