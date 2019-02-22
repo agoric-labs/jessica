@@ -11,6 +11,7 @@ const harden = sesshim.def || sesshim.harden;
 
 const globalEnv = {
     // Object factories (since operator new is not available).
+    makeError: harden((...args) => harden(new Error(...args))),
     makeMap: harden((...args) => harden(new Map(...args))),
     makeSet: harden((...args) => harden(new Set(...args))),
     makePromise: harden((...args) => harden(new Promise(...args))),
