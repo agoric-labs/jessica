@@ -27,20 +27,15 @@
 // expressions need to be pure and should be decidable.
 
 import quasiUtils from './quasi-utils.mjs';
+import './peg.mjs';
 const {qunpack} = quasiUtils;
 
-function binary(left,rights) {
+function binary(left, rights) {
     return rights.reduce((prev,[op,right]) => [op,prev,right], left);
 }
 
-/// <reference path="./jessie.d.ts"/>
-/// <reference path="./peg.d.ts"/>
 
-/**
- * @param {PegTag} jsonPeg 
- * @return {PegTag}
- */
-function makeJustin(jsonPeg) {
+function makeJustin(jsonPeg: PegTag) {
     const peg = jsonPeg;
     const {FAIL} = peg;
     return peg`

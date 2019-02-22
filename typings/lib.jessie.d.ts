@@ -29,6 +29,7 @@ and limitations under the License.
 ***************************************************************************** */
 
 /// <reference no-default-lib="true"/>
+/// <reference path="./ses.d.ts"/>
 
 /* TODO: Add declarations for:
       cajaVM: {                        // Caja support
@@ -134,6 +135,41 @@ interface ObjectConstructor {
     (): any;
  
     readonly prototype: Object;
+
+        /**
+     * Copy the values of all of the enumerable own properties from one or more source objects to a
+     * target object. Returns the target object.
+     * @param target The target object to copy to.
+     * @param source The source object from which to copy properties.
+     */
+    assign<T, U>(target: T, source: U): T & U;
+
+       /**
+     * Copy the values of all of the enumerable own properties from one or more source objects to a
+     * target object. Returns the target object.
+     * @param target The target object to copy to.
+     * @param source1 The first source object from which to copy properties.
+     * @param source2 The second source object from which to copy properties.
+     */
+    assign<T, U, V>(target: T, source1: U, source2: V): T & U & V;
+
+    /**
+     * Copy the values of all of the enumerable own properties from one or more source objects to a
+     * target object. Returns the target object.
+     * @param target The target object to copy to.
+     * @param source1 The first source object from which to copy properties.
+     * @param source2 The second source object from which to copy properties.
+     * @param source3 The third source object from which to copy properties.
+     */
+    assign<T, U, V, W>(target: T, source1: U, source2: V, source3: W): T & U & V & W;
+
+    /**
+     * Copy the values of all of the enumerable own properties from one or more source objects to a
+     * target object. Returns the target object.
+     * @param target The target object to copy to.
+     * @param sources One or more source objects from which to copy properties
+     */
+    assign(target: object, ...sources: any[]): any;
 }
 
 declare const Object: ObjectConstructor;
@@ -551,9 +587,6 @@ interface Map<K, V> {
 interface MapConstructor {
     readonly prototype: Map<any, any>;
 }
-declare function makeMap(): Map<any, any>;
-declare function makeMap<K, V>(entries?: ReadonlyArray<[K, V]> | null): Map<K, V>;
-declare function makeMap<K, V>(iterable: Iterable<[K, V]>): Map<K, V>;
 declare const Map: MapConstructor;
 
 interface ReadonlyMap<K, V> {
@@ -607,7 +640,6 @@ interface Set<T> { // 23.2
 interface SetConstructor {
     readonly prototype: Set<any>;
 }
-declare function makeSet<T = any>(values?: ReadonlyArray<T> | null): Set<T>;
 declare const Set: SetConstructor;
 
 interface ReadonlySet<T> {
@@ -643,7 +675,6 @@ interface WeakMapConstructor {
     readonly prototype: WeakMap<object, any>;
 }
 declare const WeakMap: WeakMapConstructor;
-declare function makeWeakMap<K extends object = object, V = any>(entries?: ReadonlyArray<[K, V]> | null): WeakMap<K, V>;
 
 interface WeakSet<T extends object> {  // 23.4
     add(value: T): this;
@@ -655,7 +686,6 @@ interface WeakSetConstructor {
     readonly prototype: WeakSet<object>;
 }
 declare const WeakSet: WeakSetConstructor;
-declare function makeWeakSet<T extends object = object>(values?: ReadonlyArray<T> | null): WeakSet<T>;
 
 // 24.4 TODO: Omitting Atomics for now
   
@@ -931,35 +961,3 @@ interface PromiseConstructor {
 declare function makePromise<T>(executor: (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
 
 declare const Promise: PromiseConstructor;
-
-// Jessie endowments/SES.
-declare function harden<T>(arg: T): Readonly<T>;
-declare function bond<T>(arg: T): T;
-declare function bond<T, K extends keyof T>(arg: T, index: K): T[K];
-
-declare function makeError(reason: string): any;
-
-interface ConfineOptions {
-  // TODO fill out
-}
-declare function confine(src: string, evalenv: {}, options?: ConfineOptions): Readonly<any>;
-declare function confineExpr(src: string, evalenv: {}, options?: ConfineOptions): Readonly<any>;
-declare function eval(src: string): Readonly<any>;
-
-interface SlogTag {
-  (template: TemplateStringsArray, ...args: any[]): any;
-  (context: {}): (template: TemplateStringsArray, ...args: any[]) => any;
-}
-
-interface Slog extends SlogTag {
-  panic: SlogTag;
-  alert: SlogTag;
-  crit: SlogTag;
-  error: SlogTag;
-  warn: SlogTag;
-  notice: SlogTag;
-  info: SlogTag;
-  debug: SlogTag;
-  trace: SlogTag;
-}
-declare const slog: Slog;

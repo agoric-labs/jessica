@@ -1,19 +1,12 @@
 // A lot of this code is lifted from:
 // https://github.com/erights/quasiParserGenerator/tree/master/src/bootbnf.js
 
-/// <reference path="./jessie.d.ts" />
-/// <reference path="./peg.d.ts" />
+import './peg.mjs';
 import indent from './indent.mjs';
 
-/**
- * @type {PegConstant}
- */
-const LEFT_RECUR = harden({toString: () => 'LEFT_RECUR'});
+const LEFT_RECUR: PegConstant = harden({toString: () => 'LEFT_RECUR'});
 
-/**
- * @type {PegRun}
- */
-function RUN(self, ruleOrPatt, pos, name) {
+const RUN: PegRun = (self, ruleOrPatt, pos, name) => {
     if (self._debug) {
         slog.info`run(f, ${pos}, ${name})`;
     }
@@ -43,10 +36,7 @@ function RUN(self, ruleOrPatt, pos, name) {
     return result;
 }
 
-/**
- * @return {[number, string[]]}
- */
-function lastFailures(self) {
+function lastFailures(self): [number, string[]] {
     let maxPos = 0;
     let fails = [];
     for (let [pos, posm] of self._memo) {
@@ -139,15 +129,12 @@ function FIND(template, pos) {
     return undefined;
 }
 
-function ACCEPT(self, pos) {
+const ACCEPT: PegPredicate = (self, pos) => {
     // Not really needed: useful for incremental compilation.
     return [pos, []];
-}
+};
 
-/**
- * @type {PegEat}
- */
-function EAT(self, pos, str) {
+const EAT: PegEat = (self, pos, str) => {
     if (self._debug) slog.error`Have ${self.template}`;
     const found = FIND(self.template, pos);
     if (Array.isArray(found)) {
@@ -165,10 +152,7 @@ function EAT(self, pos, str) {
     return [pos, FAIL];
 }
 
-/**
- * @type {PegPredicate}
- */
-function HOLE(self, pos) {
+const HOLE: PegPredicate = (self, pos) => {
     const found = FIND(self.template, pos);
     if (typeof found === 'number') {
         return [pos + 1, found];
@@ -589,8 +573,7 @@ function bootPeg(makePeg, bootPegAst) {
             return pair;
         }
         const quasiParser = quasiMemo(baseCurry);
-        quasiParser.Parser = bond(Parser);
-        return quasiParser;
+        return Object.assign(quasiParser, {Parser: bond(Parser)});
     }
 
     const defaultBaseGrammar = quasifyParser(template => {});
@@ -615,19 +598,21 @@ function bootPeg(makePeg, bootPegAst) {
                 const pegTag = quasifyParser(Parser);
 
                 // These predicates are needed by our extended grammars.
-                pegTag.ACCEPT = ACCEPT;
-                pegTag.HOLE = HOLE;
-                pegTag.FAIL = FAIL;
-                pegTag.EAT = EAT;
-                pegTag.SKIP = SKIP;
-                return pegTag;
+                return Object.assign(pegTag, {
+                    ACCEPT,
+                    HOLE,
+                    FAIL,
+                    EAT,
+                    SKIP,
+                });
             };
             const quasiParser = _asExtending(defaultBaseGrammar);
-            quasiParser._asExtending = _asExtending;
-            quasiParser.extends = (baseQuasiParser) =>
-                (template, ...subs) =>
-                    quasiParser(template, ...subs)._asExtending(baseQuasiParser);
-            return quasiParser;
+            return Object.assign(quasiParser, {
+                _asExtending,
+                extends: (baseQuasiParser) =>
+                    (template, ...subs) =>
+                        quasiParser(template, ...subs)._asExtending(baseQuasiParser),
+            });
         }
     }
 

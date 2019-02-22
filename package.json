@@ -4,12 +4,17 @@
   "description": "Jessica - the Jessie Compiler Architecture",
   "main": "lang/nodejs/jesspipe.mjs",
   "scripts": {
+    "build": "build.bat",
+    "clean": "rm -f lib/*.mjs.js lib/*.mjs",
     "test": "check.bat"
   },
   "author": "Michael FIG <michael@fig.org>",
   "license": "Apache-2.0",
   "dependencies": {
     "ses": "^0.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^3.3.0"
   },
   "repository": {
     "type": "git",

@@ -2,19 +2,24 @@
 // https://github.com/Agoric/Jessie/issues/19
 //
 // TODO: This function desperately needs a test suite!
+
 function makeBond(computedGet, applyMethod) {
     const _bonded = makeWeakMap(), _bondedUndefinedThis = makeWeakMap();
 
-    // Given an object and an index,
-    // either return a fresh method bound to the object,
-    // a (cached) method we already bound,
-    // or a plain value.
-    //
-    // Given an undefined index,
-    // return a fresh arrow function bound to undefined,
-    // a (cached) arrow we already bound,
-    // or a plain value.
-    const bond = (maybeThis, index) => {
+    /**
+     *  Given an object and an index, either
+     * return a fresh method bound to the object,
+     * a (cached) method we already bound,
+     * or a plain value.
+     *
+     * Given an undefined index,
+     * return a fresh arrow function bound to undefined,
+     * a (cached) arrow we already bound,
+     * or a plain value.
+     */
+    function bond<T, K extends keyof T>(maybeThis: T, index: K): T[K];
+    function bond<T>(maybeThis: T): T;
+    function bond(maybeThis, index?) {
         let maybeMethod;
         if (index === undefined) {
             maybeMethod = maybeThis;
@@ -59,9 +64,9 @@ function makeBond(computedGet, applyMethod) {
         // Cache the hardened, bound method.
         bondedForThis.set(maybeMethod, bondedMethod);
         return bondedMethod;
-    };
+    }
     
-    return bond(bond);
+    return bond<Bond>(bond);
 }
 
 export default harden(makeBond);

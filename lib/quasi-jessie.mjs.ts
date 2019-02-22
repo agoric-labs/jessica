@@ -4,14 +4,9 @@
 // See https://github.com/Agoric/Jessie/blob/master/README.md
 // for documentation of the Jessie grammar defined here.
 
-/// <reference path="./jessie.d.ts"/>
-/// <reference path="./peg.d.ts"/>
+import './peg.mjs';
 
-/**
- * @param {PegTag} justinPeg 
- * @return {PegTag}
- */
-function makeJessie(justinPeg) {
+function makeJessie(justinPeg: PegTag) {
     const peg = justinPeg;
     return peg`
     # Override rather than inherit start production.

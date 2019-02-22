@@ -1,2 +1,3 @@
 checkout/
 node_modules/
+lib/*.mjs

@@ -1,4 +1,4 @@
-type PegPredicate = (self: any, pos: number) => [number, string[]];
+type PegPredicate = (self: any, pos: number) => [number, any];
 interface Stringable {
     toString(): string;
 }

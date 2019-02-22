@@ -13,17 +13,9 @@
 // which are adapted from:
 // https://github.com/erights/quasiParserGenerator
 
-/// <reference path="./jessie.d.ts"/>
-/// <reference path="./peg.d.ts"/>
+import './peg.mjs';
 
-/**
- * 
- * @template T
- * @param {PegTag} pegTag
- * @param {(defs: PegDef[]) => any} metaCompile 
- * @return {T}
- */
-function makePeg(pegTag, metaCompile) {
+function makePeg<T>(pegTag: BootPegTag<T>, metaCompile: (defs: PegDef[]) => any): T {
       const {ACCEPT, HOLE} = pegTag;
 
       function simple(prefix, list) {

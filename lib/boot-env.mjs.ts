@@ -17,8 +17,7 @@ function tagString(template, ...args) {
         prior.push(String(hole), template.raw[i + 1]);
         return prior;
     }, [template.raw[0]]);
-    tmpl.raw = [raw.join('')];
-    return tmpl;
+    return Object.assign(tmpl, {raw: [raw.join('')]});
 }
 
 function bootEnv(endowments) {

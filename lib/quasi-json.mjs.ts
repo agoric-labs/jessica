@@ -7,14 +7,9 @@
 
 // See also json.org
 
-/// <reference path="./jessie.d.ts"/>
-/// <reference path="./peg.d.ts"/>
+import './peg.mjs';
 
-/**
- * @param {PegTag} pegPeg 
- * @return {PegTag}
- */
-function makeJSON(pegPeg) {
+function makeJSON(pegPeg: PegTag) {
     const peg = pegPeg;
     const {FAIL, HOLE, SKIP} = peg;
     return peg`
