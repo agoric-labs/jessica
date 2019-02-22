@@ -85,6 +85,8 @@ interface IterableIterator<T> extends Iterator<T> {
     [Symbol.iterator](): IterableIterator<T>;
 }
 
+type Primitive = undefined | null | boolean | string | number | Function
+
 type Readonly<T> = {
   readonly [P in keyof T]: T[P];
 };
@@ -951,13 +953,5 @@ interface PromiseConstructor {
      */
     resolve(): Promise<void>;
 }
-
-/**
- * Creates a new Promise.
- * @param executor A callback used to initialize the promise. This callback is passed two arguments:
- * a resolve callback used to resolve the promise with a value or the result of another promise,
- * and a reject callback used to reject the promise with a provided reason or error.
- */
-declare function makePromise<T>(executor: (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
 
 declare const Promise: PromiseConstructor;

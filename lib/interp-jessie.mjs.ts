@@ -56,7 +56,7 @@ function evalJessie(src, env) {
     return evaluator(src, env);
 }
 
-function interpJessie(ast, endowments, options) {
+function interpJessie(ast, endowments, options?) {
     const [tag, body] = ast;
     if (tag === 'module') {
         ast = [tag, body, (options || {}).scriptName];

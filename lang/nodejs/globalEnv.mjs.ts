@@ -1,12 +1,33 @@
-#! /usr/bin/env -Snode --experimental-modules
-// jesspipe.mjs - Evaluate a Jessie script as part of a pipeline
-// Usage is:
-// $ node --experimental-modules jesspipe.mjs \
-//    MODULE [OPTIONS...] [-- [INFILE...]]
+// We set global variables to emulate a Jessie environment in a
+// vanilla Node.js script.  This allows us to import modules directly
+// if they are written in Jessie (as all the jessica/ directory is).
+//
+// NOTE: Don't ever do this in a library module, it's only allowed when
+// we are a main program, and we're changing global state for the
+// entire process.
 
-// The following endowments are added to mutableEnv:
+/// <reference path="../../typings/ses.d.ts"/>
+import * as sesshim from './sesshim';
 
-import mutableEnv from './globalEnv.mjs';
+const globalEnv : {[index: string]: any} = {};
+
+// Export all of the SES shim.
+for (const vname in sesshim) {
+    const target = (vname === 'def') ? 'harden' : vname;
+    globalEnv[target] = sesshim[vname];
+    global[target] = sesshim[vname];
+}
+
+globalEnv.makeError = harden((...args) => harden(new Error(...args)));
+globalEnv.makeMap = harden((...args) => harden(new Map(...args)));
+globalEnv.makeSet = harden((...args) => harden(new Set(...args)));
+globalEnv.makePromise = harden((executor: (resolve: (value?: {} | PromiseLike<{}>) => void, reject: (reason?: any) => void) => void) => harden(new Promise(executor)));
+globalEnv.makeWeakMap = harden((...args) => harden(new WeakMap(...args)));
+globalEnv.makeWeakSet = harden((...args) => harden(new WeakSet(...args)));
+
+Object.keys(globalEnv).forEach(vname => {
+    global[vname] = globalEnv[vname];
+});
 
 // slog writes to console
 import makeSlog from '../../lib/slog.mjs';
@@ -56,7 +77,7 @@ const contextArg = (context, a) => {
 };
 
 // Create a logger.
-const slog = makeSlog(
+const mySlog = makeSlog(
     (level, names, levels, context, template, args) => {
         let ca;
         const reduced = args.reduce((prior, a, i) => {
@@ -86,53 +107,20 @@ const slog = makeSlog(
     (map, obj) => {
         Object.keys(obj).forEach((v) => map.set(v, obj[v]));
     });
-
-mutableEnv.slog = slog;
-global.slog = slog;
-
-// Read and evaluate the specified module,
-if (process.argv.length < 3) {
-    throw Error(`You must specify a MODULE`);
-}
-const MODULE = process.argv[2] || '-';
-const ARGV = process.argv.slice(2);
-
-// Make a confined file loader specified by the arguments.
-const dashdash = ARGV.indexOf('--');
-const CAN_LOAD_ASSETS = makeSet([MODULE]);
-if (dashdash >= 0) {
-    ARGV.slice(dashdash + 1).forEach(file => CAN_LOAD_ASSETS.add(file));
-}
-
-import fs from 'fs';
-import makeLoadAsset from '../../lib/loadAsset.mjs';
-const loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, fs.readFile);
-
-// Make a confined file writer.
-const writeOutput = (fname, str) => {
-    if (fname !== '-') {
-        throw Error(`Cannot write to ${fname}: must be -`);
-    }
-    process.stdout.write(str);
-};
+globalEnv.slog = mySlog;
 
 // We need a `bond` implementation for Jessie to be usable
 // within SES.
 import makeBond from '../../lib/bond.mjs';
-mutableEnv.bond = makeBond(
+globalEnv.bond = makeBond(
     (obj, index) => obj[index],
     (boundThis, method, args) => method.apply(boundThis, args));
-global.bond = mutableEnv.bond;
 
-// Create a Jessie bootstrap environment for the endowments.
-import bootEnv from '../../lib/boot-env.mjs';
-const Jessie = bootEnv(mutableEnv);
+// Export the environment as global endowments.  This is only possible
+// because we are in control of the main program, and we are setting
+// this policy for all our modules.
+Object.keys(globalEnv).forEach(vname => {
+    global[vname] = globalEnv[vname];
+});
 
-// Read, eval, print loop.
-import repl from '../../lib/repl.mjs';
-const doEval = (src) => Jessie.confine(src, Jessie, {scriptName: MODULE});
-repl(loadAsset(MODULE), doEval, (s) => writeOutput('-', s + '\n'), ARGV)
-  .catch(e => {
-      writeOutput('-', '/* FIXME: Stub */\n');
-      slog.error`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
-  });
+export default globalEnv;
