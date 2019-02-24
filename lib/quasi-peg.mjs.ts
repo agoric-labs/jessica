@@ -15,7 +15,7 @@
 
 import './peg.mjs';
 
-function makePeg<T>(pegTag: BootPegTag<T>, metaCompile: (defs: PegDef[]) => any): T {
+function makePeg<T>(pegTag: BootPegTag<T>, metaCompile: (defs: PegDef[]) => T): T {
       const {ACCEPT, HOLE} = pegTag;
 
       function simple(prefix, list) {

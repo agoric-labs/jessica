@@ -1,35 +1,49 @@
 // Jessie endowments/SES.
-type Immutable<T> =
-  T extends Primitive ? T :
-    T extends Array<infer U> ? ReadonlyArray<U> :
-      T extends Map<infer K, infer V> ? ReadonlyMap<K, V> : Readonly<T>
 
-type DeepImmutable<T> =
-  T extends Primitive ? T :
-    T extends Array<infer U> ? DeepImmutableArray<U> :
-      T extends Map<infer K, infer V> ? DeepImmutableMap<K, V> : DeepImmutableObject<T>
+/* TODO: Add declarations for:
+      cajaVM: {                        // Caja support
+        Nat: j,
+        def: j,
+  
+        confine: j,
+      },
+*/
 
-interface DeepImmutableArray<T> extends ReadonlyArray<DeepImmutable<T>> {}
-interface DeepImmutableMap<K, V> extends ReadonlyMap<DeepImmutable<K>, DeepImmutable<V>> {}
-type DeepImmutableObject<T> = {
-  readonly [K in keyof T]: DeepImmutable<T[K]>
-}
+type Primitive = undefined | null | boolean | string | number | Function;
 
-declare function harden<T>(arg: T): DeepImmutable<T>;
+type Hardened<T> =
+  T extends Function ? T : // FIXME: Escape hatch to allow method call signatures.
+  T extends Primitive ? Readonly<T> :
+  T extends Array<infer U> ? HardenedArray<U> :
+  // The following are always hardened, as described in lib.jessie.d.ts
+  T extends Map<infer K, infer V> ? Map<K, V> :
+  T extends WeakMap<infer WK, infer WV> ? WeakMap<WK, WV> :
+  T extends Set<infer M> ? Set<M> :
+  T extends WeakSet<infer WM> ? WeakSet<WM> :
+  T extends Promise<infer R> ? Promise<R> :
+  // All others are manually hardened.
+    HardenedObject<T>;
+
+interface HardenedArray<T> extends Readonly<Array<Hardened<T>>> {}
+type HardenedObject<T> = {
+  readonly [K in keyof T]: Hardened<T[K]>
+};
+
+declare function harden<T>(arg: T): Hardened<T>;
 
 interface Bond {
   <T>(arg: T): T;
   <T, K extends keyof T>(arg: T, index: K): T[K];
 }
-declare const bond: Bond;
+declare const bond: Hardened<Bond>;
 
-declare function makeError(reason: string): DeepImmutable<any>;
-declare function makeMap(): DeepImmutable<Map<any, any>>;
-declare function makeMap<K, V>(entries?: ReadonlyArray<[K, V]> | null): DeepImmutable<Map<K, V>>;
-declare function makeMap<K, V>(iterable: Iterable<[K, V]>): DeepImmutable<Map<K, V>>;
-declare function makeSet<T = any>(values?: ReadonlyArray<T> | null): DeepImmutable<Set<T>>;
-declare function makeWeakMap<K extends object = object, V = any>(entries?: ReadonlyArray<[K, V]> | null): DeepImmutable<WeakMap<K, V>>;
-declare function makeWeakSet<T extends object = object>(values?: ReadonlyArray<T> | null): DeepImmutable<WeakSet<T>>;
+declare function makeError(reason: string): Hardened<any>;
+declare function makeMap(): Hardened<Map<any, any>>;
+declare function makeMap<K, V>(entries?: ReadonlyArray<[K, V]> | null): Hardened<Map<K, V>>;
+declare function makeMap<K, V>(iterable: Iterable<[K, V]>): Hardened<Map<K, V>>;
+declare function makeSet<T = any>(values?: ReadonlyArray<T> | null): Hardened<Set<T>>;
+declare function makeWeakMap<K extends object = object, V = any>(entries?: ReadonlyArray<[K, V]> | null): Hardened<WeakMap<K, V>>;
+declare function makeWeakSet<T extends object = object>(values?: ReadonlyArray<T> | null): Hardened<WeakSet<T>>;
 
 /**
  * Creates a new Promise.
@@ -37,14 +51,14 @@ declare function makeWeakSet<T extends object = object>(values?: ReadonlyArray<T
  * a resolve callback used to resolve the promise with a value or the result of another promise,
  * and a reject callback used to reject the promise with a provided reason or error.
  */
-declare function makePromise<T>(executor: (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
+declare function makePromise<T>(executor: (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Hardened<Promise<T>>
 
 interface ConfineOptions {
   // TODO fill out
 }
-declare function confine(src: string, evalenv: {}, options?: ConfineOptions): DeepImmutable<any>;
-declare function confineExpr(src: string, evalenv: {}, options?: ConfineOptions): DeepImmutable<any>;
-declare function eval(src: string): DeepImmutable<any>;
+declare function confine<T>(src: string, evalenv: {}, options?: ConfineOptions): Hardened<T>;
+declare function confineExpr<T>(src: string, evalenv: {}, options?: ConfineOptions): Hardened<T>;
+declare function eval<T>(src: string): Hardened<T>;
 
 interface SlogTag {
   (template: TemplateStringsArray, ...args: any[]): any;
@@ -63,4 +77,4 @@ interface Slog extends SlogTag {
   trace: SlogTag;
 }
 
-declare const slog: Slog;
+declare const slog: Hardened<Slog>;

@@ -6,13 +6,13 @@ import indent from './indent.mjs';
 
 const LEFT_RECUR: PegConstant = harden({toString: () => 'LEFT_RECUR'});
 
-const RUN: PegRun = (self, ruleOrPatt, pos, name) => {
+function RUN(self: PegParser, ruleOrPatt: PegRuleOrPatt, pos: number, name: string) {
     if (self._debug) {
         slog.info`run(f, ${pos}, ${name})`;
     }
     let posm = self._memo.get(pos);
     if (!posm) {
-        posm = makeMap();
+        posm = makeMap<PegRuleOrPatt, any>();
         self._memo.set(pos, posm);
     }
     let result = posm.get(ruleOrPatt);
@@ -24,21 +24,22 @@ const RUN: PegRun = (self, ruleOrPatt, pos, name) => {
     } else {
         posm.set(ruleOrPatt, LEFT_RECUR);
         self._misses(1);
-        if (typeof ruleOrPatt === 'function') {
-            result = ruleOrPatt(self, pos);
-        } else if (ruleOrPatt === void 0) {
+        if (typeof ruleOrPatt === 'string' || Array.isArray(ruleOrPatt)) {
+            result = EAT(self, pos, ruleOrPatt);
+        }
+        else if (ruleOrPatt === void 0) {
             throw makeError(`Rule missing: ${name}`);
         } else {
-            result = EAT(self, pos, ruleOrPatt);
+            result = ruleOrPatt(self, pos);
         }
         posm.set(ruleOrPatt, result);
     }
     return result;
 }
 
-function lastFailures(self): [number, string[]] {
+function lastFailures(self: PegParser): [number, string[]] {
     let maxPos = 0;
-    let fails = [];
+    let fails: string[] = [];
     for (let [pos, posm] of self._memo) {
         for (let [ruleOrPatt, result] of posm) {
             if (typeof ruleOrPatt !== 'function' && result !== LEFT_RECUR) {
@@ -58,7 +59,7 @@ function lastFailures(self): [number, string[]] {
     return [maxPos, fails];
 }
 
-function ERROR(self, pos) {
+function ERROR(self: PegParser, pos: number) {
     slog.error`
 -------template--------
 ${JSON.stringify(self.template, void 0, ' ')}
@@ -75,7 +76,7 @@ ${JSON.stringify(self.template, void 0, ' ')}
 }
 
 
-function makeTokStr(self, found) {
+function makeTokStr(self: PegParser, found: [number, number] | number) {
     if (Array.isArray(found)) {
         const segment = self.template[found[0]];
         return `${JSON.stringify(segment[found[1]])} #${found[0]}:${found[1]}`;
@@ -87,7 +88,7 @@ function makeTokStr(self, found) {
 }
  
 
-function DONE(self) {
+function DONE(self: PegParser) {
     if (self._debug) {
         for (let [pos, posm] of self._memo) {
             const fails = [];
@@ -113,7 +114,7 @@ function DONE(self) {
     }
 }
 
-function FIND(template, pos) {
+function FIND(template: ReadonlyArray<string>, pos: number): [number, number] | number | undefined {
     const numSubs = template.length - 1;
     let relpos = pos;
     for (let segnum = 0; segnum <= numSubs; segnum++) {
@@ -164,7 +165,7 @@ const FAIL = harden({toString: () => 'FAIL'});
 const SKIP = harden({toString: () => 'SKIP'});
 
 const octalDigits = "01234567";
-function unescape(cs) {
+function unescape(cs: string): [string, number] {
     if (cs[0] !== '\\') {
         return [cs[0], 1];
     }
@@ -216,7 +217,7 @@ function unescape(cs) {
                 }
             }
             // We got an octal escape.
-            q = String.fromCharCode(ord);
+            q = String.fromCodePoint(ord);
         }
         return [q, 1 + i];
     }
@@ -224,13 +225,8 @@ function unescape(cs) {
     return [q, 2];
 }
 
-/**
- * @template T
- * @param {(pegTag: BootPegTag<T>, metaCompile: (defs: PegDef[]) => any) => T} makePeg
- * @param {PegDefs} bootPegAst 
- */
-function bootPeg(makePeg, bootPegAst) {
-    function compile(sexp) {
+function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
+    function compile(sexp: PegExpr) {
         let numSubs = 0;              // # of holes implied by sexp, so far
         const tokenTypes = makeSet(); // Literal tokens in sexp, so far
 
@@ -245,7 +241,7 @@ function bootPeg(makePeg, bootPegAst) {
 
         let alphaCount = 0;
         const vars = ['let value = FAIL'];
-        function nextVar(prefix) {
+        function nextVar(prefix: string) {
             const result = `${prefix}_${alphaCount++}`;
             vars.push(result);
             return result;
@@ -255,13 +251,13 @@ function bootPeg(makePeg, bootPegAst) {
             vars.length = 1;
             return result;
         }
-        function nextLabel(prefix) {
+        function nextLabel(prefix: string) {
             return `${prefix}_${alphaCount++}`;
         }
 
 
-        const vtable = Object.freeze({
-            peg(...rules) {
+        const vtable = harden({
+            peg(...rules: PegDef[]) {
                 // The following line also initializes tokenTypes and numSubs
                 const rulesSrc = rules.map(peval).join('\n');
 
@@ -304,7 +300,7 @@ function bootPeg(makePeg, bootPegAst) {
     })
     `;
             },
-            def(name, body) {
+            def(name: string, body: PegExpr) {
                 const bodySrc = peval(body);
                 return indent`
     rule_${name}: (self, pos) => {
@@ -319,7 +315,7 @@ function bootPeg(makePeg, bootPegAst) {
             fail() {
                 return `value = FAIL;`;
             },
-            or(...choices) {
+            or(...choices: PegExpr[]) {
                 const labelSrc = nextLabel('or');
                 const choicesSrc = choices.map(peval).map(cSrc => indent`
     ${cSrc}
@@ -330,7 +326,7 @@ function bootPeg(makePeg, bootPegAst) {
       ${choicesSrc}
     }`;
             },
-            seq(...terms) {
+            seq(...terms: PegExpr[]) {
                 const posSrc = nextVar('pos');
                 const labelSrc = nextLabel('seq');
                 const sSrc = nextVar('s');
@@ -356,11 +352,11 @@ function bootPeg(makePeg, bootPegAst) {
     }
     if ((value = ${vSrc}) === FAIL) pos = ${posSrc};`;
             },
-            pred(hole) {
+            pred(hole: number) {
                 numSubs = Math.max(numSubs, hole + 1);
                 return `[pos, value] = act_${hole}(self, pos);`;
             },
-            val0(...terms) {
+            val0(...terms: PegExpr[]) {
                 // FIXME: Find a better way to specify where < foo > can
                 // provide a default semantic action, and to warn
                 // when it is in the wrong context.
@@ -369,14 +365,14 @@ function bootPeg(makePeg, bootPegAst) {
     ${termsSrc}
     if (value !== FAIL) value = value.find((v) => v !== SKIP);`;
             },
-            act(hole, ...terms) {
+            act(hole: number, ...terms: PegExpr[]) {
                 numSubs = Math.max(numSubs, hole + 1);
                 const termsSrc = vtable.seq(...terms);
                 return indent`
     ${termsSrc}
     if (value !== FAIL) value = act_${hole}(...value);`;
             },
-            '**'(patt, sep) {
+            '**'(patt: PegExpr, sep: PegExpr) {
                 // for backtracking
                 const posSrc = nextVar('pos');
                 // a non-advancing success only repeats once.
@@ -403,22 +399,22 @@ function bootPeg(makePeg, bootPegAst) {
     }
     value = ${sSrc};`;
             },
-            '++'(patt, sep) {
+            '++'(patt: PegExpr, sep: PegExpr) {
                 const starSrc = vtable['**'](patt, sep);
                 return indent`
     ${starSrc}
     if (value.length === 0) value = FAIL;`;
             },
-            '?'(patt) {
+            '?'(patt: PegExpr) {
                 return vtable['**'](patt, ['fail']);
             },
-            '*'(patt) {
+            '*'(patt: PegExpr) {
                 return vtable['**'](patt, ['empty']);
             },
-            '+'(patt) {
+            '+'(patt: PegExpr) {
                 return vtable['++'](patt, ['empty']);
             },
-            'super'(ident) {
+            'super'(ident: string) {
                 return `[pos, value] = RUN(self, BaseParser.rule_${ident}, pos, ${
                     JSON.stringify(`super.${ident}`)});`;
             },
@@ -443,7 +439,7 @@ function bootPeg(makePeg, bootPegAst) {
         value = [];
     }`;
             },
-            cls(cs) {
+            cls(cs: string) {
                 // Character class.
                 let classStr = '', i = 0;
                 const invert = (cs[i] === '^');
@@ -451,17 +447,17 @@ function bootPeg(makePeg, bootPegAst) {
                     ++i;
                 }
                 while (i < cs.length) {
-                    const [c, j] = unescape(cs.substr(i));
+                    const [c, j] = unescape(cs.slice(i, i + 1));
                     i += j;
                     if (cs[i] === '-') {
                         // It's a range.
                         ++i;
-                        const [c2, j2] = unescape(cs.substr(i));
+                        const [c2, j2] = unescape(cs.slice(i, i + 1));
                         i += j2;
                         const min = c.codePointAt(0);
                         const max = c2.codePointAt(0);
                         for (let k = min; k <= max; k++) {
-                            classStr += String.fromCharCode(k);
+                            classStr += String.fromCodePoint(k);
                         }
                     }
                     else {
@@ -482,10 +478,10 @@ function bootPeg(makePeg, bootPegAst) {
     [pos, value] = EAT(self, pos);
                 `;
             },
-            lit(cs) {
+            lit(cs: string) {
                 let str = '', i = 0;
                 while (i < cs.length) {
-                    const [c, j] = unescape(cs.substr(i));
+                    const [c, j] = unescape(cs.slice(i));
                     i += j;
                     str += c;
                 }
@@ -508,7 +504,7 @@ function bootPeg(makePeg, bootPegAst) {
     }
     pos = ${posSrc};`;
             },
-            peekNot(patt) {
+            peekNot(patt: PegExpr) {
                 // for backtracking
                 const posSrc = nextVar('pos');
                 const pattSrc = peval(patt);
@@ -522,7 +518,7 @@ function bootPeg(makePeg, bootPegAst) {
             },
         });
 
-        function peval(sexp) {
+        function peval(sexp: PegExpr): string {
             if (typeof sexp === 'string') {
                 // We only match idents... literal strings are protected
                 // by ['lit', s].
@@ -539,17 +535,18 @@ function bootPeg(makePeg, bootPegAst) {
         return peval(sexp);
     }
 
-    function quasiMemo(quasiCurry) {
+    function quasiMemo(quasiCurry: (template: TemplateStringsArray, debug: boolean) => PegTag) {
         const wm = makeWeakMap();
         let debug = false;
-        return function templateTag(template, ...subs) {
-            if (template === 'DEBUG') {
+        return function templateTag(templateOrDebug: TemplateStringsArray | 'DEBUG', ...subs: any[]): T | typeof templateTag {
+            if (templateOrDebug === 'DEBUG') {
                 // Called as tag('DEBUG')`template string`
                 // Turn on debug mode.
                 debug = true;
                 return templateTag;
             }
-            let quasiRest = wm.get(template);
+            const template = templateOrDebug;
+            let quasiRest = wm.get(templateOrDebug);
             if (!quasiRest) {
                 quasiRest = quasiCurry(template, debug);
                 wm.set(template, quasiRest);
@@ -561,8 +558,8 @@ function bootPeg(makePeg, bootPegAst) {
         };
     }
 
-    function quasifyParser(Parser) {
-        function baseCurry(template, debug) {
+    function quasifyParser<T>(Parser: (template: TemplateStringsArray, ...subs: any[]) => T): T {
+        function baseCurry(template: TemplateStringsArray, debug: boolean) {
             const parser = Parser(template, debug);
             let pair = null;
             try {
@@ -576,13 +573,13 @@ function bootPeg(makePeg, bootPegAst) {
         return Object.assign(quasiParser, {Parser: bond(Parser)});
     }
 
-    const defaultBaseGrammar = quasifyParser(template => {});
+    const defaultBaseGrammar = quasifyParser(_template => {});
 
-    function metaCompile(baseRules) {
+    function metaCompile(baseRules: PegDef[]) {
         const baseAST = ['peg', ...baseRules];
         const parserTraitMakerSrc = compile(baseAST);
         //slog.trace`SOURCES: ${parserTraitMakerSrc}\n`;
-        const makeParserTrait = confine(parserTraitMakerSrc, {
+        const makeParserTrait = confine<string>(parserTraitMakerSrc, {
             DONE,
             FAIL,
             EAT,
@@ -591,9 +588,9 @@ function bootPeg(makePeg, bootPegAst) {
             SKIP,
         });
 
-        return function(...baseActions) {
+        return function(...baseActions: any[]) {
             const parserTrait = makeParserTrait(...baseActions);
-            const _asExtending = (baseQuasiParser) => {
+            const _asExtending = (baseQuasiParser: PegTag) => {
                 const Parser = parserTrait(baseQuasiParser.Parser);
                 const pegTag = quasifyParser(Parser);
 
@@ -609,29 +606,26 @@ function bootPeg(makePeg, bootPegAst) {
             const quasiParser = _asExtending(defaultBaseGrammar);
             return Object.assign(quasiParser, {
                 _asExtending,
-                extends: (baseQuasiParser) =>
-                    (template, ...subs) =>
+                extends: (baseQuasiParser: PegTag) =>
+                    (template: TemplateStringsArray, ...subs: any[]) =>
                         quasiParser(template, ...subs)._asExtending(baseQuasiParser),
             });
         }
     }
 
     // Bootstrap the compiler with the precompiled pegAst.
-    /**
-     * @type {BootPegTag}
-     */
-    const actionExtractorTag = (_template, ...actions) => actions;
+    const actionExtractorTag = (_template: TemplateStringsArray, ...actions: any[]) => actions;
     actionExtractorTag.ACCEPT = ACCEPT;
     actionExtractorTag.HOLE = HOLE;
 
     // Extract the actions, binding them to the metaCompile function.
-    const bootPegActions = makePeg(actionExtractorTag, metaCompile);
+    const bootPegActions = makePeg(actionExtractorTag, (_defs: PegDef[]) => {});
 
     // Create the parser tag from the AST and the actions.
     const bootPegTag = metaCompile(bootPegAst)(...bootPegActions);
 
     // Use the parser tag to create another parser tag that returns the AST.
-    const astExtractorTag = makePeg(bootPegTag, (defs) => (..._) => defs);
+    const astExtractorTag = makePeg<PegDef[]>(bootPegTag, (defs: PegDef[]) => (..._: any[]) => defs);
     const reparsedPegAst = makePeg(astExtractorTag, undefined);
 
     // Compare our bootPegTag output to bootPegAst, to help ensure it is
@@ -647,10 +641,7 @@ ${b}
     }
 
     // Use the metaCompiler to generate another parser.
-    /**
-     * @type {PegTag}
-     */
-    const pegTag = makePeg(bootPegTag, metaCompile);
+    const pegTag = makePeg<PegTag>(bootPegTag, metaCompile);
 
     // YAAY!  If you got this far, you can uncomment the following
     // and overwrite src/boot-pegast.mjs.

@@ -7,7 +7,7 @@ import makeJessie from './quasi-jessie.mjs';
 
 import interpJessie from './interp-jessie.mjs';
 
-function tagString(template, ...args) {
+function tagString(template: TemplateStringsArray, ...args: any[]) {
     const cooked = args.reduce((prior, hole, i) => {
         prior.push(String(hole), template[i + 1]);
         return prior;
@@ -20,9 +20,9 @@ function tagString(template, ...args) {
     return Object.assign(tmpl, {raw: [raw.join('')]});
 }
 
-function bootEnv(endowments) {
+function bootEnv(endowments: object) {
     // Bootstrap a peg tag.
-    const pegTag = bootPeg(makePeg, bootPegAst);
+    const pegTag = bootPeg<PegTag>(makePeg, bootPegAst);
 
     // Stack up the parser.
     const jsonTag = makeJSON(pegTag);
@@ -31,15 +31,15 @@ function bootEnv(endowments) {
 
     const env = harden({
         ...endowments,
-        confine: (src, evalenv, options) => {
+        confine: (src: string, evalenv: object, options?: ConfineOptions) => {
             const ast = jessieTag(tagString`${src + '\n;'}`);
             return harden(interpJessie(ast, evalenv, options || {}));
         },
-        confineExpr: (src, evalenv, options) => {
+        confineExpr: (src: string, evalenv: object, options?: ConfineOptions) => {
             const ast = jessieTag(tagString`${'(' + src + '\n)'}`);
             return harden(interpJessie.expr(ast, evalenv, options || {}));
         },
-        eval: (src) => {
+        eval: (src: string) => {
             const ast = jessieTag(tagString`${src}`);
             return harden(interpJessie(ast, env));
         },

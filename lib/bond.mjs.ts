@@ -3,8 +3,12 @@
 //
 // TODO: This function desperately needs a test suite!
 
-function makeBond(computedGet, applyMethod) {
-    const _bonded = makeWeakMap(), _bondedUndefinedThis = makeWeakMap();
+type ComputedGet = <T, K extends keyof T>(that: T, index: K) => T[K];
+type ApplyMethod = <T, U>(that: any, method: (...args: T[]) => U, args: T[]) => U;
+
+function makeBond(computedGet: ComputedGet, applyMethod: ApplyMethod) {
+    const _bonded = makeWeakMap<Object, WeakMap<Function, Function>>(),
+        _bondedUndefinedThis = makeWeakMap<Function, Function>();
 
     /**
      *  Given an object and an index, either
@@ -19,8 +23,8 @@ function makeBond(computedGet, applyMethod) {
      */
     function bond<T, K extends keyof T>(maybeThis: T, index: K): T[K];
     function bond<T>(maybeThis: T): T;
-    function bond(maybeThis, index?) {
-        let maybeMethod;
+    function bond(maybeThis: any, index?: number | string) {
+        let maybeMethod: any;
         if (index === undefined) {
             maybeMethod = maybeThis;
         }
@@ -35,8 +39,9 @@ function makeBond(computedGet, applyMethod) {
             // Plain value.
             return maybeMethod;
         }
+        const actualMethod: Function = maybeMethod;
 
-        let actualThis, bondedForThis;
+        let actualThis: object, bondedForThis;
         if (index === undefined) {
             // Cache for undefined `this` value.
             bondedForThis = _bondedUndefinedThis;
@@ -51,18 +56,18 @@ function makeBond(computedGet, applyMethod) {
             }
         }
 
-        const bonded = bondedForThis.get(maybeMethod);
+        const bonded = bondedForThis.get(actualMethod);
         if (bonded) {
             // Already wrapped for `this` and the method.
             return bonded;
         }
 
         // Wrap the method similar to `bind`.
-        const bondedMethod = harden((...args) =>
+        const bondedMethod = harden((...args: any[]) =>
             applyMethod(actualThis, maybeMethod, args));
         
         // Cache the hardened, bound method.
-        bondedForThis.set(maybeMethod, bondedMethod);
+        bondedForThis.set(actualMethod, bondedMethod);
         return bondedMethod;
     }
     
