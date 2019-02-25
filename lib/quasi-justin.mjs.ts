@@ -30,8 +30,8 @@ import quasiUtils from './quasi-utils.mjs';
 import './peg.mjs';
 const {qunpack} = quasiUtils;
 
-function binary(left, rights) {
-    return rights.reduce((prev,[op,right]) => [op,prev,right], left);
+function binary(left: PegExpr, rights: any[]) {
+    return rights.reduce<PegExpr>((prev,[op,right]) => [op,prev,right], left);
 }
 
 
@@ -40,7 +40,7 @@ function makeJustin(jsonPeg: PegTag) {
     const {FAIL} = peg;
     return peg`
     # to be overridden or inherited
-    start <- WS assignExpr EOF                       ${(_,v,_2) => (..._) => v};
+    start <- WS assignExpr EOF                       ${(_,v,_2) => (..._: any[]) => v};
 
     # A.1 Lexical Grammar
 

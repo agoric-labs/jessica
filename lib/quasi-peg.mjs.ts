@@ -15,23 +15,23 @@
 
 import './peg.mjs';
 
-function makePeg<T>(pegTag: BootPegTag<T>, metaCompile: (defs: PegDef[]) => T): T {
+function makePeg<T, U = any>(pegTag: BootPegTag<T>, metaCompile: (defs: PegDef[]) => U): T {
       const {ACCEPT, HOLE} = pegTag;
 
-      function simple(prefix, list) {
+      function simple(prefix: string, list: PegExpr[]) {
             if (list.length === 0) { return ['empty']; }
             if (list.length === 1) { return list[0]; }
             return [prefix, ...list];
       }
 
-      function flatArgs(args) {
-            return args.reduce((prior, a) => {
+      function flatArgs(args: PegExpr[]) {
+            return args.reduce<PegExpr[]>((prior, a) => {
                   prior.push(...flatSeq(a));
                   return prior;
             }, []);
       }
 
-      function flatSeq(term) {
+      function flatSeq(term: PegExpr): PegExpr[] {
             if (Array.isArray(term)) {
                   if (term.length === 0) {
                         return [];

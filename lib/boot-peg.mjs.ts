@@ -256,7 +256,7 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
         }
 
 
-        const vtable = harden({
+        const vtable: {[index: string]: (...args: any[]) => string} = harden({
             peg(...rules: PegDef[]) {
                 // The following line also initializes tokenTypes and numSubs
                 const rulesSrc = rules.map(peval).join('\n');
@@ -489,7 +489,7 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
     [pos, value] = EAT(self, pos, ${JSON.stringify(str)});
     `;
             },
-            peek(patt) {
+            peek(patt: PegExpr) {
                 // for backtracking
                 const posSrc = nextVar('pos');
                 const vSrc = nextVar('v');
@@ -558,9 +558,12 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
         };
     }
 
-    function quasifyParser<T>(Parser: (template: TemplateStringsArray, ...subs: any[]) => T): T {
+    function quasifyParser(ParserCreator: PegParserCreator): PegParserTag {
         function baseCurry(template: TemplateStringsArray, debug: boolean) {
-            const parser = Parser(template, debug);
+            const parser = ParserCreator(template, debug);
+            if (parser === undefined) {
+                throw makeError('Cannot curry baseParserCreator');
+            }
             let pair = null;
             try {
                 pair = parser.start(parser);
@@ -570,16 +573,16 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
             return pair;
         }
         const quasiParser = quasiMemo(baseCurry);
-        return Object.assign(quasiParser, {Parser: bond(Parser)});
+        return Object.assign(quasiParser, {ParserCreator: bond(ParserCreator)});
     }
 
-    const defaultBaseGrammar = quasifyParser(_template => {});
+    const defaultBaseGrammar = quasifyParser(_template => undefined);
 
     function metaCompile(baseRules: PegDef[]) {
         const baseAST = ['peg', ...baseRules];
         const parserTraitMakerSrc = compile(baseAST);
         //slog.trace`SOURCES: ${parserTraitMakerSrc}\n`;
-        const makeParserTrait = confine<string>(parserTraitMakerSrc, {
+        const makeParserTrait = confine<any>(parserTraitMakerSrc, {
             DONE,
             FAIL,
             EAT,
@@ -590,8 +593,8 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
 
         return function(...baseActions: any[]) {
             const parserTrait = makeParserTrait(...baseActions);
-            const _asExtending = (baseQuasiParser: PegTag) => {
-                const Parser = parserTrait(baseQuasiParser.Parser);
+            const _asExtending = (baseQuasiParser: PegParserTag) => {
+                const Parser = parserTrait(baseQuasiParser.ParserCreator);
                 const pegTag = quasifyParser(Parser);
 
                 // These predicates are needed by our extended grammars.
@@ -625,7 +628,7 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
     const bootPegTag = metaCompile(bootPegAst)(...bootPegActions);
 
     // Use the parser tag to create another parser tag that returns the AST.
-    const astExtractorTag = makePeg<PegDef[]>(bootPegTag, (defs: PegDef[]) => (..._: any[]) => defs);
+    const astExtractorTag = makePeg<PegTag, PegDef[]>(bootPegTag, (defs: PegDef[]) => defs);
     const reparsedPegAst = makePeg(astExtractorTag, undefined);
 
     // Compare our bootPegTag output to bootPegAst, to help ensure it is

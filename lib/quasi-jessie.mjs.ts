@@ -11,7 +11,7 @@ function makeJessie(justinPeg: PegTag) {
     return peg`
     # Override rather than inherit start production.
     # Only module syntax is permitted.
-    start <- WS moduleBody EOF               ${(_,b,_2) => (..._) => ['module',b]};
+    start <- WS moduleBody EOF               ${(_,b,_2) => (..._: any[]) => ['module',b]};
 
     # A.1 Lexical Grammar
 

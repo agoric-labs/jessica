@@ -14,7 +14,7 @@ function makeJSON(pegPeg: PegTag) {
     const {FAIL, HOLE, SKIP} = peg;
     return peg`
 # to be overridden or inherited
-start <- WS assignExpr EOF                ${(_,v,_2) => (..._) => v};
+start <- WS assignExpr EOF                ${(_,v,_2) => (..._: any[]) => v};
 
 # to be extended
 primaryExpr <- dataStructure;

@@ -1,13 +1,13 @@
 // Options: --free-variable-checker --require --validate
 /*global module require*/
 
-function indent(template, ...substs) {
+function indent(template: TemplateStringsArray, ...substs: any[]) {
     const result = [];
     let newnewline = '\n';
     for (let i = 0, ilen = substs.length; i < ilen; i++) {
         let segment = template[i];
         if (i == 0 && segment[0].startsWith('\n')) {
-            segment = segment.substr(1);
+            segment = segment.slice(1);
         }
         const lastnl = segment.lastIndexOf('\n');
         if (lastnl >= 0) {
