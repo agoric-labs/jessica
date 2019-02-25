@@ -8,15 +8,16 @@ type PegRun = (self: any, ruleOrPatt: PegRuleOrPatt, pos: number, name: string) 
 
 type PegEat = (self: any, pos: number, str: PegExpr) => [number, string | PegConstant];
 type PegAction = (...terms: any[]) => any;
+type PegHole = PegConstant | PegAction;
 
 interface BootPegTag<T> {
-    (template: TemplateStringsArray, ...args: PegAction[]): T;
+    (template: TemplateStringsArray, ...args: PegHole[]): T;
     ACCEPT: PegPredicate,
     HOLE: PegPredicate,
 }
 
 interface PegParserTag {
-    (template: TemplateStringsArray, ...args: PegAction[]): any;
+    (template: TemplateStringsArray, ...args: PegHole[]): any;
     ParserCreator: PegParserCreator;
 }
 
@@ -33,8 +34,8 @@ interface PegParser {
 type PegParserCreator = (template: TemplateStringsArray, debug: boolean) => PegParser | undefined;
 
 interface PegTag {
-    (template: TemplateStringsArray, ...args: PegAction[]): PegTag;
-    (debug: 'DEBUG'): (template: TemplateStringsArray, ...args: any[]) => PegTag;
+    (template: TemplateStringsArray, ...args: PegHole[]): PegTag;
+    (debug: 'DEBUG'): (template: TemplateStringsArray, ...args: PegHole[]) => PegTag;
     ParserCreator: PegParserCreator,
     extends(peg: PegTag): PegTag,
     ACCEPT: PegPredicate,
