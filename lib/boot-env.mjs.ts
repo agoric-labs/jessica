@@ -39,7 +39,7 @@ function bootEnv(endowments: object) {
             const ast = jessieTag(tagString`${'(' + src + '\n)'}`);
             return harden(interpJessie.expr(ast, evalenv, options || {}));
         },
-        eval: (src: string) => {
+        eval: (src: string): any => {
             const ast = jessieTag(tagString`${src}`);
             return harden(interpJessie(ast, env));
         },

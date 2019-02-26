@@ -5,6 +5,7 @@
   "main": "lang/nodejs/jesspipe.mjs",
   "scripts": {
     "build": "build.bat",
+    "dev": "check.bat typescript",
     "clean": "rm -rf esm",
     "test": "check.bat"
   },
