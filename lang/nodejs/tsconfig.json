@@ -1,7 +1,8 @@
 {
     "compilerOptions": {
         "target": "es2017",
-        "module": "commonjs",
-        "types": ["./typesnode", "../../typings/ses"]
+        "module": "esnext",
+        "typeRoots": ["./node_modules/@types"],
+        "types": ["node", "../../typings/ses"]
     },
 }

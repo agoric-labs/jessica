@@ -5,15 +5,13 @@
   "main": "lang/nodejs/jesspipe.mjs",
   "scripts": {
     "build": "build.bat",
-    "dev": "check.bat typescript",
     "clean": "rm -rf esm",
     "test": "check.bat"
   },
   "author": "Michael FIG <michael@fig.org>",
   "license": "Apache-2.0",
   "dependencies": {
-    "ses": "^0.3.0",
-    "ts-node": "^8.0.2"
+    "ses": "^0.3.0"
   },
   "devDependencies": {
     "typescript": "^3.3.0"
