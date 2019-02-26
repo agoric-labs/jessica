@@ -24,13 +24,13 @@ function RUN(self: PegParser, ruleOrPatt: PegRuleOrPatt, pos: number, name: stri
     } else {
         posm.set(ruleOrPatt, LEFT_RECUR);
         self._misses(1);
-        if (typeof ruleOrPatt === 'string' || Array.isArray(ruleOrPatt)) {
-            result = EAT(self, pos, ruleOrPatt);
+        if (typeof ruleOrPatt === 'function') {
+            result = ruleOrPatt(self, pos);
         }
         else if (ruleOrPatt === void 0) {
             throw makeError(`Rule missing: ${name}`);
         } else {
-            result = ruleOrPatt(self, pos);
+            result = EAT(self, pos, ruleOrPatt as PegExpr);
         }
         posm.set(ruleOrPatt, result);
     }
@@ -447,12 +447,12 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
                     ++i;
                 }
                 while (i < cs.length) {
-                    const [c, j] = unescape(cs.slice(i, i + 1));
+                    const [c, j] = unescape(cs.slice(i));
                     i += j;
                     if (cs[i] === '-') {
                         // It's a range.
                         ++i;
-                        const [c2, j2] = unescape(cs.slice(i, i + 1));
+                        const [c2, j2] = unescape(cs.slice(i));
                         i += j2;
                         const min = c.codePointAt(0);
                         const max = c2.codePointAt(0);
@@ -622,13 +622,13 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
     actionExtractorTag.HOLE = HOLE;
 
     // Extract the actions, binding them to the metaCompile function.
-    const bootPegActions = makePeg(actionExtractorTag, (_defs: PegDef[]) => {});
+    const bootPegActions = makePeg(actionExtractorTag, metaCompile);
 
     // Create the parser tag from the AST and the actions.
     const bootPegTag = metaCompile(bootPegAst)(...bootPegActions);
 
     // Use the parser tag to create another parser tag that returns the AST.
-    const astExtractorTag = makePeg<PegTag, PegDef[]>(bootPegTag, (defs: PegDef[]) => defs);
+    const astExtractorTag = makePeg<PegTag>(bootPegTag, (defs: PegDef[]) => (..._: any[]) => defs);
     const reparsedPegAst = makePeg(astExtractorTag, undefined);
 
     // Compare our bootPegTag output to bootPegAst, to help ensure it is
