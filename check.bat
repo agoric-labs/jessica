@@ -2,6 +2,7 @@
 :; langs=${1+"$@"}
 :; test -n "$langs" || langs=`cd "$thisdir"/lang && echo *`
 :; mkdir -p "$thisdir/checkout"
+:; test -f lib/emit-c.mjs || { npm install && npm run build; }
 :; for lang in $langs; do
 :;  echo "==== Checking for $lang support"
 :;  "$thisdir/lang/$lang/supported.bat" || continue

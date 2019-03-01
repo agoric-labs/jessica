@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "module": "esnext",
+        "typeRoots": ["./node_modules/@types"],
+        "types": ["node", "../../typings/ses"]
+    },
+}
