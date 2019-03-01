@@ -6,8 +6,8 @@
 // we are a main program, and we're changing global state for the
 // entire process.
 
-///
-import '../../typings/ses.d';
+// tslint:disable-next-line:no-reference
+/// <reference path="../../typings/ses.d.ts" />
 
 // Most of the work is already done by globalEnv0.js.
 const globalEnv: Record<string, any> = {};
