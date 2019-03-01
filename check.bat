@@ -20,6 +20,11 @@
 :;    diff -u "$thisdir/lang/$target/jessica.$sfx" "$out" || { status=$?; break; }
 :;  done
 :; done
+:; if test $status -eq 0; then
+:;   echo 1>&2 '=== ALL TESTS PASSED ==='
+:; else
+:;   echo 1>&2 '=== TESTS FAILED ==='
+:; fi
 :; exit $status
 @echo off
 set thisdir=%~dp0
