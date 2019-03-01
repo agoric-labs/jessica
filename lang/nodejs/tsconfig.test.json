@@ -1,0 +1,16 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+			"target": "es2017",
+			"module": "commonjs",
+			"types": [
+				"node",
+				"jest",
+				"../../typings/ses"
+			],
+		},
+		"include": [
+			"**/*.test.ts"
+		]
+}
+

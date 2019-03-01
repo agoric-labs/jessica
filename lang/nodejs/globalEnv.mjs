@@ -5,8 +5,6 @@
 // NOTE: Don't ever do this in a library module, it's only allowed when
 // we are a main program, and we're changing global state for the
 // entire process.
-// tslint:disable-next-line:no-reference
-/// <reference path="../../typings/ses.d.ts" />
 // Most of the work is already done by globalEnv0.js.
 const globalEnv = {};
 // slog writes to console

@@ -11,5 +11,11 @@
     "trailing-comma": [true, {"singleline": "never"}],
     "no-console": [true, "log"]
   },
+  "linterOptions": {
+    "exclude": [
+      "**/*.mjs",
+      "**/*.js"
+    ]
+  },
   "alwaysShowRuleFailuresAsWarnings": true
 }

@@ -1,0 +1,30 @@
+{
+  "name": "jessica-lang-nodejs",
+  "version": "0.0.1",
+  "description": "Jessica implementation for Node.js",
+  "main": "jesspipe.js",
+  "dependencies": {
+    "ses": "^0.4.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.9",
+    "@types/node": "^11.9.6",
+    "jest": "^24.1.0",
+    "ts-jest": "^24.0.0",
+    "typescript": "^3.3.3333"
+  },
+  "scripts": {
+    "build": "build.bat",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michaelfig/jessica.git"
+  },
+  "author": "Michael FIG <michael+jessica@fig.org>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/michaelfig/jessica/issues"
+  },
+  "homepage": "https://github.com/michaelfig/jessica#readme"
+}

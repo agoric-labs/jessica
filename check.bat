@@ -2,10 +2,11 @@
 :; langs=${1+"$@"}
 :; test -n "$langs" || langs=`cd "$thisdir"/lang && echo *`
 :; mkdir -p "$thisdir/checkout"
-:; test -f lib/emit-c.mjs || { npm install && npm run build; }
 :; for lang in $langs; do
 :;  echo "==== Checking for $lang support"
 :;  "$thisdir/lang/$lang/supported.bat" || continue
+:;  check="$thisdir/lang/$lang/check.bat"
+:;  test ! -f "$check" || "$check" || { status=$la?; break; }
 :;  for emitter in "$thisdir"/lib/emit-*.mjs; do
 :;    target=`echo "$emitter" | sed -e 's/.*\/emit-//; s/\.mjs$//'`
 :;    sfx=`cat "$thisdir/lang/$target/.suffix"`
