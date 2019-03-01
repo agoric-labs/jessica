@@ -1,9 +1,9 @@
 /// <reference types="jest"/>
-import './globalEnv0';
+import '../globalEnv0';
 
-import './globalEnv.mjs';
+import '../globalEnv.mjs';
 
-import makeBond from '../../lib/bond.mjs';
+import makeBond from '../../../lib/bond.mjs';
 const defaultBond = () => makeBond(
     (that, index) => that[index],
     (that, method, args) => method.apply(that, args));
