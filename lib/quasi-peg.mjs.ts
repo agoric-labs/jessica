@@ -15,7 +15,7 @@
 
 import './peg.mjs';
 
-function makePeg<T, U = any>(pegTag: BootPegTag<T>, metaCompile: (defs: PegDef[]) => U): T {
+function makePeg<T, U = any>(pegTag: IBootPegTag<T>, metaCompile: (defs: PegDef[]) => U): T {
       const {ACCEPT, HOLE} = pegTag;
 
       function simple(prefix: string, list: PegExpr[]) {
@@ -39,15 +39,13 @@ function makePeg<T, U = any>(pegTag: BootPegTag<T>, metaCompile: (defs: PegDef[]
                   const [kind, ...terms] = term;
                   if (kind === 'seq') {
                         return flatArgs(terms);
-                  }
-                  else if (terms.length === 0 && Array.isArray(kind)) {
+                  } else if (terms.length === 0 && Array.isArray(kind)) {
                         return flatSeq(kind);
-                  }
-                  else {
+                  } else {
                         return [[kind, ...flatArgs(terms)]];
                   }
             }
-            
+
             return [term];
       }
 
@@ -58,7 +56,7 @@ Grammar      <- Spacing Definition+ EndOfFile
                     ${(_, defs, _2) => metaCompile(defs) };
 
 Definition   <- Identifier LEFTARROW Expression SEMI &${ACCEPT}
-                    ${(i,_,e,_2) => ['def', i, e]};
+                    ${(i, _, e, _2) => ['def', i, e]};
 Expression   <- Sequence ** SLASH
                     ${list => simple('or', list)};
 Sequence     <- (Prefix*
@@ -99,8 +97,8 @@ Primary      <- Super
               ;
 
 Super        <- 'super.' Identifier
-                    ${(_,i) => ['super', i]};
-              
+                    ${(_, i) => ['super', i]};
+
 # Lexical syntax
 
 Identifier   <- < IdentStart IdentCont* > Spacing;

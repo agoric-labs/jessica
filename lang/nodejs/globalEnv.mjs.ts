@@ -6,10 +6,11 @@
 // we are a main program, and we're changing global state for the
 // entire process.
 
-/// <reference path="../../typings/ses.d.ts"/>
+// tslint:disable-next-line:no-reference
+/// <reference path="../../typings/ses.d.ts" />
 
 // Most of the work is already done by globalEnv0.js.
-const globalEnv : {[index: string]: any} = {};
+const globalEnv: Record<string, any> = {};
 
 // slog writes to console
 import makeSlog from '../../lib/slog.mjs';
@@ -19,8 +20,7 @@ const contextArg = (context, a) => {
     if (typeof a !== 'object' || a === null) {
         // Just stringify the argument.
         return '' + a;
-    }
-    else if (a.length !== undefined) {
+    } else if (a.length !== undefined) {
         // Take the value as the (anonymous) array.
         return a;
     }
@@ -29,12 +29,10 @@ const contextArg = (context, a) => {
     for (const vname of Object.keys(a)) {
         if (vname === 'format') {
             format = a[vname];
-        }
-        else if (valname !== undefined || typeof a[vname] === 'function') {
+        } else if (valname !== undefined || typeof a[vname] === 'function') {
             // Too many members or seems to be an active object.
             return a;
-        }
-        else {
+        } else {
             // We have at least one non-format member.
             valname = vname;
             val = a[vname];
@@ -51,8 +49,7 @@ const contextArg = (context, a) => {
         if (val !== oval) {
             throw Error(`Context value ${valname} mismatch: ${JSON.stringify(val)} vs. ${JSON.stringify(oval)}`);
         }
-    }
-    else {
+    } else {
         context.set(valname, val);
     }
     return val;
@@ -66,17 +63,16 @@ const mySlog = makeSlog(
             ca = contextArg(context, a);
             if (typeof ca === 'object') {
                 prior.push(ca, template[i + 1].replace(startWs, ''));
-            }
-            else {
+            } else {
                 const last = prior[prior.length - 1];
                 prior[prior.length - 1] = last + String(ca) + template[i + 1];
             }
             return prior;
         }, [names[level] + ': ' + template[0].replace(endWs, '')]);
+
         if (level > levels.get('warn') || ca instanceof Error) {
             console.error(...reduced);
-        }
-        else {
+        } else {
             // Record a location, too.
             const at = new Error('at:');
             console.error(...reduced, at);

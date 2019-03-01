@@ -7,7 +7,7 @@ function makeLoadAsset(CAN_LOAD_ASSETS: Set<string>, readFile: FileReader) {
             return Promise.reject(`${JSON.stringify(file)} not in INFILE whitelist`);
         }
         return makePromise<string>((resolve, reject) => {
-            readFile(file, {encoding: 'latin1'}, function(err: any, data: string) {
+            readFile(file, {encoding: 'latin1'}, function readCb(err: any, data: string) {
                 if (err) {
                     return reject(err);
                 }
