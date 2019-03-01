@@ -5,10 +5,12 @@
 
 type ComputedGet = <T, K extends keyof T>(that: T, index: K) => T[K];
 type ApplyMethod = <T, U>(that: any, method: (...args: T[]) => U, args: T[]) => U;
+type AnyMethod = (this: any, ...args: any[]) => any;
+type AnyArrow = (...args: any[]) => any;
 
 function makeBond(computedGet: ComputedGet, applyMethod: ApplyMethod) {
-    const _bonded = makeWeakMap<Object, WeakMap<Function, Function>>(),
-        _bondedUndefinedThis = makeWeakMap<Function, Function>();
+    const _bonded = makeWeakMap<object, WeakMap<AnyMethod, AnyArrow>>(),
+        _bondedUndefinedThis = makeWeakMap<AnyMethod, AnyArrow>();
 
     /**
      *  Given an object and an index, either
@@ -27,26 +29,24 @@ function makeBond(computedGet: ComputedGet, applyMethod: ApplyMethod) {
         let maybeMethod: any;
         if (index === undefined) {
             maybeMethod = maybeThis;
-        }
-        else {
+        } else {
             if (typeof maybeThis !== 'object' || maybeThis === null) {
                 throw makeError(`Can only call bond(obj, index) on an object, not ${JSON.stringify(maybeThis)}`);
             }
             maybeMethod = computedGet(maybeThis, index);
         }
-        
+
         if (typeof maybeMethod !== 'function') {
             // Plain value.
             return maybeMethod;
         }
-        const actualMethod: Function = maybeMethod;
+        const actualMethod: AnyMethod = maybeMethod;
 
         let actualThis: object, bondedForThis;
         if (index === undefined) {
             // Cache for undefined `this` value.
             bondedForThis = _bondedUndefinedThis;
-        }
-        else {
+        } else {
             actualThis = maybeThis;
             bondedForThis = _bonded.get(actualThis);
             if (!bondedForThis) {
@@ -65,12 +65,12 @@ function makeBond(computedGet: ComputedGet, applyMethod: ApplyMethod) {
         // Wrap the method similar to `bind`.
         const bondedMethod = harden((...args: any[]) =>
             applyMethod(actualThis, maybeMethod, args));
-        
+
         // Cache the hardened, bound method.
         bondedForThis.set(actualMethod, bondedMethod);
         return bondedMethod;
     }
-    
+
     return bond<Bond>(bond);
 }
 

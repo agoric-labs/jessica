@@ -5,7 +5,7 @@ const APPLY_MACRO = 1;
 const APPLY_DEFUN = 2;
 
 type EvalEnv = any;
-interface EvalOptions {
+interface IEvalOptions {
     [key: string]: any;
     scriptName?: string;
 }
@@ -40,13 +40,13 @@ const topLevelContext = makeMap([
         // We need to look for the export default.
         const mod = ChildEnvironment(env, moduleContext);
         script[1].forEach((expr: any) => evalJessie(expr, mod));
-        
+
         const exp = mod[2].get('#exportDefault');
         if (exp) {
             // Return the exported value.
             return evalJessie(exp, ChildEnvironment(mod, exprContext));
         }
-        
+
         // The module didn't export.
         throw makeError(`Module ${JSON.stringify(script[2])} did not export default`);
     }],
@@ -62,14 +62,14 @@ function evalJessie(src: string, env: EvalEnv) {
     return evaluator(src, env);
 }
 
-function interpJessie(ast: any, endowments: {[key: string]: any}, options: EvalOptions = {}) {
+function interpJessie(ast: any, endowments: {[key: string]: any}, options: IEvalOptions = {}) {
     const [tag, body] = ast;
     if (tag === 'module') {
         ast = [tag, body, options.scriptName];
     }
     return evalJessie(ast, ChildEnvironment(endowments, topLevelContext));
 }
-interpJessie.expr = (ast: any, endowments: {[key: string]: any}, options: EvalOptions = {}) => {
+interpJessie.expr = (ast: any, endowments: {[key: string]: any}, options: IEvalOptions = {}) => {
     const [tag, body] = ast;
     if (tag === 'module') {
         ast = [tag, body, options.scriptName];

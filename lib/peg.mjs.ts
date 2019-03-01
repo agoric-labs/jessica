@@ -1,8 +1,8 @@
 type PegPredicate = (self: any, pos: number) => [number, any];
-interface Stringable {
+interface IStringable {
     toString(): string;
 }
-type PegConstant = Readonly<Stringable>;
+type PegConstant = Readonly<IStringable>;
 
 type PegRun = (self: any, ruleOrPatt: PegRuleOrPatt, pos: number, name: string) => [number, string[]];
 
@@ -10,46 +10,46 @@ type PegEat = (self: any, pos: number, str: PegExpr) => [number, string | PegCon
 type PegAction = (...terms: any[]) => any;
 type PegHole = PegConstant | PegAction;
 
-interface BootPegTag<T> {
+interface IBootPegTag<T> {
     (template: TemplateStringsArray, ...args: PegHole[]): T;
-    ACCEPT: PegPredicate,
-    HOLE: PegPredicate,
+    ACCEPT: PegPredicate;
+    HOLE: PegPredicate;
 }
 
-interface PegParserTag {
+interface IPegParserTag {
     (template: TemplateStringsArray, ...args: PegHole[]): any;
-    ParserCreator: PegParserCreator;
+    parserCreator: PegParserCreator;
 }
 
-interface PegParser {
+interface IPegParser {
     _memo: Map<number, Map<PegRuleOrPatt, any>>;
     _debug: boolean;
     _hits: (n?: number) => number;
     _misses: (n?: number) => number;
     template: TemplateStringsArray['raw'];
-    start: (parser: PegParser) => any;
-    done: (parser: PegParser) => void; 
+    start: (parser: IPegParser) => any;
+    done: (parser: IPegParser) => void;
 }
 
-type PegParserCreator = (template: TemplateStringsArray, debug: boolean) => PegParser | undefined;
+type PegParserCreator = (template: TemplateStringsArray, debug: boolean) => IPegParser | undefined;
 
-interface PegTag {
-    (template: TemplateStringsArray, ...args: PegHole[]): PegTag;
-    (debug: 'DEBUG'): (template: TemplateStringsArray, ...args: PegHole[]) => PegTag;
-    ParserCreator: PegParserCreator,
-    extends(peg: PegTag): PegTag,
-    ACCEPT: PegPredicate,
-    FAIL: PegConstant,
-    HOLE: PegPredicate,
-    SKIP: PegConstant,
-    ERROR: PegPredicate,
-    RUN: PegRun,
-    EAT: PegEat,
+interface IPegTag {
+    (template: TemplateStringsArray, ...args: PegHole[]): IPegTag;
+    (debug: 'DEBUG'): (template: TemplateStringsArray, ...args: PegHole[]) => IPegTag;
+    ParserCreator: PegParserCreator;
+    ACCEPT: PegPredicate;
+    FAIL: PegConstant;
+    HOLE: PegPredicate;
+    SKIP: PegConstant;
+    ERROR: PegPredicate;
+    RUN: PegRun;
+    EAT: PegEat;
+    extends(peg: IPegTag): IPegTag;
 }
 
 // TODO: Fill out all the tree from PegDef.
 type PegExpr = string | any[];
-type PegRuleOrPatt = (Function & {name: string}) | PegExpr;
+type PegRuleOrPatt = (((..._args: any[]) => any) & {name: string}) | PegExpr;
 type PegDef = any[];
 
-type MakePeg = <T, U = any>(pegTag: BootPegTag<T>, metaCompile: (defs: PegDef[]) => U) => T;
+type MakePeg = <T, U = any>(pegTag: IBootPegTag<T>, metaCompile: (defs: PegDef[]) => U) => T;

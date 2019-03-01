@@ -1,9 +1,9 @@
 import bootPeg from './boot-peg.mjs';
 import bootPegAst from './boot-pegast.mjs';
-import makePeg from './quasi-peg.mjs';
+import makeJessie from './quasi-jessie.mjs';
 import makeJSON from './quasi-json.mjs';
 import makeJustin from './quasi-justin.mjs';
-import makeJessie from './quasi-jessie.mjs';
+import makePeg from './quasi-peg.mjs';
 
 import interpJessie from './interp-jessie.mjs';
 
@@ -22,7 +22,7 @@ function tagString(template: TemplateStringsArray, ...args: any[]) {
 
 function bootEnv(endowments: object) {
     // Bootstrap a peg tag.
-    const pegTag = bootPeg<PegTag>(makePeg, bootPegAst);
+    const pegTag = bootPeg<IPegTag>(makePeg, bootPegAst);
 
     // Stack up the parser.
     const jsonTag = makeJSON(pegTag);

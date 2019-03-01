@@ -1,5 +1,6 @@
-const repl = (asset: Promise<string>, doEval: (data: string) => Promise<any>,
-    printer: (s: string) => void, argv: string[]) =>
+const repl = (asset: Promise<string>,
+              doEval: (data: string) => Promise<any>,
+              printer: (s: string) => void, argv: string[]) =>
     // Read...
     harden(asset
     // Eval ...

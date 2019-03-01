@@ -1,13 +1,13 @@
 type SlogContext = Map<string, any>;
-type SlogContextObject = {[key: string]: any};
-type SlogHandler = (level: number, names: SlogName[],
-    levels: Map<SlogName, number>, context: SlogContext,
-    template: TemplateStringsArray, args: any[]) => any;
-type SlogSetMapFrom = (context: SlogContext, obj: SlogContextObject) => void;
+type SlogHandler =
+    (level: number, names: SlogName[],
+     levels: Map<SlogName, number>, context: SlogContext,
+     template: TemplateStringsArray, args: any[]) => any;
+type SlogSetMapFrom = (context: SlogContext, obj: Record<string, any>) => void;
 
 const makeSlog = (handler: SlogHandler, setMapFrom: SlogSetMapFrom): Slog => {
-    let levels = makeMap<SlogName, number>(), names: SlogName[] = [];
-    let slog: Partial<Slog> & Function = () => {};
+    const levels = makeMap<SlogName, number>(), names: SlogName[] = [];
+    let slog: Partial<Slog> & SlogTag = (...args: any[]): any => undefined;
     for (const prep of [true, false]) {
         let i = 0, doit;
         if (prep) {
@@ -17,18 +17,17 @@ const makeSlog = (handler: SlogHandler, setMapFrom: SlogSetMapFrom): Slog => {
                 levels.set(name, level);
                 return slog;
             };
-        }
-        else {
+        } else {
             // We have levels.trace, so create the actual SLOG object.
             doit = (level: number, _name: SlogName): SlogTag => {
-                function tag(context: SlogContextObject): SlogTag;
+                function tag(context: Record<string, any>): SlogTag;
                 function tag(template: TemplateStringsArray, ...args: any[]): any;
-                function tag(contextOrTemplate: SlogContextObject | TemplateStringsArray, ...args: any[]) {
+                function tag(contextOrTemplate: Record<string, any> | TemplateStringsArray, ...args: any[]) {
                     const context = makeMap();
                     if (!contextOrTemplate.raw) {
                         setMapFrom(context, contextOrTemplate);
-                        return (template: TemplateStringsArray, ...args: any[]) =>
-                            handler(level, names, levels, context, template, args);
+                        return (t: TemplateStringsArray, ...a: any[]) =>
+                            handler(level, names, levels, context, t, a);
                     }
                     // No specified context, this is the template tag.
                     const template = contextOrTemplate as TemplateStringsArray;
@@ -36,7 +35,7 @@ const makeSlog = (handler: SlogHandler, setMapFrom: SlogSetMapFrom): Slog => {
                 }
                 return tag;
             };
-            let defaultLevel = levels.get('trace');
+            const defaultLevel = levels.get('trace');
             levels.set('DEFAULT', defaultLevel);
             slog = doit(defaultLevel, 'DEFAULT');
         }

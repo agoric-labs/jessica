@@ -45,6 +45,10 @@ declare const NaN: number;
 // TODO: Don't export Symbols.
 interface Symbol {}
 
+type Record<K extends string | number, T> = {
+  [P in K]: T;
+};
+
 interface SymbolConstructor {
     readonly iterator: symbol;
 }

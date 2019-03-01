@@ -26,21 +26,21 @@
 // provide its expression language in a JS-like style. Chainmail
 // expressions need to be pure and should be decidable.
 
-import quasiUtils from './quasi-utils.mjs';
 import './peg.mjs';
+import quasiUtils from './quasi-utils.mjs';
+
 const {qunpack} = quasiUtils;
 
 function binary(left: PegExpr, rights: any[]) {
-    return rights.reduce<PegExpr>((prev,[op,right]) => [op,prev,right], left);
+    return rights.reduce<PegExpr>((prev, [op, right]) => [op, prev, right], left);
 }
 
-
-function makeJustin(jsonPeg: PegTag) {
+function makeJustin(jsonPeg: IPegTag) {
     const peg = jsonPeg;
     const {FAIL} = peg;
     return peg`
     # to be overridden or inherited
-    start <- WS assignExpr EOF                       ${(_,v,_2) => (..._: any[]) => v};
+    start <- WS assignExpr EOF                       ${(_, v, _2) => (..._a: any[]) => v};
 
     # A.1 Lexical Grammar
 
@@ -50,7 +50,7 @@ function makeJustin(jsonPeg: PegTag) {
     QUESTION <- "?" WS;
     RIGHT_PAREN <- ")" WS;
     STARSTAR <- "**" WS;
-        
+
     # Define Javascript-style comments.
     WS <- super.WS / EOL_COMMENT / MULTILINE_COMMENT;
     EOL_COMMENT <- "//" (~[\n\r] .)* WS;
@@ -115,50 +115,50 @@ function makeJustin(jsonPeg: PegTag) {
 
     # A.2 Expressions
 
-    useVar <- IDENT                                       ${id => ['use',id]};
+    useVar <- IDENT                                       ${id => ['use', id]};
 
     # Justin does not contain variable definitions, only uses. However,
     # multiple languages that extend Justin will contain defining
     # occurrences of variable names, so we put the defVar production
     # here.
-    defVar <- IDENT                                       ${id => ['def',id]};
+    defVar <- IDENT                                       ${id => ['def', id]};
 
 
     primaryExpr <-
       super.primaryExpr
     / quasiExpr
-    / LEFT_PAREN expr RIGHT_PAREN                         ${(_,e,_2) => e}
+    / LEFT_PAREN expr RIGHT_PAREN                         ${(_, e, _2) => e}
     / useVar;
 
     element <-
       super.element
-    / ELLIPSIS assignExpr                                     ${(_,e) => ['spread',e]};
+    / ELLIPSIS assignExpr                                 ${(_, e) => ['spread', e]};
 
     propDef <-
       super.propDef
-    / useVar                                               ${id => ['prop',id,id]}
-    / ELLIPSIS assignExpr                                  ${(_,e) => ['spreadObj',e]};
+    / useVar                                              ${id => ['prop', id, id]}
+    / ELLIPSIS assignExpr                                 ${(_, e) => ['spreadObj', e]};
 
     # No computed property name
     propName <-
       super.propName
     / IDENT_NAME
     / NUMBER;
-    
+
     quasiExpr <-
-      QUASI_ALL                                            ${q => ['quasi',[q]]}
-    / QUASI_HEAD (expr ** QUASI_MID)? QUASI_TAIL           ${(h,ms,t) => ['quasi',qunpack(h,ms,t)]};
+      QUASI_ALL                                            ${q => ['quasi', [q]]}
+    / QUASI_HEAD (expr ** QUASI_MID)? QUASI_TAIL           ${(h, ms, t) => ['quasi', qunpack(h, ms, t)]};
 
     # to be extended
     memberPostOp <-
-      WS LEFT_BRACKET indexExpr RIGHT_BRACKET             ${(_,_2,e,_3) => ['index',e]}
-    / DOT IDENT_NAME                                       ${(_,id) => ['get',id]}
-    / quasiExpr                                            ${q => ['tag',q]};
+      WS LEFT_BRACKET indexExpr RIGHT_BRACKET              ${(_, _2, e, _3) => ['index', e]}
+    / DOT IDENT_NAME                                       ${(_, id) => ['get', id]}
+    / quasiExpr                                            ${q => ['tag', q]};
 
     # to be extended
     callPostOp <-
       memberPostOp
-    / args                                                 ${args => ['call',args]};
+    / args                                                 ${args => ['call', args]};
 
     # Because Justin and Jessie have no "new" or "super", they don't need
     # to distinguish callExpr from memberExpr. So justin omits memberExpr
@@ -172,21 +172,21 @@ function makeJustin(jsonPeg: PegTag) {
     # Introduced to impose a non-JS restriction
     # Restrict index access to number-names, including
     # floating point, NaN, Infinity, and -Infinity.
-    indexExpr <- 
-      NUMBER                                               ${n => ['data',n]}
-    / PLUS unaryExpr                                       ${(_,e) => [`pre:+`,e]};
+    indexExpr <-
+      NUMBER                                               ${n => ['data', n]}
+    / PLUS unaryExpr                                       ${(_, e) => [`pre:+`, e]};
 
-    args <- LEFT_PAREN arg ** COMMA RIGHT_PAREN            ${(_,args,_2) => args};
+    args <- LEFT_PAREN arg ** COMMA RIGHT_PAREN            ${(_, args, _2) => args};
 
     arg <-
       assignExpr
-    / ELLIPSIS assignExpr                                     ${(_,e) => ['spread',e]};
+    / ELLIPSIS assignExpr                                  ${(_, e) => ['spread', e]};
 
     # to be overridden
     updateExpr <- callExpr;
 
     unaryExpr <-
-      preOp unaryExpr                                      ${(op,e) => [op,e]}
+      preOp unaryExpr                                      ${(op, e) => [op, e]}
     / updateExpr;
 
     # to be extended
@@ -199,11 +199,11 @@ function makeJustin(jsonPeg: PegTag) {
     # so the EcmaScript grammar forces parens to disambiguate.
     powExpr <-
       unaryExpr
-    / updateExpr STARSTAR powExpr                              ${(x,op,y) => [op,x,y]};
+    / updateExpr STARSTAR powExpr                          ${(x, op, y) => [op, x, y]};
 
-    multExpr <- powExpr (multOp powExpr)*                 ${binary};
-    addExpr <- multExpr (addOp multExpr)*                 ${binary};
-    shiftExpr <- addExpr (shiftOp addExpr)*               ${binary};
+    multExpr <- powExpr (multOp powExpr)*                  ${binary};
+    addExpr <- multExpr (addOp multExpr)*                  ${binary};
+    shiftExpr <- addExpr (shiftOp addExpr)*                ${binary};
 
     # Non-standard, to be overridden
     # In C-like languages, the precedence and associativity of the
@@ -229,7 +229,7 @@ function makeJustin(jsonPeg: PegTag) {
 
     condExpr <-
       orElseExpr
-    / orElseExpr QUESTION assignExpr COLON assignExpr   ${(c,_,t,_2,e) => ['cond',c,t,e]};
+    / orElseExpr QUESTION assignExpr COLON assignExpr   ${(c, _, t, _2, e) => ['cond', c, t, e]};
 
     # override, to be extended
     assignExpr <- condExpr;

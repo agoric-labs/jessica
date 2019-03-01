@@ -9,38 +9,38 @@
 
 import './peg.mjs';
 
-function makeJSON(pegPeg: PegTag) {
+function makeJSON(pegPeg: IPegTag) {
     const peg = pegPeg;
     const {FAIL, HOLE, SKIP} = peg;
     return peg`
 # to be overridden or inherited
-start <- WS assignExpr EOF                ${(_,v,_2) => (..._: any[]) => v};
+start <- WS assignExpr EOF                ${(_, v, _2) => (..._a: any[]) => v};
 
 # to be extended
 primaryExpr <- dataStructure;
 
 dataStructure <-
-  dataLiteral                             ${n => ['data',JSON.parse(n)]}
+  dataLiteral                             ${n => ['data', JSON.parse(n)]}
 / array
 / record
-/ HOLE                                    ${h => ['exprHole',h]};
+/ HOLE                                    ${h => ['exprHole', h]};
 
 dataLiteral <- ("null" / "false" / "true" / NUMBER / STRING) WS;
 
 array <-
-  LEFT_BRACKET RIGHT_BRACKET                              ${(_,_2) => ['array']}
-/ LEFT_BRACKET (element ** COMMA) RIGHT_BRACKET             ${(_,es,_2) => ['array',es]};
+  LEFT_BRACKET RIGHT_BRACKET              ${(_, _2) => ['array']}
+/ LEFT_BRACKET (element ** COMMA) RIGHT_BRACKET ${(_, es, _2) => ['array', es]};
 
 # to be extended
 element <- assignExpr;
 
 # The JavaScript and JSON grammars calls records "objects"
 
-record <- LEFT_BRACE RIGHT_BRACE           ${(_,_2) => ['record']}
-/ LEFT_BRACE propDef ** COMMA RIGHT_BRACE  ${(_,ps,_2) => ['record', ps]};
+record <- LEFT_BRACE RIGHT_BRACE           ${(_, _2) => ['record']}
+/ LEFT_BRACE propDef ** COMMA RIGHT_BRACE  ${(_, ps, _2) => ['record', ps]};
 
 # to be extended
-propDef <- propName COLON assignExpr        ${(k,_,e) => ['prop',k,e]};
+propDef <- propName COLON assignExpr       ${(k, _, e) => ['prop', k, e]};
 
 # to be extended
 propName <- STRING                     ${(str) => {
@@ -99,6 +99,5 @@ WS <- [\t\n\r ]*     ${(_) => SKIP};
 `;
 
 }
-
 
 export default harden(makeJSON);

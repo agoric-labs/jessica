@@ -1,11 +1,12 @@
-// TODO(mf): Provide proper types, once I understand what they are!
-function qunpack(h: any, ms: any, t: any) {
-  const result = [h];
+import './peg.mjs';
+
+function qunpack(h: string, ms: Array<[string, Array<[string, any]>]>, t: string) {
+  const result: Array<string | PegHole> = [h];
   if (ms.length === 1) {
-    const [[m,pairs]] = ms;
+    const [[m, pairs]] = ms;
     result.push(m);
-    for (let [q,e] of pairs) {
-      result.push(q,e);
+    for (const [q, e] of pairs) {
+      result.push(q, e);
     }
   }
   result.push(t);
@@ -21,7 +22,7 @@ function qrepack(parts: any[]) {
   const len = parts.length;
   for (let i = 1; i < len; i += 2) {
     argExprs.push(parts[i]);
-    raw.push(parts[i+1]);
+    raw.push(parts[i + 1]);
   }
   const template = harden({raw});
   return [['data', template], ...argExprs];

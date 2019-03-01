@@ -24,10 +24,10 @@ const writeOutput = (fname, str) => {
 };
 // Create a Jessie bootstrap environment for the endowments.
 import bootEnv from '../../lib/boot-env.mjs';
-const Jessie = bootEnv(mutableEnv);
+const jessie = bootEnv(mutableEnv);
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
-const doEval = (src) => Jessie.confine(src, Jessie, { scriptName: MODULE });
+const doEval = (src) => jessie.confine(src, jessie, { scriptName: MODULE });
 repl(loadAsset(MODULE), doEval, (s) => writeOutput('-', s + '\n'), ARGV)
     .catch(e => {
     writeOutput('-', '/* FIXME: Stub */\n');
