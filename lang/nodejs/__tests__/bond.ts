@@ -47,12 +47,12 @@ test('bond(cache)', () => {
 
 test('bond(capture)', () => {
     const bond = defaultBond();
-    function MyObj(val: number) {
-        this.val = val;
+    class MyObj {
+        constructor(public val: number) {}
+        public meth(a: number) {
+            return this.val + a;
+        }
     }
-    MyObj.prototype.meth = function meth(a: number) {
-        return this.val + a;
-    };
     const obj = new MyObj(123);
     expect(obj.meth(456)).toBe(579);
 

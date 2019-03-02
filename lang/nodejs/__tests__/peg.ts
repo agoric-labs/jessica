@@ -54,8 +54,9 @@ test('json', () => {
     prim <- (STRING / NUMBER / "true" / "false" / "null") WS;
 
     array <- LEFT_BRACKET value ** COMMA RIGHT_BRACKET
-                           ${(_, vs, _2) => (...subs: any[]) =>
-                              vs.map(v => v(...subs))};
+                           ${(_, vs: Array<(...a: any[]) => any>, _2) =>
+                             (...subs: any[]) =>
+                                vs.map(v => v(...subs))};
     record <- LEFT_BRACE pair ** COMMA RIGHT_BRACE
                            ${(_, pairs, _2) => (...subs: any[]) => {
                                const result: Record<string, any> = {};

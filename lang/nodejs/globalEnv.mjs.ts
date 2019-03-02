@@ -13,7 +13,7 @@ const globalEnv: Record<string, any> = {};
 import makeSlog from '../../lib/slog.mjs';
 const startWs = /^\s+/;
 const endWs = /\s+$/;
-const contextArg = (context, a) => {
+const contextArg = (context: Map<string, any>, a: any) => {
     if (typeof a !== 'object' || a === null) {
         // Just stringify the argument.
         return '' + a;
@@ -55,7 +55,7 @@ const contextArg = (context, a) => {
 // Create a logger.
 const mySlog = makeSlog(
     (level, names, levels, context, template, args) => {
-        let ca;
+        let ca: {};
         const reduced = args.reduce((prior, a, i) => {
             ca = contextArg(context, a);
             if (typeof ca === 'object') {
@@ -95,7 +95,7 @@ globalEnv.bond = makeBond(
 // because we are in control of the main program, and we are setting
 // this policy for all our modules.
 Object.keys(globalEnv).forEach(vname => {
-    global[vname] = globalEnv[vname];
+    (global as Record<string, any>)[vname] = globalEnv[vname];
 });
 
 export default globalEnv;

@@ -25,7 +25,7 @@ import makeLoadAsset from '../../lib/loadAsset.mjs';
 const loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, fs.readFile);
 
 // Make a confined file writer.
-const writeOutput = (fname, str) => {
+const writeOutput = (fname: string, str: string) => {
     if (fname !== '-') {
         throw Error(`Cannot write to ${fname}: must be -`);
     }

@@ -2,6 +2,9 @@
     "compilerOptions": {
         "target": "es2017",
         "module": "esnext",
+        "noImplicitAny": true,
+        "noEmitOnError": true,
+        "alwaysStrict": true,
         "typeRoots": ["./node_modules/@types"],
         "types": ["node", "../../typings/ses"]
     },
