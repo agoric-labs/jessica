@@ -114,6 +114,10 @@ function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
 
     # A.2 Expressions
 
+    dataLiteral <-
+      "undefined" WS     ${_ => ['data', undefined]}
+    / super.dataLiteral;
+
     useVar <- IDENT                                       ${id => ['use', id]};
 
     # Justin does not contain variable definitions, only uses. However,

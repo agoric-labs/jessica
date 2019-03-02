@@ -20,11 +20,11 @@ function bootEnv(endowments: object) {
     const env = harden({
         ...endowments,
         confine: (src: string, evalenv: object, options?: ConfineOptions) => {
-            const ast = tagString(jessieTag)`${src + '\n;'}`;
+            const ast = tagString(jessieTag, options.scriptName)`${src + '\n;'}`;
             return harden(interpJessie(ast, evalenv, options || {}));
         },
         confineExpr: (src: string, evalenv: object, options?: ConfineOptions) => {
-            const ast = tagString(jessieTag)`${'(' + src + '\n)'}`;
+            const ast = tagString(jessieTag, options.scriptName)`${'(' + src + '\n)'}`;
             return harden(interpJessie.expr(ast, evalenv, options || {}));
         },
         eval: (src: string): any => {

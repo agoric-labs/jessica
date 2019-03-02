@@ -17,7 +17,7 @@ for (const vname in sesshim) {
 const makeError = (...args) => {
     const err = new Error(...args);
     if (err.stack) {
-        err.stack = err.stack.replace(/\(data:(.{20}).*\)$/m, '(data:$1...)');
+        err.stack = err.stack.replace(/\(data:(.{20}).*\)$/mg, '(data:$1...)');
     }
     return harden(err);
 };

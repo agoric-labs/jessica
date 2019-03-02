@@ -1,4 +1,5 @@
 // Jessie endowments/SES.
+/// <reference path="./ses-proposed.d.ts"/>
 
 /* TODO: Add declarations for:
       cajaVM: {                        // Caja support
@@ -55,6 +56,7 @@ declare function makePromise<T>(executor: (resolve: (value?: T | PromiseLike<T>)
 
 interface ConfineOptions {
   // TODO fill out
+  scriptName?: string;
 }
 declare function confine<T>(src: string, evalenv: {}, options?: ConfineOptions): Hardened<T>;
 declare function confineExpr<T>(src: string, evalenv: {}, options?: ConfineOptions): Hardened<T>;

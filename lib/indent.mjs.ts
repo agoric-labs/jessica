@@ -1,6 +1,3 @@
-// Options: --free-variable-checker --require --validate
-/*global module require*/
-
 function indent(template: TemplateStringsArray, ...substs: any[]) {
     const result = [];
     let newnewline = '\n';

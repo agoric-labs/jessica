@@ -69,9 +69,17 @@ function ERROR(self: IPegParser, pos: number) {
 
     const failStr = fails.length === 0 ?
         `stuck` : `looking for ${fails.join(', ')}`;
+    const {sources} = self.template;
     throw makeError(`Syntax error ${tokStr} ${failStr}
     -------template--------
-    ${JSON.stringify(self.template, void 0, ' ')}
+    ${self.template.raw.reduce((prior, r, i) => {
+        if (sources) {
+            const s = sources[i];
+            prior += `    ${s.uri}:${s.line}: `;
+        }
+        prior += JSON.stringify(r) + '\n';
+        return prior;
+    }, '')}
     -------`);
 }
 
@@ -112,11 +120,13 @@ function DONE(self: IPegParser) {
     }
 }
 
-function FIND(template: ReadonlyArray<string>, pos: number): [number, number] | number | undefined {
-    const numSubs = template.length - 1;
+function FIND(template: TemplateStringsArray, pos: number):
+    [number, number] | number | undefined {
+    const {raw} = template;
+    const numSubs = raw.length - 1;
     let relpos = pos;
     for (let segnum = 0; segnum <= numSubs; segnum++) {
-        const segment = template[segnum];
+        const segment = raw[segnum];
         const seglen = segment.length;
         if (relpos < seglen) {
             return [segnum, relpos];
@@ -139,7 +149,7 @@ const EAT: PegEat = (self, pos, str) => {
     // }
     const found = FIND(self.template, pos);
     if (Array.isArray(found)) {
-        const segment = self.template[found[0]];
+        const segment = self.template.raw[found[0]];
         if (typeof str === 'string') {
             if (segment.startsWith(str, found[1])) {
                 return [pos + str.length, str];
@@ -277,7 +287,7 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
       return baseMemo => (template, debug) => {
           const BaseParser = baseMemo({});
           return {...BaseParser,
-        template: template.raw,
+        template,
         _memo: makeMap(),
         _hits: (i) => myHits += i,
         _misses: (i) => myMisses += i,

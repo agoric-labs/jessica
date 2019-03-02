@@ -22,7 +22,18 @@ if (dashdash >= 0) {
 
 import * as fs from 'fs';
 import makeLoadAsset from '../../lib/loadAsset.mjs';
-const loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, fs.readFile);
+const rawLoadAsset = (asset: string) =>
+    makePromise<string>((resolve, reject) => {
+        fs.readFile(asset, {encoding: 'latin1'}, function readCb(err: any, data: string) {
+            slog.error`Reading got ${asset} ${data}`;
+            if (err) {
+                return reject(err);
+            }
+            return resolve(data);
+        });
+    });
+
+const loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, rawLoadAsset);
 
 // Make a confined file writer.
 const writeOutput = (fname: string, str: string) => {
@@ -38,8 +49,9 @@ const jessie = bootEnv(mutableEnv);
 
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
-const doEval = (src: string) => jessie.confine(src, jessie, {scriptName: MODULE});
-repl(loadAsset(MODULE), doEval, (s) => writeOutput('-', s + '\n'), ARGV)
+const doEval = (src: string, uri?: string) =>
+    jessie.confine(src, jessie, {scriptName: uri});
+repl(MODULE, loadAsset, doEval, writeOutput, ARGV)
   .catch(e => {
       writeOutput('-', '/* FIXME: Stub */\n');
       slog.error`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;

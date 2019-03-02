@@ -32,7 +32,7 @@ interface IPegParser {
     _debug: boolean;
     _hits: (n?: number) => number;
     _misses: (n?: number) => number;
-    template: TemplateStringsArray['raw'];
+    template: TemplateStringsArray;
     start: (parser: IPegParser) => any;
     done: (parser: IPegParser) => void;
 }

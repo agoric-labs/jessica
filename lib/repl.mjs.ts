@@ -1,16 +1,18 @@
-const repl = (asset: Promise<string>,
-              doEval: (data: string) => Promise<any>,
-              printer: (s: string) => void, argv: string[]) =>
+const repl = (asset: string,
+              readAsset: (asset: string) => Promise<string>,
+              doEval: (data: string, uri: string) => Promise<any>,
+              writeOutput: (asset: string, data: string) => void,
+              argv: string[]) =>
     // Read...
-    harden(asset
+    harden(readAsset(asset)
     // Eval ...
-    .then(data => doEval(data))
+    .then(data => doEval(data, asset))
     // Execute as main, if a function.
-    .then(main => (typeof main === 'function') ? main(argv) : main)
+    .then(main => (typeof main === 'function') ? main({readAsset, writeOutput}, argv) : main)
     // ... maybe Print.
     .then(val => {
         if (val !== undefined) {
-            printer(JSON.stringify(val, undefined, '  '));
+            writeOutput('-', JSON.stringify(val, undefined, '  ') + '\n');
         }
     }));
 

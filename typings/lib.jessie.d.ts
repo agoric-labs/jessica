@@ -31,7 +31,7 @@ and limitations under the License.
 
 /// <reference no-default-lib="true"/>
 /// <reference path="./ses.d.ts"/>
-/// <reference path="./jessica-proposed.d.ts"/>
+/// <reference path="./jessie-proposed.d.ts"/>
   
       // In order according to
       // http://www.ecma-international.org/ecma-262/ with chapter
@@ -295,8 +295,9 @@ interface String { // 21.2
     readonly [index: number]: string;
 }
 
+interface RawTemplateString extends String {}
 interface TemplateStringsArray extends ReadonlyArray<string> {
-    readonly raw: ReadonlyArray<string>;
+    readonly raw: ReadonlyArray<RawTemplateString>;
 }
 
 interface StringConstructor {
