@@ -37,7 +37,7 @@ function binary(left: PegExpr, rights: any[]) {
 
 function makeJustin(jsonPeg: IPegTag) {
     const peg = jsonPeg;
-    const {FAIL} = peg;
+    const {FAIL, SKIP} = peg;
     return peg`
     # to be overridden or inherited
     start <- WS assignExpr EOF                       ${(_, v, _2) => (..._a: any[]) => v};
@@ -52,16 +52,16 @@ function makeJustin(jsonPeg: IPegTag) {
     STARSTAR <- "**" WS;
 
     # Define Javascript-style comments.
-    WS <- super.WS / EOL_COMMENT / MULTILINE_COMMENT;
+    WS <- (EOL_COMMENT / MULTILINE_COMMENT / super.WS) ${(_) => SKIP};
     EOL_COMMENT <- "//" (~[\n\r] .)* WS;
-    MULTILINE_COMMENT <- "/*" (~"*/" .) "*/" WS;
+    MULTILINE_COMMENT <- "/*" (~"*/" .)* "*/" WS;
 
     # Add single-quoted strings.
     STRING <- super.STRING
     / "'" < (~"'" character)* > "'" WS  ${FAIL};
 
     # Only match if whitespace doesn't contain newline
-    NO_NEWLINE <- [\t ]+;
+    NO_NEWLINE <- (~[\r\n] .)+;
 
     IDENT_NAME <- < IDENT / RESERVED_WORD > WS;
 

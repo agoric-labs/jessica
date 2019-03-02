@@ -12,7 +12,7 @@ function defaultPegTag() {
     return bootPeg(makePeg, bootPegAst);
 }
 
-test('arith', () => {
+test('comments', () => {
     function doArith(peg: IPegTag) {
         const {HOLE, SKIP} = peg;
         return peg`
