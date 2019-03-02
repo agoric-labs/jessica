@@ -27,6 +27,10 @@ function bootEnv(endowments: object) {
             const ast = tagString(jessieTag, options.scriptName)`${'(' + src + '\n)'}`;
             return harden(interpJessie.expr(ast, evalenv, options || {}));
         },
+        eval: (src: string): any => {
+            const ast = tagString(jessieTag)`${src}`;
+            return interpJessie(ast, env);
+        },
     });
     return env;
 }

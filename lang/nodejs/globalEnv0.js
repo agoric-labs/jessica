@@ -17,6 +17,15 @@ for (const vname in sesshim) {
 const makeError = (...args) => {
     const err = new Error(...args);
     if (err.stack) {
+        const firstNl = err.stack.indexOf('\n');
+        if (firstNl >= 0) {
+            const secondNl = err.stack.indexOf('\n', firstNl + 1);
+            if (secondNl >= 0) {
+                // Remove this frame from the stack trace.
+                err.stack = err.stack.slice(0, firstNl + 1) +
+                    err.stack.slice(secondNl + 1);
+            }
+        }
         err.stack = err.stack.replace(/\(data:(.{20}).*\)$/mg, '(data:$1...)');
     }
     return harden(err);
