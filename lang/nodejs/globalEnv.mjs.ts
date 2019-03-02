@@ -8,7 +8,7 @@
 
 /* tslint:disable:no-reference */
 /// <reference path="../../typings/ses.d.ts"/>
-/// <reference path="node_modules/@types/node/index.d.ts"/>
+/// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 
 // Most of the work is already done by globalEnv0.js.
 const globalEnv: Record<string, any> = {};

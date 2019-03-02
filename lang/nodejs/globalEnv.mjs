@@ -5,6 +5,9 @@
 // NOTE: Don't ever do this in a library module, it's only allowed when
 // we are a main program, and we're changing global state for the
 // entire process.
+/* tslint:disable:no-reference */
+/// <reference path="../../typings/ses.d.ts"/>
+/// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 // Most of the work is already done by globalEnv0.js.
 const globalEnv = {};
 // slog writes to console
@@ -21,10 +24,10 @@ const contextArg = (context, a) => {
         return a;
     }
     // Deconstruct the argument object.
-    let format, valname, val;
+    let valname, val;
     for (const vname of Object.keys(a)) {
         if (vname === 'format') {
-            format = a[vname];
+            // format = a[vname];
         }
         else if (valname !== undefined || typeof a[vname] === 'function') {
             // Too many members or seems to be an active object.

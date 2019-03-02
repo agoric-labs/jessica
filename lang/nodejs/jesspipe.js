@@ -26,7 +26,7 @@ const loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, rawLoadAsset);
 // Make a confined file writer.
 const writeOutput = (fname, str) => {
     if (fname !== '-') {
-        throw Error(`Cannot write to ${fname}: must be -`);
+        throw makeError(`Cannot write to ${fname}: must be -`);
     }
     process.stdout.write(str);
 };

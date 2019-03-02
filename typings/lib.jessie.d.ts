@@ -862,3 +862,5 @@ interface PromiseResolve {
 }
 
 declare const Promise: PromiseConstructor;
+
+declare function eval<T>(src: string): T;

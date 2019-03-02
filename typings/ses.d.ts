@@ -32,12 +32,6 @@ type HardenedObject<T> = {
 
 declare function harden<T>(arg: T): Hardened<T>;
 
-interface Bond {
-  <T>(arg: T): T;
-  <T, K extends keyof T>(arg: T, index: K): T[K];
-}
-declare const bond: Hardened<Bond>;
-
 declare function makeError(reason: string): Hardened<any>;
 declare function makeMap(): Hardened<Map<any, any>>;
 declare function makeMap<K, V>(entries?: ReadonlyArray<[K, V]> | null): Hardened<Map<K, V>>;
@@ -58,31 +52,5 @@ interface ConfineOptions {
   // TODO fill out
   scriptName?: string;
 }
-declare function confine<T>(src: string, evalenv: {}, options?: ConfineOptions): Hardened<T>;
-declare function confineExpr<T>(src: string, evalenv: {}, options?: ConfineOptions): Hardened<T>;
-declare function eval<T>(src: string): Hardened<T>;
-
-interface SlogTag {
-  (template: TemplateStringsArray, ...args: any[]): any;
-  (context: {}): (template: TemplateStringsArray, ...args: any[]) => any;
-}
-
-type SlogName = 'panic' | 'alert' | 'crit' | 'error' | 'warn' | 'notice' |
-    'info' | 'debug' | 'trace' | 'DEFAULT';
-
-
-interface Slog extends SlogTag {
-  LEVELS: Map<SlogName, number>;
-  NAMES: SlogName[];
-  panic: SlogTag;
-  alert: SlogTag;
-  crit: SlogTag;
-  error: SlogTag;
-  warn: SlogTag;
-  notice: SlogTag;
-  info: SlogTag;
-  debug: SlogTag;
-  trace: SlogTag;
-}
-
-declare const slog: Hardened<Slog>;
+declare function confine<T>(src: string, evalenv: {}, options?: ConfineOptions): T;
+declare function confineExpr<T>(src: string, evalenv: {}, options?: ConfineOptions): T;
