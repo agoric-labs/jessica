@@ -4,6 +4,10 @@
 // $ ts-node jesspipe.ts \
 //    MODULE [OPTIONS...] [-- [INFILE...]]
 
+/* tslint:disable:no-reference */
+/// <reference path="../../typings/ses.d.ts"/>
+/// <reference path="node_modules/@types/node/index.d.ts"/>
+
 import mutableEnv from './globalEnv.mjs';
 
 // Read and evaluate the specified module,
@@ -37,7 +41,7 @@ const loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, rawLoadAsset);
 // Make a confined file writer.
 const writeOutput = (fname: string, str: string) => {
     if (fname !== '-') {
-        throw Error(`Cannot write to ${fname}: must be -`);
+        throw makeError(`Cannot write to ${fname}: must be -`);
     }
     process.stdout.write(str);
 };
