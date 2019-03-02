@@ -61,19 +61,18 @@ function lastFailures(self: IPegParser): [number, string[]] {
 }
 
 function ERROR(self: IPegParser, pos: number) {
-    slog.error`
--------template--------
-${JSON.stringify(self.template, void 0, ' ')}
--------`;
     const [last, fails] = lastFailures(self);
     const found = FIND(self.template, last);
     const tokStr = Array.isArray(found) ?
-        `At ${last} ${makeTokStr(self, found)}` :
-        `Unexpected EOF after ${makeTokStr(self, FIND(self.template, last - 1))}`;
+        `at ${last} ${makeTokStr(self, found)}` :
+        `unexpected EOF after ${makeTokStr(self, FIND(self.template, last - 1))}`;
 
     const failStr = fails.length === 0 ?
         `stuck` : `looking for ${fails.join(', ')}`;
-    throw makeError(`Syntax error ${tokStr} ${failStr}`);
+    throw makeError(`Syntax error ${tokStr} ${failStr}
+    -------template--------
+    ${JSON.stringify(self.template, void 0, ' ')}
+    -------`);
 }
 
 function makeTokStr(self: IPegParser, found: [number, number] | number) {

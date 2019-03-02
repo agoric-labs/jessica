@@ -127,5 +127,5 @@ test('error', () => {
   `;
 
   expect(parser`abcadbadbabc`).toEqual(['abc', 'adb', 'adb', 'abc']);
-  expect(parser`abcadbabcadd`).toThrowError('Syntax error At 9 "a" #0:9 looking for token, EOF');
+  expect(() => parser`abcadbabcadd`).toThrowError('Syntax error at 9 "a" #0:9 looking for token, EOF');
 });
