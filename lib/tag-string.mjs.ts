@@ -1,6 +1,5 @@
 const tagString = (tag: (template: TemplateStringsArray, ...args: any[]) => any, uri?: string) => {
     function tagged(template: TemplateStringsArray, ...args: any[]) {
-        slog.error`${JSON.stringify(args)}`;
         const cooked = template.reduce<string[]>((prior, t, i) => {
             prior.push(t, String(args[i]));
             return prior;
@@ -21,7 +20,6 @@ const tagString = (tag: (template: TemplateStringsArray, ...args: any[]) => any,
             line: 1,
             uri,
         }];
-        slog.error`${JSON.stringify(tmpl)}`;
         return tag(tmpl as TemplateStringsArray);
     }
     return harden(tagged);

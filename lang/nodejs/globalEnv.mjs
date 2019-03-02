@@ -56,15 +56,16 @@ const mySlog = makeSlog((level, names, levels, context, template, args) => {
     let ca;
     const reduced = args.reduce((prior, a, i) => {
         ca = contextArg(context, a);
+        const last = prior[prior.length - 1];
         if (typeof ca === 'object') {
+            prior[prior.length - 1] = last.replace(endWs, '');
             prior.push(ca, template[i + 1].replace(startWs, ''));
         }
         else {
-            const last = prior[prior.length - 1];
             prior[prior.length - 1] = last + String(ca) + template[i + 1];
         }
         return prior;
-    }, [names[level] + ': ' + template[0].replace(endWs, '')]);
+    }, [names[level] + ': ' + template[0]]);
     if (level > levels.get('warn') || ca instanceof Error) {
         console.error(...reduced);
     }

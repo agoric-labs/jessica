@@ -241,6 +241,7 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
     # Lexical syntax
     IMPORT <- "import" WS;
     EXPORT <- "export" WS;
+    FROM <- "from" WS;
     FUNCTION <- "function" WS;
     DEFAULT <- "default" WS;
     EQUALS <- "=" WS;

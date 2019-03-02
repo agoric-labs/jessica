@@ -25,7 +25,6 @@ import makeLoadAsset from '../../lib/loadAsset.mjs';
 const rawLoadAsset = (asset: string) =>
     makePromise<string>((resolve, reject) => {
         fs.readFile(asset, {encoding: 'latin1'}, function readCb(err: any, data: string) {
-            slog.error`Reading got ${asset} ${data}`;
             if (err) {
                 return reject(err);
             }
@@ -52,7 +51,12 @@ import repl from '../../lib/repl.mjs';
 const doEval = (src: string, uri?: string) =>
     jessie.confine(src, jessie, {scriptName: uri});
 repl(MODULE, loadAsset, doEval, writeOutput, ARGV)
-  .catch(e => {
-      writeOutput('-', '/* FIXME: Stub */\n');
-      slog.error`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
-  });
+    .catch(e => {
+        writeOutput('-', '/* FIXME: Stub */\n');
+        try {
+            e.stack = e.stack.replace(/\(data:(.{20}).*\)$/mg, '(data:$1...)');
+        } catch (e2) {
+            // Do nothing.
+        }
+        slog.error`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
+    });

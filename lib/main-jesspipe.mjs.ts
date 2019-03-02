@@ -11,7 +11,6 @@ function jesspipe(power: IPower, argv: string[]) {
         bond,
         confine,
         confineExpr,
-        eval,
         harden,
         makeError,
         makeMap,
