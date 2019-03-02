@@ -6,9 +6,8 @@
 
 import './peg.mjs';
 
-function makeJessie(justinPeg: IPegTag) {
-    const peg = justinPeg;
-    return peg`
+function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
+    return peg.extends(justinPeg)`
     # Override rather than inherit start production.
     # Only module syntax is permitted.
     start <- WS moduleBody EOF               ${(_, b, _2) => (..._a: any[]) => ['module', b]};

@@ -35,10 +35,9 @@ function binary(left: PegExpr, rights: any[]) {
     return rights.reduce<PegExpr>((prev, [op, right]) => [op, prev, right], left);
 }
 
-function makeJustin(jsonPeg: IPegTag) {
-    const peg = jsonPeg;
+function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
     const {FAIL, SKIP} = peg;
-    return peg`
+    return peg.extends(jsonPeg)`
     # to be overridden or inherited
     start <- WS assignExpr EOF                       ${(_, v, _2) => (..._a: any[]) => v};
 

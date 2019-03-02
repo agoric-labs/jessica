@@ -14,8 +14,8 @@ function bootEnv(endowments: object) {
 
     // Stack up the parser.
     const jsonTag = makeJSON(pegTag);
-    const justinTag = makeJustin(pegTag.extends(jsonTag));
-    const jessieTag = makeJessie(pegTag.extends(justinTag));
+    const justinTag = makeJustin(pegTag, jsonTag);
+    const jessieTag = makeJessie(pegTag, justinTag);
 
     const env = harden({
         ...endowments,

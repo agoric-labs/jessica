@@ -529,11 +529,12 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
         return peval(sexp);
     }
 
+    type DebugTemplate = TemplateStringsArray | 'DEBUG';
+
     function quasiMemo(quasiCurry: (template: TemplateStringsArray, debug: boolean) => IPegTag) {
         const wm = makeWeakMap();
         let debug = false;
-        type DebugTemplate = TemplateStringsArray | 'DEBUG';
-        return function templateTag(templateOrDebug: DebugTemplate, ...subs: any[]): T | typeof templateTag {
+        const templateTag: IDebugTemplateTag<T> = (templateOrDebug: DebugTemplate, ...subs: any[]) => {
             if (templateOrDebug === 'DEBUG') {
                 // Called as tag('DEBUG')`template string`
                 // Turn on debug mode.
@@ -551,9 +552,10 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
             }
             return quasiRest(...subs);
         };
+        return templateTag;
     }
 
-    function quasifyParser(parserCreator: PegParserCreator): IPegParserTag {
+    function quasifyParser(parserCreator: PegParserCreator) {
         function baseCurry(template: TemplateStringsArray, debug: boolean) {
             const parser = parserCreator(template, debug);
             if (parser === undefined) {
@@ -567,8 +569,9 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
             }
             return pair;
         }
-        const quasiParser = quasiMemo(baseCurry);
-        return Object.assign(quasiParser, {parserCreator: bond(parserCreator)});
+        const quasiParser: IDebugTemplateTag<T> & Partial<IPegParserTag> = quasiMemo(baseCurry);
+        quasiParser.parserCreator = bond(parserCreator);
+        return quasiParser as IPegParserTag;
     }
 
     const defaultBaseGrammar = quasifyParser(_template => undefined);
@@ -577,7 +580,8 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
         const baseAST = ['peg', ...baseRules];
         const parserTraitMakerSrc = compile(baseAST);
         // slog.trace`SOURCES: ${parserTraitMakerSrc}\n`;
-        const makeParserTrait = confine<any>(parserTraitMakerSrc, {
+        type ParserTrait = (base: PegParserCreator) => PegParserCreator;
+        const makeParserTrait = confine<(...actions: any[]) => ParserTrait>(parserTraitMakerSrc, {
             DONE,
             EAT,
             ERROR,
@@ -589,25 +593,24 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
         return function parserTag(...baseActions: any[]) {
             const parserTrait = makeParserTrait(...baseActions);
             const _asExtending = (baseQuasiParser: IPegParserTag) => {
-                const parser = parserTrait(baseQuasiParser.parserCreator);
-                const pegTag = quasifyParser(parser);
+                const parserCreator = parserTrait(baseQuasiParser.parserCreator);
+                const pegTag: Partial<IPegTag> = quasifyParser(parserCreator);
 
                 // These predicates are needed by our extended grammars.
-                return Object.assign(pegTag, {
-                    ACCEPT,
-                    EAT,
-                    FAIL,
-                    HOLE,
-                    SKIP,
-                });
+                pegTag.ACCEPT = ACCEPT;
+                pegTag.EAT = EAT;
+                pegTag.FAIL = FAIL;
+                pegTag.HOLE = HOLE;
+                pegTag.SKIP = SKIP;
+                pegTag._asExtending = _asExtending;
+                return pegTag as IPegTag;
             };
             const quasiParser = _asExtending(defaultBaseGrammar);
-            return Object.assign(quasiParser, {
-                _asExtending,
-                extends: (baseQuasiParser: IPegTag) =>
-                    (template: TemplateStringsArray, ...subs: any[]) =>
-                        quasiParser(template, ...subs)._asExtending(baseQuasiParser),
-            });
+            // TODO: Allow extends to specify a DEBUG option.
+            quasiParser.extends = (baseQuasiParser: IPegTag) =>
+                (template: TemplateStringsArray, ...subs: PegHole[]) =>
+                    quasiParser(template, ...subs)._asExtending(baseQuasiParser);
+            return quasiParser;
         };
     }
 

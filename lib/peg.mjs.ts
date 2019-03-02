@@ -21,6 +21,12 @@ interface IPegParserTag {
     parserCreator: PegParserCreator;
 }
 
+type DebugTemplate = TemplateStringsArray | 'DEBUG';
+interface IDebugTemplateTag<T> {
+    (template: TemplateStringsArray, ...args: PegHole[]): IDebugTemplateTag<T> | T;
+    (debug: 'DEBUG'): (template: TemplateStringsArray, ...args: PegHole[]) => IDebugTemplateTag<T>;
+}
+
 interface IPegParser {
     _memo: Map<number, Map<PegRuleOrPatt, any>>;
     _debug: boolean;
@@ -33,18 +39,20 @@ interface IPegParser {
 
 type PegParserCreator = (template: TemplateStringsArray, debug: boolean) => IPegParser | undefined;
 
+type ExtendedPegTag = (template: TemplateStringsArray, ...args: PegHole[]) => IPegTag;
+
 interface IPegTag {
     (template: TemplateStringsArray, ...args: PegHole[]): IPegTag;
     (debug: 'DEBUG'): (template: TemplateStringsArray, ...args: PegHole[]) => IPegTag;
-    ParserCreator: PegParserCreator;
+    parserCreator: PegParserCreator;
     ACCEPT: PegPredicate;
     FAIL: PegConstant;
     HOLE: PegPredicate;
     SKIP: PegConstant;
-    ERROR: PegPredicate;
-    RUN: PegRun;
     EAT: PegEat;
-    extends(peg: IPegTag): IPegTag;
+    // TODO: Have ExtendedPegTag be the same as IPegTag.
+    extends: (peg: IPegParserTag) => ExtendedPegTag;
+    _asExtending(baseQuasiParser: IPegParserTag): IPegTag;
 }
 
 // TODO: Fill out all the tree from PegDef.
