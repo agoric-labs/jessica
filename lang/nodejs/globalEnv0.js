@@ -14,7 +14,14 @@ for (const vname in sesshim) {
     globalEnv[target] = sesshim[vname];
     global[target] = sesshim[vname];
 }
-globalEnv.makeError = harden((...args) => harden(new Error(...args)));
+const makeError = (...args) => {
+    const err = new Error(...args);
+    if (err.stack) {
+        err.stack = err.stack.replace(/\(data:(.{20}).*\)$/m, '(data:$1...)');
+    }
+    return harden(err);
+};
+globalEnv.makeError = harden(makeError);
 globalEnv.makeMap = harden((...args) => harden(new Map(...args)));
 globalEnv.makeSet = harden((...args) => harden(new Set(...args)));
 globalEnv.makePromise = harden((executor) => harden(new Promise(executor)));
