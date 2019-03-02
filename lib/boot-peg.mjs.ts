@@ -133,9 +133,9 @@ const ACCEPT: PegPredicate = (self, pos) => {
 };
 
 const EAT: PegEat = (self, pos, str) => {
-    if (self._debug) {
-        slog.error`Have ${self.template}`;
-    }
+    // if (self._debug) {
+    //    slog.error`Have ${self.template}`;
+    // }
     const found = FIND(self.template, pos);
     if (Array.isArray(found)) {
         const segment = self.template[found[0]];
