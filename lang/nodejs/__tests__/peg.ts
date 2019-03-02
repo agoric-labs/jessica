@@ -117,3 +117,15 @@ test('scannerish', () => {
     const tks = scannerish`33he llo${3}w ++ orld`;
     expect(tks).toEqual(["33", 'he', 'l', 'l', 'o', 0, 'w', '++', 'o', 'r', 'l', 'd']);
 });
+
+test('error', () => {
+  const pegTag = defaultPegTag();
+  const parser = pegTag`
+    start <- token* EOF ${toks => (..._: any[]) => toks};
+    token <- "abc" / "adb";
+    EOF <- ~.;
+  `;
+
+  expect(parser`abcadbadbabc`).toEqual(['abc', 'adb', 'adb', 'abc']);
+  expect(parser`abcadbabcadd`).toThrowError('Syntax error At 9 "a" #0:9 looking for token, EOF');
+});

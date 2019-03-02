@@ -41,8 +41,10 @@ function lastFailures(self: IPegParser): [number, string[]] {
     let fails: string[] = [];
     for (const [pos, posm] of self._memo) {
         for (const [ruleOrPatt, result] of posm) {
-            if (typeof ruleOrPatt !== 'function' && result !== LEFT_RECUR) {
-                const fail = JSON.stringify('' + ruleOrPatt);
+            if (result !== LEFT_RECUR) {
+                const fail = typeof ruleOrPatt === 'function' ?
+                    ruleOrPatt.name.slice(5) :
+                    JSON.stringify('' + ruleOrPatt);
                 const [newPos, v] = result;
                 if (v === FAIL) {
                     if (newPos > maxPos) {
@@ -70,7 +72,7 @@ ${JSON.stringify(self.template, void 0, ' ')}
         `Unexpected EOF after ${makeTokStr(self, FIND(self.template, last - 1))}`;
 
     const failStr = fails.length === 0 ?
-        `stuck` : `looking for ${fails.join(' ')}`;
+        `stuck` : `looking for ${fails.join(', ')}`;
     throw makeError(`Syntax error ${tokStr} ${failStr}`);
 }
 
@@ -226,7 +228,6 @@ function unescape(cs: string): [string, number] {
 function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
     function compile(sexp: PegExpr) {
         let numSubs = 0;              // # of holes implied by sexp, so far
-        const tokenTypes = makeSet(); // Literal tokens in sexp, so far
 
         // generated names
         // act_${i}      action parameter
@@ -255,15 +256,13 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
 
         const vtable: {[index: string]: (...args: any[]) => string} = harden({
             peg(...rules: PegDef[]) {
-                // The following line also initializes tokenTypes and numSubs
+                // The following line also initializes numSubs
                 const rulesSrc = rules.map(peval).join('\n');
 
                 const paramSrcs = [];
                 for (let i = 0; i < numSubs; i++) {
                     paramSrcs.push(`act_${i}`);
                 }
-                const tokenTypeListSrc =
-                    `[${[...tokenTypes].map(tt => JSON.stringify(tt)).join(', ')}]`;
                 // rules[0] is the ast of the first rule, which has the form
                 // ["def", ruleName, body], so rules[0][1] is the name of
                 // the start rule. We prepend "rule_" to get the name of the
