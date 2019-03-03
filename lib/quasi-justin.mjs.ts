@@ -38,15 +38,18 @@ function binary(left: PegExpr, rights: any[]) {
 function transformSingleQuote(s: string) {
   let i = 0, qs = '';
   while (i < s.length) {
-    let dq = s.indexOf('"', i);
-    if (dq < 0) {
-      dq = s.length;
-    }
-    qs += s.slice(i, dq - 1);
-    i = dq;
-    if (i < s.length) {
-      // Escape the quote.
+    const c = s.slice(i, i + 1);
+    if (c === '\\') {
+      // Skip one char.
+      qs += s.slice(i, i + 2);
+      i += 2;
+    } else if (c === '"') {
+      // Quote it.
       qs += '\\"';
+      i ++;
+    } else {
+      // Add it directly.
+      qs += c;
       i ++;
     }
   }

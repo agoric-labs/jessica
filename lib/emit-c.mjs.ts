@@ -1,1 +1,1 @@
-export default "/* FIXME: Stub */";
+export default "-";

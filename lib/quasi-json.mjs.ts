@@ -81,7 +81,7 @@ character <-
 / '\\u' hex hex hex hex
 / ~'\\' ([\40-\177] / utf8);
 
-escape <- '\\' ["\\bfnrt];
+escape <- '\\' ['"\\bfnrt];
 hex <- digit / [a-fA-F];
 
 NUMBER <- < int frac? exp? > WS;
