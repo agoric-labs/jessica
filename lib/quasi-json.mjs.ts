@@ -49,7 +49,7 @@ propName <- STRING                     ${(str) => {
                                               // Don't allow __proto__ behaviour attacks.
                                               return FAIL;
                                             }
-                                            return ['data', JSON.parse(str)];
+                                            return ['data', js];
                                           }};
 
 # to be overridden

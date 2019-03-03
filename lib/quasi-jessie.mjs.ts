@@ -86,8 +86,8 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
     / IF LEFT_PAREN expr RIGHT_PAREN arm                   ${(_, _2, c, _3, t) => ['if', c, t]}
     / breakableStatement
     / terminator
-    / IDENT COLON statement                                ${(label, _, stat) => ['label', label, stat]}
-    / IDENT COLON functionDecl                             ${(label, _, func) => ['label', label, func]}
+    / IDENT WS COLON statement                             ${(label, _, _2, stat) => ['label', label, stat]}
+    / IDENT WS COLON functionDecl                          ${(label, _, _2, func) => ['label', label, func]}
     / TRY block catcher finalizer                          ${(_, b, c, f) => ['try', b, c, f]}
     / TRY block catcher                                    ${(_, b, c) => ['try', b, c]}
     / TRY block finalizer                                  ${(_, b, f) => ['try', b, f]}
@@ -107,10 +107,10 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
 
     # Each case clause must end in a terminating statement.
     terminator <-
-      "continue" NO_NEWLINE IDENT SEMI                ${(_, _2, label, _3) => ['continue', label]}
+      "continue" NO_NEWLINE IDENT WS SEMI             ${(_, _2, label, _3, _4) => ['continue', label]}
     / "continue" WS SEMI                              ${(_, _2, _3) => ['continue']}
-    / "break" NO_NEWLINE IDENT SEMI                   ${(_, _2, label, _3) => ['break', label]}
-    / "break" WS ";"                                  ${(_, _2, _3) => ['break']}
+    / "break" NO_NEWLINE IDENT WS SEMI                 ${(_, _2, label, _3, _4) => ['break', label]}
+    / "break" WS SEMI                                  ${(_, _2, _3) => ['break']}
     / "return" NO_NEWLINE expr SEMI                   ${(_, _2, e, _3) => ['return', e]}
     / "return" WS SEMI                                ${(_, _2) => ['return']}
     / "throw" NO_NEWLINE expr SEMI                    ${(_, _2, e, _3) => ['throw', e]};
@@ -197,7 +197,7 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
     / arrowParams NO_NEWLINE ARROW assignExpr         ${(ps, _, _2, e) => ['lambda', ps, e]};
 
     arrowParams <-
-      IDENT                                           ${id => [['def', id]]}
+      IDENT WS                                        ${(id, _) => [['def', id]]}
     / LEFT_PAREN param ** COMMA RIGHT_PAREN           ${(_, ps, _2) => ps};
 
     # to be extended
@@ -212,12 +212,11 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
 
     # A.5 Scripts and Modules
 
-    moduleBody <- moduleItem ** SEMI;
+    moduleBody <- moduleItem ** SEMI SEMI?;
     moduleItem <-
       importDecl
     / exportDecl
-    / moduleStatement
-    / SEMI;
+    / moduleStatement;
 
     moduleStatement <- moduleDeclaration
     / pureAssignExpr;
@@ -239,6 +238,20 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
 
 
     # Lexical syntax
+    ARROW <- "=>" WS;
+    DEBUGGER <- "debugger" WS;
+    IF <- "if" WS;
+    ELSE <- "else" WS;
+    FOR <- "for" WS;
+    WHILE <- "while" WS;
+    BREAK <- "break" WS;
+    CONTINUE <- "continue" WS;
+    SWITCH <- "switch" WS;
+    TRY <- "try" WS;
+    CATCH <- "catch" WS;
+    FINALLY <- "finally" WS;
+    GET <- "get" WS;
+    SET <- "set" WS;
     IMPORT <- "import" WS;
     EXPORT <- "export" WS;
     FROM <- "from" WS;

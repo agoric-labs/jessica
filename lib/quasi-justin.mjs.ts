@@ -35,6 +35,24 @@ function binary(left: PegExpr, rights: any[]) {
     return rights.reduce<PegExpr>((prev, [op, right]) => [op, prev, right], left);
 }
 
+function transformSingleQuote(s: string) {
+  let i = 0, qs = '';
+  while (i < s.length) {
+    let dq = s.indexOf('"', i);
+    if (dq < 0) {
+      dq = s.length;
+    }
+    qs += s.slice(i, dq - 1);
+    i = dq;
+    if (i < s.length) {
+      // Escape the quote.
+      qs += '\\"';
+      i ++;
+    }
+  }
+  return `"${qs}"`;
+}
+
 function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
     const {FAIL, SKIP} = peg;
     return peg.extends(jsonPeg)`
@@ -56,15 +74,16 @@ function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
     MULTILINE_COMMENT <- "/*" (~"*/" .)* "*/" WS;
 
     # Add single-quoted strings.
-    STRING <- super.STRING
-    / "'" < (~"'" character)* > "'" WS  ${FAIL};
+    STRING <-
+      super.STRING
+    / "'" < (~"'" character)* > "'" WS  ${s => transformSingleQuote(s)};
 
     # Only match if whitespace doesn't contain newline
-    NO_NEWLINE <- (~[\r\n] .)+;
+    NO_NEWLINE <- ~IDENT [ \t]*;
 
-    IDENT_NAME <- < IDENT / RESERVED_WORD > WS;
+    IDENT_NAME <- ~"__proto__" < IDENT / RESERVED_WORD > WS;
 
-    IDENT <- < [A-Za-z_] [A-Za-z0-9_]* > WS;
+    IDENT <- < [$A-Za-z_] [$A-Za-z0-9_]* > WS;
 
     # Omit "async", "arguments", "eval", "get", and "set" from IDENT
     # in Justin even though ES2017 considers them in IDENT.
@@ -106,17 +125,28 @@ function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
     / "interface" / "private" / "public") WS;
 
     # Quasiliterals aka template literals
-    QUASI_ALL <- < "\`" (~"\${" .)* "\`" > WS;
-    QUASI_HEAD <- < "\`" (~"\${" .)* "\${" >;
-    QUASI_MID <- < "}" (~"\${" .)* "\${" >;
-    QUASI_TAIL <- < "}" (~"\${" .)* "\`" > WS;
+    QUASI_CHAR <- "\\" . / ~"\`" .;
+    QUASI_ALL <- "\`" < (~"\${" QUASI_CHAR)* > "\`" WS;
+    QUASI_HEAD <- "\`" < (~"\${" QUASI_CHAR)* "\${" >;
+    QUASI_MID <- < "}" (~"\${" QUASI_CHAR)* "\${" >;
+    QUASI_TAIL <- < "}" (~"\${" QUASI_CHAR)* > "\`" WS;
 
 
     # A.2 Expressions
 
-    dataLiteral <-
+    dataStructure <-
       "undefined" WS     ${_ => ['data', undefined]}
-    / super.dataLiteral;
+    / super.dataStructure;
+
+    # Optional trailing commas.
+    record <-
+      super.record
+    / LEFT_BRACE propDef ** COMMA COMMA? RIGHT_BRACE  ${(_, ps, _2) => ['record', ps]};
+
+    array <-
+      super.array
+    / LEFT_BRACKET (element ** COMMA) COMMA? RIGHT_BRACKET ${(_, es, _2) => ['array', es]};
+
 
     useVar <- IDENT                                       ${id => ['use', id]};
 
@@ -150,7 +180,7 @@ function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
 
     quasiExpr <-
       QUASI_ALL                                            ${q => ['quasi', [q]]}
-    / QUASI_HEAD (expr ** QUASI_MID)? QUASI_TAIL           ${(h, ms, t) => ['quasi', qunpack(h, ms, t)]};
+    / QUASI_HEAD expr ** QUASI_MID QUASI_TAIL              ${(h, ms, t) => ['quasi', qunpack(h, ms, t)]};
 
     # to be extended
     memberPostOp <-
@@ -220,8 +250,8 @@ function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
 
     multOp <- ("*" / "/" / "%") WS;
     addOp <- ("+" / "-") WS;
-    shiftOp <- ("<<" / ">>" / ">>>") WS;
-    relOp <- ("<" / ">" / "<=" / ">=") WS;
+    shiftOp <- ("<<" / ">>>" / ">>") WS;
+    relOp <- ("<=" / "<" / ">=" / ">") WS;
     eqOp <- ("===" / "!==") WS;
     bitOp <- ("&" / "^" / "|") WS;
 
