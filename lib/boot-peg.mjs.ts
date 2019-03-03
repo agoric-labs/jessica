@@ -226,7 +226,7 @@ function unescape(cs: string): [string, number] {
                 }
             }
             // We got an octal escape.
-            q = String.fromCodePoint(ord);
+            q = String.fromCharCode(ord);
         }
         return [q, 1 + i];
     }
@@ -459,10 +459,10 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
                         ++i;
                         const [c2, j2] = unescape(cs.slice(i));
                         i += j2;
-                        const min = c.codePointAt(0);
-                        const max = c2.codePointAt(0);
+                        const min = c.charCodeAt(0);
+                        const max = c2.charCodeAt(0);
                         for (let k = min; k <= max; k++) {
-                            classStr += String.fromCodePoint(k);
+                            classStr += String.fromCharCode(k);
                         }
                     } else {
                         classStr += c;

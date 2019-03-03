@@ -257,6 +257,12 @@ interface String { // 21.2
     readonly length: number;
 
     /**
+      * Returns the Unicode value of the character at the specified location.
+      * @param index The zero-based index of the desired character. If there is no character at the specified index, NaN is returned.
+      */
+     readonly charCodeAt: (index: number) => number;
+
+    /**
      * Returns true if the sequence of elements of searchString converted to a String is the
      * same as the corresponding elements of this object (converted to a String) starting at
      * endPosition – length(this). Otherwise returns false.

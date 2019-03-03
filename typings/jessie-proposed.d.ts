@@ -36,23 +36,8 @@ interface String {
       * @param limit A value used to limit the number of elements returned in the array.
       */
     readonly split: (separator: string, limit?: number) => string[];
-
-    /**
-     * Returns a nonnegative integer Number less than 1114112 (0x110000) that is the code point
-     * value of the UTF-16 encoded code point starting at the string element at position pos in
-     * the String resulting from converting this object to a String.
-     * If there is no element at that position, the result is undefined.
-     * If a valid UTF-16 surrogate pair does not begin at pos, the result is the code unit at pos.
-     */
-    codePointAt(pos: number): number | undefined;
-
-    // PROPOSED: Remove charCodeAt.
 }
 
 interface StringConstructor {
-    /**
-     * Return the String value whose elements are, in order, the elements in the List elements.
-     * If length is 0, the empty string is returned.
-     */
-    readonly fromCodePoint: (...codePoints: number[]) => string;
+    fromCharCode(...codes: number[]): string;
 }
