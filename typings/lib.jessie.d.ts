@@ -292,6 +292,13 @@ interface String { // 21.2
     readonly slice: (start?: number, end?: number) => string;
 
     /**
+      * Split a string into substrings using the specified separator and return them as an array.
+      * @param separator A string that identifies character or characters to use in separating the string. If omitted, a single-element array containing the entire string is returned.
+      * @param limit A value used to limit the number of elements returned in the array.
+      */
+     readonly split: (separator: string, limit?: number) => string[];
+
+    /**
      * Returns true if the sequence of elements of searchString converted to a String is the
      * same as the corresponding elements of this object (converted to a String) starting at
      * position. Otherwise returns false.
@@ -309,6 +316,7 @@ interface TemplateStringsArray extends ReadonlyArray<string> {
 interface StringConstructor {
     (value?: any): string;
     readonly prototype: String;
+    fromCharCode(...codes: number[]): string;
 
     /**
      * String.raw is intended for use as a tag function of a Tagged Template String. When called
@@ -337,6 +345,13 @@ interface ReadonlyArray<T> {
       * @param callbackfn  A function that accepts up to three arguments. forEach calls the callbackfn function one time for each element in the array.
       */
     readonly forEach: (callbackfn: (value: T, index: number, array: ReadonlyArray<T>) => void) => void;
+
+    /**
+      * Adds all the elements of an array separated by the specified separator string.
+      * @param separator A string used to separate one element of an array from the next in the resulti
+ng String.
+      */
+     readonly join: (separator: string) => string;
 
     /**
       * Returns a section of an array.
@@ -421,6 +436,15 @@ interface ArrayReduceRight<T> {
       * Gets or sets the length of the array. This is a number one higher than the highest element defined in an array.
       */
      length: number;
+     
+    /**
+      * Adds all the elements of an array separated by the specified separator string.
+      * @param separator A string used to separate one element of an array from the next in the resulti
+ng String.
+      */
+     readonly join: (separator: string) => string;
+
+
     /**
       * Removes the last element from an array and returns it.
       */
@@ -479,6 +503,7 @@ interface ArrayLike<T> {
     (arrayLength?: number): any[];
     <T>(arrayLength: number): T[];
     <T>(...items: T[]): T[];
+    readonly isArray: (arg: any) => arg is Array<any>;
     readonly prototype: Array<any>;
 
     readonly from: ArrayFrom;
@@ -651,6 +676,13 @@ interface Promise<T> { // 25.4
      * @returns A Promise for the completion of which ever callback is executed.
      */
     readonly then: <TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null) => Promise<TResult1 | TResult2>;
+
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    readonly catch: <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null) => Promise<T | TResult>;
 }
 
 interface PromiseConstructor {
