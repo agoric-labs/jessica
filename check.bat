@@ -6,7 +6,7 @@
 :;  echo "==== Checking for $lang support"
 :;  "$thisdir/lang/$lang/supported.bat" || continue
 :;  check="$thisdir/lang/$lang/check.bat"
-:;  test ! -f "$check" || "$check" || { status=$la?; break; }
+:;  test ! -f "$check" || "$check" || { status=$?; break; }
 :;  for emitter in "$thisdir"/lib/emit-*.mjs; do
 :;    target=`echo "$emitter" | sed -e 's/.*\/emit-//; s/\.mjs$//'`
 :;    sfx=`cat "$thisdir/lang/$target/.suffix"`

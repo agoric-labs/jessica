@@ -5,7 +5,7 @@ import makeJSON from './quasi-json.mjs';
 import makeJustin from './quasi-justin.mjs';
 import makePeg from './quasi-peg.mjs';
 
-import interpJessie from './interp-jessie.mjs';
+import makeInterpJessie from './interp-jessie.mjs';
 import tagString from './tag-string.mjs';
 
 function bootEnv(endowments: object) {
@@ -16,6 +16,7 @@ function bootEnv(endowments: object) {
     const jsonTag = makeJSON(pegTag);
     const justinTag = makeJustin(pegTag, jsonTag);
     const jessieTag = makeJessie(pegTag, justinTag);
+    const interpJessie = makeInterpJessie();
 
     const env = harden({
         ...endowments,

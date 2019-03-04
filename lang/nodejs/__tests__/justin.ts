@@ -34,3 +34,10 @@ test('data', () => {
   123`).toEqual(['data', 123]);
   // expect(jsonTag`"\f\r\n\t\b"`).toBe(['data', '\f\r\n\t\b']);
 });
+
+test('binops', () => {
+  const justinTag = defaultJustinTag();
+  expect(justinTag`2 === 2`).toEqual(['===', ['data', 2], ['data', 2]]);
+  expect(justinTag`2 < argv`).toEqual(['<', ['data', 2], ['use', 'argv']]);
+  expect(justinTag`argv < 2`).toEqual(['<', ['use', 'argv'], ['data', 2]]);
+});

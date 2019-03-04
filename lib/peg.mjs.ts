@@ -14,6 +14,7 @@ interface IBootPegTag<T> {
     (template: TemplateStringsArray, ...args: PegHole[]): T;
     ACCEPT: PegPredicate;
     HOLE: PegPredicate;
+    SKIP: PegConstant;
 }
 
 interface IPegParserTag {

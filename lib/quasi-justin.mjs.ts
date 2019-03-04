@@ -57,43 +57,43 @@ function transformSingleQuote(s: string) {
 }
 
 function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
-    const {FAIL, SKIP} = peg;
+    const {SKIP} = peg;
     return peg.extends(jsonPeg)`
     # to be overridden or inherited
-    start <- WS assignExpr EOF                       ${(_, v, _2) => (..._a: any[]) => v};
+    start <- _WS assignExpr _EOF                       ${v => (..._a: any[]) => v};
 
     # A.1 Lexical Grammar
 
-    DOT <- "." WS;
-    ELLIPSIS <- "..." WS;
-    LEFT_PAREN <- "(" WS;
-    QUESTION <- "?" WS;
-    RIGHT_PAREN <- ")" WS;
-    STARSTAR <- "**" WS;
+    DOT <- "." _WS;
+    ELLIPSIS <- "..." _WS;
+    LEFT_PAREN <- "(" _WS;
+    QUESTION <- "?" _WS;
+    RIGHT_PAREN <- ")" _WS;
+    STARSTAR <- "**" _WS;
 
     # Define Javascript-style comments.
-    WS <- (EOL_COMMENT / MULTILINE_COMMENT / super.WS) ${(_) => SKIP};
-    EOL_COMMENT <- "//" (~[\n\r] .)* WS;
-    MULTILINE_COMMENT <- "/*" (~"*/" .)* "*/" WS;
+    _WS <- (EOL_COMMENT / MULTILINE_COMMENT / super._WS) ${_ => SKIP};
+    EOL_COMMENT <- "//" (~[\n\r] .)* _WS;
+    MULTILINE_COMMENT <- "/*" (~"*/" .)* "*/" _WS;
 
     # Add single-quoted strings.
     STRING <-
       super.STRING
-    / "'" < (~"'" character)* > "'" WS  ${s => transformSingleQuote(s)};
+    / "'" < (~"'" character)* > "'" _WS  ${s => transformSingleQuote(s)};
 
     # Only match if whitespace doesn't contain newline
-    NO_NEWLINE <- ~IDENT [ \t]*;
+    _NO_NEWLINE <- ~IDENT [ \t]*     ${_ => SKIP};
 
-    IDENT_NAME <- ~"__proto__" < IDENT / RESERVED_WORD > WS;
+    IDENT_NAME <- ~"__proto__" (IDENT / RESERVED_WORD) _WS;
 
-    IDENT <- < [$A-Za-z_] [$A-Za-z0-9_]* > WS;
+    IDENT <- < [$A-Za-z_] [$A-Za-z0-9_]* > _WS;
 
     # Omit "async", "arguments", "eval", "get", and "set" from IDENT
     # in Justin even though ES2017 considers them in IDENT.
     RESERVED_WORD <-
       (KEYWORD / RESERVED_KEYWORD / FUTURE_RESERVED_WORD
     / "null" / "false" / "true"
-    / "async" / "arguments" / "eval" / "get" / "set") WS;
+    / "async" / "arguments" / "eval" / "get" / "set") _WS;
 
     KEYWORD <-
       ("break"
@@ -106,7 +106,7 @@ function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
     / "switch"
     / "throw" / "try" / "typeof"
     / "void"
-    / "while") WS;
+    / "while") _WS;
 
     # Unused by Justin but enumerated here, in order to omit them
     # from the IDENT token.
@@ -120,25 +120,25 @@ function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
     / "this"
     / "var"
     / "with"
-    / "yield") WS;
+    / "yield") _WS;
 
     FUTURE_RESERVED_WORD <-
       ("await" / "enum"
     / "implements" / "package" / "protected"
-    / "interface" / "private" / "public") WS;
+    / "interface" / "private" / "public") _WS;
 
     # Quasiliterals aka template literals
     QUASI_CHAR <- "\\" . / ~"\`" .;
-    QUASI_ALL <- "\`" < (~"\${" QUASI_CHAR)* > "\`" WS;
+    QUASI_ALL <- "\`" < (~"\${" QUASI_CHAR)* > "\`" _WS;
     QUASI_HEAD <- "\`" < (~"\${" QUASI_CHAR)* "\${" >;
     QUASI_MID <- < "}" (~"\${" QUASI_CHAR)* "\${" >;
-    QUASI_TAIL <- < "}" (~"\${" QUASI_CHAR)* > "\`" WS;
+    QUASI_TAIL <- < "}" (~"\${" QUASI_CHAR)* > "\`" _WS;
 
 
     # A.2 Expressions
 
     dataStructure <-
-      "undefined" WS     ${_ => ['data', undefined]}
+      "undefined" _WS     ${_ => ['data', undefined]}
     / super.dataStructure;
 
     # Optional trailing commas.
@@ -187,7 +187,7 @@ function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
 
     # to be extended
     memberPostOp <-
-      WS LEFT_BRACKET indexExpr RIGHT_BRACKET              ${(_, _2, e, _3) => ['index', e]}
+      _WS LEFT_BRACKET indexExpr RIGHT_BRACKET              ${(_, e, _3) => ['index', e]}
     / DOT IDENT_NAME                                       ${(_, id) => ['get', id]}
     / quasiExpr                                            ${q => ['tag', q]};
 
@@ -228,8 +228,8 @@ function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
     # to be extended
     # No prefix or postfix "++" or "--".
     # No "delete".
-    preOp <- ("void" / "typeof" / prePre) WS;
-    prePre <- ("+" / "-" / "~" / "!") WS                   ${op => `pre:${op}`};
+    preOp <- ("void" / "typeof" / prePre) _WS;
+    prePre <- ("+" / "-" / "~" / "!") _WS                   ${op => `pre:${op}`};
 
     # Different communities will think -x**y parses in different ways,
     # so the EcmaScript grammar forces parens to disambiguate.
@@ -246,22 +246,22 @@ function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
     # relational, equality, and bitwise operators is surprising, and
     # therefore hazardous. Here, none of these associate with the
     # others, forcing parens to disambiguate.
-    eagerExpr <- shiftExpr (eagerOp shiftExpr)?           ${binary};
+    eagerExpr <- shiftExpr (eagerOp shiftExpr)?            ${binary};
 
     andThenExpr <- eagerExpr (andThenOp eagerExpr)*       ${binary};
     orElseExpr <- andThenExpr (orElseOp andThenExpr)*     ${binary};
 
-    multOp <- ("*" / "/" / "%") WS;
-    addOp <- ("+" / "-") WS;
-    shiftOp <- ("<<" / ">>>" / ">>") WS;
-    relOp <- ("<=" / "<" / ">=" / ">") WS;
-    eqOp <- ("===" / "!==") WS;
-    bitOp <- ("&" / "^" / "|") WS;
+    multOp <- ("*" / "/" / "%") _WS;
+    addOp <- ("+" / "-") _WS;
+    shiftOp <- ("<<" / ">>>" / ">>") _WS;
+    relOp <- ("<=" / "<" / ">=" / ">") _WS;
+    eqOp <- ("===" / "!==") _WS;
+    bitOp <- ("&" / "^" / "|") _WS;
 
     eagerOp <- relOp / eqOp / bitOp;
 
-    andThenOp <- "&&" WS;
-    orElseOp <- "||" WS;
+    andThenOp <- "&&" _WS;
+    orElseOp <- "||" _WS;
 
     condExpr <-
       orElseExpr

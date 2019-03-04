@@ -16,7 +16,7 @@
 import './peg.mjs';
 
 function makePeg<T, U = any>(pegTag: IBootPegTag<T>, metaCompile: (defs: PegDef[]) => U): T {
-      const {ACCEPT, HOLE} = pegTag;
+      const {ACCEPT, HOLE, SKIP} = pegTag;
 
       function simple(prefix: string, list: PegExpr[]) {
             if (list.length === 0) { return ['empty']; }
@@ -52,8 +52,8 @@ function makePeg<T, U = any>(pegTag: IBootPegTag<T>, metaCompile: (defs: PegDef[
       return pegTag`
 # Hierarchical syntax
 
-Grammar      <- Spacing Definition+ EndOfFile
-                    ${(_, defs, _2) => metaCompile(defs) };
+Grammar      <- _Spacing Definition+ _EndOfFile
+                    ${metaCompile};
 
 Definition   <- Identifier LEFTARROW Expression SEMI &${ACCEPT}
                     ${(i, _, e, _2) => ['def', i, e]};
@@ -101,40 +101,40 @@ Super        <- 'super.' Identifier
 
 # Lexical syntax
 
-Identifier   <- < IdentStart IdentCont* > Spacing;
+Identifier   <- < IdentStart IdentCont* > _Spacing;
 IdentStart   <- [a-zA-Z_];
 IdentCont    <- IdentStart / [0-9];
-Literal      <- ['] < (~['] Char )* > ['] Spacing
-              / ["] < (~["] Char )* > ["] Spacing;
-Class        <- '[' < (~']' Range)* > ']' Spacing;
+Literal      <- ['] < (~['] Char )* > ['] _Spacing
+              / ["] < (~["] Char )* > ["] _Spacing;
+Class        <- '[' < (~']' Range)* > ']' _Spacing;
 Range        <- Char '-' Char / Char;
 Char         <- '\\' [abefnrtv'"\[\]\\\`\$]
               / '\\' [0-3][0-7][0-7]
               / '\\' [0-7][0-7]?
               / '\\' '-'
               / ~'\\' .;
-LEFTARROW    <- '<-' Spacing;
-SLASH        <- '/' Spacing;
-SEMI         <- ';' Spacing;
-AND          <- '&' Spacing;
-NOT          <- '~' Spacing;
-QUESTION     <- '?' Spacing;
-STAR         <- '*' Spacing;
-PLUS         <- '+' Spacing;
-OPEN         <- '(' Spacing;
-CLOSE        <- ')' Spacing;
-DOT          <- '.' Spacing;
-Spacing      <- (Space / Comment)*;
+LEFTARROW    <- '<-' _Spacing;
+SLASH        <- '/' _Spacing;
+SEMI         <- ';' _Spacing;
+AND          <- '&' _Spacing;
+NOT          <- '~' _Spacing;
+QUESTION     <- '?' _Spacing;
+STAR         <- '*' _Spacing;
+PLUS         <- '+' _Spacing;
+OPEN         <- '(' _Spacing;
+CLOSE        <- ')' _Spacing;
+DOT          <- '.' _Spacing;
+_Spacing      <- (Space / Comment)*        ${_ => SKIP};
 Comment      <- '#' (~EndOfLine .)* EndOfLine;
 Space        <- ' ' / '\t' / EndOfLine;
 EndOfLine    <- '\r\n' / '\n' / '\r';
-EndOfFile    <- ~.;
+_EndOfFile    <- ~.;
 
-HOLE         <- &${HOLE} Spacing;
-BEGIN        <- '<' Spacing;
-END          <- '>' Spacing;
-PLUSPLUS     <- '++' Spacing;
-STARSTAR     <- '**' Spacing;
+HOLE         <- &${HOLE} _Spacing;
+BEGIN        <- '<' _Spacing;
+END          <- '>' _Spacing;
+PLUSPLUS     <- '++' _Spacing;
+STARSTAR     <- '**' _Spacing;
 `;
 }
 

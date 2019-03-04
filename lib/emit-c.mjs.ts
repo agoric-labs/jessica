@@ -2,4 +2,4 @@ function emitMain(deps: IMainDependencies, argv: string[]) {
     deps.writeOutput('-', '/* FIXME: Stub */\n');
 }
 
-export default emitMain;
+export default harden(emitMain);

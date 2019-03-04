@@ -7,15 +7,16 @@
 import './peg.mjs';
 
 function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
+    const {SKIP} = peg;
     return peg.extends(justinPeg)`
     # Override rather than inherit start production.
     # Only module syntax is permitted.
-    start <- WS moduleBody EOF               ${(_, b, _2) => (..._a: any[]) => ['module', b]};
+    start <- _WS moduleBody _EOF               ${b => (..._a: any[]) => ['module', b]};
 
     # A.1 Lexical Grammar
 
     # For proposed eventual send expressions
-    LATER <- NO_NEWLINE "!" WS;
+    LATER <- _NO_NEWLINE "!" _WS;
 
     # A.2 Expressions
 
@@ -72,7 +73,7 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
       ("*=" / "/=" / "%=" / "+=" / "-="
     / "<<=" / ">>=" / ">>>="
     / "&=" / "^=" / "|="
-    / "**=") WS;
+    / "**=") _WS;
 
 
     # A.3 Statements
@@ -86,8 +87,8 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
     / IF LEFT_PAREN expr RIGHT_PAREN arm                   ${(_, _2, c, _3, t) => ['if', c, t]}
     / breakableStatement
     / terminator
-    / IDENT WS COLON statement                             ${(label, _, _2, stat) => ['label', label, stat]}
-    / IDENT WS COLON functionDecl                          ${(label, _, _2, func) => ['label', label, func]}
+    / IDENT _WS COLON statement                             ${(label, _, stat) => ['label', label, stat]}
+    / IDENT _WS COLON functionDecl                          ${(label, _, func) => ['label', label, func]}
     / TRY block catcher finalizer                          ${(_, b, c, f) => ['try', b, c, f]}
     / TRY block catcher                                    ${(_, b, c) => ['try', b, c]}
     / TRY block finalizer                                  ${(_, b, f) => ['try', b, f]}
@@ -107,13 +108,13 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
 
     # Each case clause must end in a terminating statement.
     terminator <-
-      "continue" NO_NEWLINE IDENT WS SEMI             ${(_, _2, label, _3, _4) => ['continue', label]}
-    / "continue" WS SEMI                              ${(_, _2, _3) => ['continue']}
-    / "break" NO_NEWLINE IDENT WS SEMI                 ${(_, _2, label, _3, _4) => ['break', label]}
-    / "break" WS SEMI                                  ${(_, _2, _3) => ['break']}
-    / "return" NO_NEWLINE expr SEMI                   ${(_, _2, e, _3) => ['return', e]}
-    / "return" WS SEMI                                ${(_, _2) => ['return']}
-    / "throw" NO_NEWLINE expr SEMI                    ${(_, _2, e, _3) => ['throw', e]};
+      "continue" _NO_NEWLINE IDENT _WS SEMI             ${(_, label, _3) => ['continue', label]}
+    / "continue" _WS SEMI                              ${(_, _2) => ['continue']}
+    / "break" _NO_NEWLINE IDENT _WS SEMI                 ${(_, label, _2) => ['break', label]}
+    / "break" _WS SEMI                                  ${(_, _2) => ['break']}
+    / "return" _NO_NEWLINE expr SEMI                   ${(_, e, _2) => ['return', e]}
+    / "return" _WS SEMI                                ${(_, _2) => ['return']}
+    / "throw" _NO_NEWLINE expr SEMI                    ${(_, e, _3) => ['throw', e]};
 
     block <- LEFT_BRACE body RIGHT_BRACE              ${(_, b, _2) => ['block', b]};
     body <- statementItem*;
@@ -130,7 +131,7 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
       declOp binding ** COMMA SEMI                    ${(op, decls, _) => [op, decls]}
     / functionDecl;
 
-    declOp <- ("const" / "let") WS;
+    declOp <- ("const" / "let") _WS;
 
     binding <-
       bindingPattern EQUALS assignExpr                ${(p, _, e) => ['bind', p, e]}
@@ -164,17 +165,17 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
     # Use PEG prioritized choice.
     # TODO emit diagnostic for failure cases.
     exprStatement <-
-      ~cantStartExprStatement expr SEMI               ${(e, _) => e};
+      ~cantStartExprStatement expr SEMI               ${(e, _2) => e};
 
     cantStartExprStatement <-
-      ("{" / "function" / "async" NO_NEWLINE "function"
-    / "class" / "let" / "[") WS;
+      ("{" / "function" / "async" _NO_NEWLINE "function"
+    / "class" / "let" / "[") _WS;
 
     # to be overridden
     clause <- caseLabel+ LEFT_BRACE body terminator RIGHT_BRACE ${(cs, _, b, t, _2) => ['clause', cs, [...b, t]]};
     caseLabel <-
       CASE expr COLON                                 ${(_, e) => ['case', e]}
-    / DEFAULT WS COLON                                ${(_, _2) => ['default']};
+    / DEFAULT _WS COLON                                ${(_, _2) => ['default']};
 
     catcher <- CATCH LEFT_PAREN pattern RIGHT_PAREN block ${(_, _2, p, _3, b) => ['catch', p, b]};
     finalizer <- FINALLY block                        ${(_, b) => ['finally', b]};
@@ -193,11 +194,11 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
     # The assignExpr form must come after the block form, to make proper use
     # of PEG prioritized choice.
     arrowFunc <-
-      arrowParams NO_NEWLINE ARROW block              ${(ps, _, _2, b) => ['arrow', ps, b]}
-    / arrowParams NO_NEWLINE ARROW assignExpr         ${(ps, _, _2, e) => ['lambda', ps, e]};
+      arrowParams _NO_NEWLINE ARROW block              ${(ps, _2, b) => ['arrow', ps, b]}
+    / arrowParams _NO_NEWLINE ARROW assignExpr         ${(ps, _2, e) => ['lambda', ps, e]};
 
     arrowParams <-
-      IDENT WS                                        ${(id, _) => [['def', id]]}
+      IDENT _WS                                        ${id => [['def', id]]}
     / LEFT_PAREN param ** COMMA RIGHT_PAREN           ${(_, ps, _2) => ps};
 
     # to be extended
@@ -214,7 +215,7 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
 
     moduleBody <- moduleItem*;
     moduleItem <-
-      SEMI
+      SEMI                                               ${_ => SKIP}
     / importDecl
     / exportDecl
     / moduleStatement;
@@ -239,27 +240,27 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
 
 
     # Lexical syntax
-    ARROW <- "=>" WS;
-    DEBUGGER <- "debugger" WS;
-    IF <- "if" WS;
-    ELSE <- "else" WS;
-    FOR <- "for" WS;
-    WHILE <- "while" WS;
-    BREAK <- "break" WS;
-    CONTINUE <- "continue" WS;
-    SWITCH <- "switch" WS;
-    TRY <- "try" WS;
-    CATCH <- "catch" WS;
-    FINALLY <- "finally" WS;
-    GET <- "get" WS;
-    SET <- "set" WS;
-    IMPORT <- "import" WS;
-    EXPORT <- "export" WS;
-    FROM <- "from" WS;
-    FUNCTION <- "function" WS;
-    DEFAULT <- "default" WS;
-    EQUALS <- "=" WS;
-    SEMI <- ";" WS;
+    ARROW <- "=>" _WS;
+    DEBUGGER <- "debugger" _WS;
+    IF <- "if" _WS;
+    ELSE <- "else" _WS;
+    FOR <- "for" _WS;
+    WHILE <- "while" _WS;
+    BREAK <- "break" _WS;
+    CONTINUE <- "continue" _WS;
+    SWITCH <- "switch" _WS;
+    TRY <- "try" _WS;
+    CATCH <- "catch" _WS;
+    FINALLY <- "finally" _WS;
+    GET <- "get" _WS;
+    SET <- "set" _WS;
+    IMPORT <- "import" _WS;
+    EXPORT <- "export" _WS;
+    FROM <- "from" _WS;
+    FUNCTION <- "function" _WS;
+    DEFAULT <- "default" _WS;
+    EQUALS <- "=" _WS;
+    SEMI <- ";" _WS;
   `;
 }
 

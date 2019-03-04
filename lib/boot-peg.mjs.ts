@@ -339,7 +339,7 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
                 const termsSrc = terms.map(peval).map(termSrc => indent`
     ${termSrc}
     if (value === FAIL) break ${labelSrc};
-    ${sSrc}.push(value);`).join('\n');
+    if (value !== SKIP) ${sSrc}.push(value);`).join('\n');
 
                 return indent`
     ${sSrc} = [];
@@ -368,7 +368,13 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
                 const termsSrc = vtable.seq(...terms);
                 return indent`
     ${termsSrc}
-    if (value !== FAIL) value = value.find((v) => v !== SKIP);`;
+    if (value !== FAIL) {
+        let i = 0;
+        while (value[i] === SKIP) {
+            i ++;
+        }
+        value = (i < value.length) ? value[i] : SKIP;
+    }`;
             },
             act(hole: number, ...terms: PegExpr[]) {
                 numSubs = Math.max(numSubs, hole + 1);
@@ -396,7 +402,7 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
         pos = ${posSrc};
         break;
       }
-      ${sSrc}.push(value);
+      if (value !== SKIP) ${sSrc}.push(value);
       ${posSrc} = pos;
       ${sepSrc}
       if (value === FAIL) break;
@@ -504,7 +510,7 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
     ${posSrc} = pos;
     ${pattSrc}
     if (value !== FAIL) {
-        value = [];
+        value = SKIP;
     }
     pos = ${posSrc};`;
             },
@@ -517,7 +523,7 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
                 return indent`
     ${posSrc} = pos;
     ${pattSrc}
-    value = (value === FAIL) ? [] : FAIL;
+    value = (value === FAIL) ? SKIP : FAIL;
     pos = ${posSrc};`;
             },
         });
@@ -628,6 +634,7 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
     const actionExtractorTag = (_template: TemplateStringsArray, ...actions: any[]) => actions;
     actionExtractorTag.ACCEPT = ACCEPT;
     actionExtractorTag.HOLE = HOLE;
+    actionExtractorTag.SKIP = SKIP;
 
     // Extract the actions, binding them to the metaCompile function.
     const bootPegActions = makePeg(actionExtractorTag, metaCompile);

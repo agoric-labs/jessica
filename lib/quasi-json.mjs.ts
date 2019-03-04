@@ -14,7 +14,7 @@ function makeJSON(pegPeg: IPegTag) {
     const {FAIL, HOLE, SKIP} = peg;
     return peg`
 # to be overridden or inherited
-start <- WS assignExpr EOF                ${(_, v, _2) => (..._a: any[]) => v};
+start <- _WS assignExpr _EOF                ${v => (..._a: any[]) => v};
 
 # to be extended
 primaryExpr <- dataStructure;
@@ -25,7 +25,7 @@ dataStructure <-
 / record
 / HOLE                                    ${h => ['exprHole', h]};
 
-dataLiteral <- ("null" / "false" / "true" / NUMBER / STRING) WS;
+dataLiteral <- ("null" / "false" / "true" / NUMBER / STRING) _WS;
 
 array <-
   LEFT_BRACKET RIGHT_BRACKET              ${(_, _2) => ['array']}
@@ -57,17 +57,17 @@ assignExpr <- primaryExpr;
 
 # Lexical syntax
 
-EOF <- ~.;
-LEFT_BRACKET <- "[" WS;
-RIGHT_BRACKET <- "]" WS;
-LEFT_BRACE <- "{" WS;
-RIGHT_BRACE <- "}" WS;
-COMMA <- "," WS;
-COLON <- ":" WS;
-MINUS <- "-" WS;
-HOLE <- &${HOLE} WS;
+_EOF <- ~.;
+LEFT_BRACKET <- "[" _WS;
+RIGHT_BRACKET <- "]" _WS;
+LEFT_BRACE <- "{" _WS;
+RIGHT_BRACE <- "}" _WS;
+COMMA <- "," _WS;
+COLON <- ":" _WS;
+MINUS <- "-" _WS;
+HOLE <- &${HOLE} _WS;
 
-STRING <- < '"' (~'"' character)* '"' > WS;
+STRING <- < '"' (~'"' character)* '"' > _WS;
 
 utf8 <-
   [\302-\337] utf8cont
@@ -84,7 +84,7 @@ character <-
 escape <- '\\' ['"\\bfnrt];
 hex <- digit / [a-fA-F];
 
-NUMBER <- < int frac? exp? > WS;
+NUMBER <- < int frac? exp? > _WS;
 
 int <- [1-9] digit+
 / digit
@@ -96,7 +96,7 @@ digit <- [0-9];
 frac <- '.' digit+;
 exp <- [Ee] [+\-]? digit+;
 
-WS <- ([\t\n\r ]+ WS)?   ${(_) => SKIP};
+_WS <- ([\t\n\r ]+ _WS)?   ${_ => SKIP};
 `;
 
 }
