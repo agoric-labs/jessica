@@ -7,3 +7,8 @@
 // then they will be moved to lib.jessie.d.ts.
 //
 // Michael FIG <michael+jessica@fig.org>, 2019-02-23
+
+interface IMainDependencies {
+    loadAsset: (asset: string) => Promise<string>;
+    writeOutput: (asset: string, data: string) => Promise<void>;
+}

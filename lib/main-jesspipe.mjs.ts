@@ -1,12 +1,7 @@
 import makeLoadAsset from './loadAsset.mjs';
 import repl from './repl.mjs';
 
-interface IPower {
-    loadAsset: (asset: string) => Promise<string>;
-    writeOutput: (asset: string, data: string) => Promise<void>;
-}
-
-function jesspipe(power: IPower, argv: string[]) {
+function jesspipe(deps: IMainDependencies, argv: string[]) {
     const endowments = {
         bond,
         confine,
@@ -36,13 +31,13 @@ function jesspipe(power: IPower, argv: string[]) {
         ARGV.slice(dashdash + 1).forEach(file => CAN_LOAD_ASSETS.add(file));
     }
 
-    const loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, power.loadAsset);
+    const loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, deps.loadAsset);
 
     const doEval = (src: string, asset: string) =>
         Promise.resolve(confine(src, endowments, {scriptName: asset}));
-    repl(MODULE, loadAsset, doEval, power.writeOutput, ARGV)
+    repl(MODULE, loadAsset, doEval, deps.writeOutput, ARGV)
     .catch(e => {
-      power.writeOutput('-', '/* FIXME: Stub */\n');
+      deps.writeOutput('-', '/* FIXME: Stub */\n');
       slog.error`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
     });
 }

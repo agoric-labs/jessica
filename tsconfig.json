@@ -5,7 +5,6 @@
         "typeRoots": ["./typings"],
         "noImplicitAny": true,
         "noEmitOnError": true,
-        "sourceMap": true,
         "alwaysStrict": true,
         "types": ["./typings/lib.jessie"]
     },
