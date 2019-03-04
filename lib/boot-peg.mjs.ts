@@ -368,13 +368,7 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
                 const termsSrc = vtable.seq(...terms);
                 return indent`
     ${termsSrc}
-    if (value !== FAIL) {
-        let i = 0;
-        while (value[i] === SKIP) {
-            i ++;
-        }
-        value = (i < value.length) ? value[i] : SKIP;
-    }`;
+    if (value !== FAIL && value.length === 1) value = value[0];`;
             },
             act(hole: number, ...terms: PegExpr[]) {
                 numSubs = Math.max(numSubs, hole + 1);
