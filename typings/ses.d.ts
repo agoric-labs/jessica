@@ -52,5 +52,5 @@ interface ConfineOptions {
   // TODO fill out
   scriptName?: string;
 }
-declare function confine<T>(src: string, evalenv: {}, options?: ConfineOptions): T;
-declare function confineExpr<T>(src: string, evalenv: {}, options?: ConfineOptions): T;
+declare function confine<T>(src: string, evalenv: Record<string, any>, options?: ConfineOptions): T;
+declare function confineExpr<T>(src: string, evalenv: Record<string, any>, options?: ConfineOptions): T;

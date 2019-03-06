@@ -6,7 +6,7 @@
 
 This directory contains Jessica, a compiler architecture implementing [Jessie](https://github.com/Agoric/Jessie).  In short, Jessie is a secure subset of Javascript that enables interconnected distributed applications running on different targets (such as other threads, OS processes, device drivers, networked hosts).  It does this without granting excess authority to any Jessie submodule.
 
-Jessica is a metacircular Jessie: it is a library designed to compile or interpret itself.  Jessica consists of is its own Jessie submodules in `lib`, and language platform-specific sources in `lang/*`.  For each target, Jessica is an extension language library, as well as `jesspipe`, an executable (based on the Jessica library) for running Jessie modules.
+Jessica is a metacircular Jessie: it is a library designed to compile or interpret itself.  Jessica consists of its own Jessie submodules in `lib`, and language platform-specific sources in `lang/*`.  For each target, Jessica is an extension language library, as well as `jesspipe`, an executable (based on the Jessica library) for running Jessie modules.
 
 The goal of Jessica is to be broad: providing the minimal Jessie environment for as many different language platforms as possible.
 

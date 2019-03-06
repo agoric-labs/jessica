@@ -1,6 +1,4 @@
 /// <reference types="jest"/>
-import '../globalEnv0';
-
 import '../globalEnv.mjs';
 
 import bootPeg from '../../../lib/boot-peg.mjs';

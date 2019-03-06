@@ -1,6 +1,4 @@
 /// <reference types="jest"/>
-import '../globalEnv0';
-
 import '../globalEnv.mjs';
 
 import makeBond from '../../../lib/bond.mjs';

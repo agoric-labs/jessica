@@ -8,7 +8,7 @@ import makePeg from './quasi-peg.mjs';
 import makeInterpJessie from './interp-jessie.mjs';
 import tagString from './tag-string.mjs';
 
-function bootEnv(endowments: object) {
+function bootEnv(computedGet: (obj: any, index: string | number) => any, endowments: object) {
     // Bootstrap a peg tag.
     const pegTag = bootPeg<IPegTag>(makePeg, bootPegAst);
 
@@ -16,7 +16,7 @@ function bootEnv(endowments: object) {
     const jsonTag = makeJSON(pegTag);
     const justinTag = makeJustin(pegTag, jsonTag);
     const jessieTag = makeJessie(pegTag, justinTag);
-    const interpJessie = makeInterpJessie();
+    const interpJessie = makeInterpJessie(computedGet);
 
     const env = harden({
         ...endowments,
