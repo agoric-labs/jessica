@@ -3,12 +3,11 @@
 //
 // TODO: This function desperately needs a test suite!
 
-type ComputedGet = <T, K extends keyof T>(that: T, index: K) => T[K];
 type ApplyMethod = <T, U>(that: any, method: (...args: T[]) => U, args: T[]) => U;
 type AnyMethod = (this: any, ...args: any[]) => any;
 type AnyArrow = (...args: any[]) => any;
 
-function makeBond(computedGet: ComputedGet, applyMethod: ApplyMethod) {
+function makeBond(applyMethod: ApplyMethod) {
     const _bonded = makeWeakMap<object, WeakMap<AnyMethod, AnyArrow>>(),
         _bondedUndefinedThis = makeWeakMap<AnyMethod, AnyArrow>();
 
@@ -33,7 +32,7 @@ function makeBond(computedGet: ComputedGet, applyMethod: ApplyMethod) {
             if (typeof maybeThis !== 'object' || maybeThis === null) {
                 throw makeError(`Can only call bond(obj, index) on an object, not ${JSON.stringify(maybeThis)}`);
             }
-            maybeMethod = computedGet(maybeThis, index);
+            maybeMethod = maybeThis[index];
         }
 
         if (typeof maybeMethod !== 'function') {

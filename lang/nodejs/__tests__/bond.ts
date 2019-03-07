@@ -3,8 +3,8 @@ import '../globalEnv.mjs';
 
 import makeBond from '../../../lib/bond.mjs';
 const defaultBond = () => makeBond(
-    (that, index) => that[index],
-    (that, method, args) => method.apply(that, args));
+    (that, method, args) => method.apply(that, args)
+);
 
 test('bond(primitives)', () => {
     const bond = defaultBond();

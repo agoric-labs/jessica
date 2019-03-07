@@ -60,7 +60,7 @@ const contextArg = (context, a) => {
         else {
             // We have at least one non-format member.
             valname = vname;
-            val = a[vname];
+            val = JSON.stringify(a[vname], undefined, 2);
         }
     }
     if (valname === undefined) {
@@ -105,14 +105,12 @@ const mySlog = makeSlog((level, names, levels, context, template, args) => {
         // At least allow turns to finish.
         process.exitCode = 99;
     }
-}, (map, obj) => {
-    Object.keys(obj).forEach((v) => map.set(v, obj[v]));
 });
 globalEnv.slog = mySlog;
 // We need a `bond` implementation for Jessie to be usable
 // within SES.
 import makeBond from '../../lib/bond.mjs';
-globalEnv.bond = makeBond((obj, index) => obj[index], (boundThis, method, args) => method.apply(boundThis, args));
+globalEnv.bond = makeBond((boundThis, method, args) => method.apply(boundThis, args));
 // Export the environment as global endowments.  This is only possible
 // because we are in control of the main program, and we are setting
 // this policy for all our modules.

@@ -120,6 +120,45 @@ interface ObjectConstructor {
      * @param value2 The second value.
      */
     readonly is: (value1: any, value2: any) => boolean;
+
+    readonly entries: ObjectEntries;
+
+    /**
+      * Returns the names of the enumerable properties and methods of an object.
+      * @param o Object that contains the properties and methods. This can be an object that you create
+d or an existing Document Object Model (DOM) object.
+      */
+    readonly keys: (o: {}) => string[];
+
+    readonly values: ObjectValues;
+}
+
+interface ObjectValues {
+   /**
+     * Returns an array of values of the enumerable properties of an object
+     * @param o Object that contains the properties and methods. This can be an object that you created or an existing Document Object Model (DOM) object.
+     */
+    <T>(o: { [s: string]: T } |  ArrayLike<T>): T[];
+
+    /**
+     * Returns an array of values of the enumerable properties of an object
+     * @param o Object that contains the properties and methods. This can be an object that you created or an existing Document Object Model (DOM) object.
+     */
+    (o: {}): any[];
+}
+  
+interface ObjectEntries {
+    /**
+     * Returns an array of key/values of the enumerable properties of an object
+     * @param o Object that contains the properties and methods. This can be an object that you created or an existing Document Object Model (DOM) object.
+     */
+    <T>(o: { [s: string]: T } | ArrayLike<T>): [string, T][];
+
+    /**
+     * Returns an array of key/values of the enumerable properties of an object
+     * @param o Object that contains the properties and methods. This can be an object that you created or an existing Document Object Model (DOM) object.
+     */
+    (o: {}): [string, any][];
 }
 
 interface ObjectFreeze {

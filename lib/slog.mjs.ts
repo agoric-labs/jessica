@@ -3,9 +3,8 @@ type SlogHandler =
     (level: number, names: SlogName[],
      levels: Map<SlogName, number>, context: SlogContext,
      template: TemplateStringsArray, args: any[]) => any;
-type SlogSetMapFrom = (context: SlogContext, obj: Record<string, any>) => void;
 
-const makeSlog = (handler: SlogHandler, setMapFrom: SlogSetMapFrom): Slog => {
+const makeSlog = (handler: SlogHandler): Slog => {
     const levels = makeMap<SlogName, number>(), names: SlogName[] = [];
     let slog: Partial<Slog> & SlogTag = (...args: any[]): any => undefined;
     for (const prep of [true, false]) {
@@ -23,13 +22,14 @@ const makeSlog = (handler: SlogHandler, setMapFrom: SlogSetMapFrom): Slog => {
                 function tag(context: Record<string, any>): SlogTag;
                 function tag(template: TemplateStringsArray, ...args: any[]): any;
                 function tag(contextOrTemplate: Record<string, any> | TemplateStringsArray, ...args: any[]) {
-                    const context = makeMap();
+                    let context: Map<string, any>;
                     if (!contextOrTemplate.raw) {
-                        setMapFrom(context, contextOrTemplate);
+                        context = makeMap([...Object.entries(contextOrTemplate)]);
                         return (t: TemplateStringsArray, ...a: any[]) =>
                             handler(level, names, levels, context, t, a);
                     }
                     // No specified context, this is the template tag.
+                    context = makeMap<string, any>();
                     const template = contextOrTemplate as TemplateStringsArray;
                     return handler(level, names, levels, context, template, args);
                 }

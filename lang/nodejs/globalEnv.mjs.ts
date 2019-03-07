@@ -62,7 +62,7 @@ const contextArg = (context: Map<string, any>, a: any) => {
         } else {
             // We have at least one non-format member.
             valname = vname;
-            val = a[vname];
+            val = JSON.stringify(a[vname], undefined, 2);
         }
     }
 
@@ -109,9 +109,6 @@ const mySlog = makeSlog(
             // At least allow turns to finish.
             process.exitCode = 99;
         }
-    },
-    (map, obj) => {
-        Object.keys(obj).forEach((v) => map.set(v, obj[v]));
     });
 globalEnv.slog = mySlog;
 
@@ -119,7 +116,6 @@ globalEnv.slog = mySlog;
 // within SES.
 import makeBond from '../../lib/bond.mjs';
 globalEnv.bond = makeBond(
-    (obj, index) => obj[index],
     (boundThis, method, args) => method.apply(boundThis, args));
 
 // Export the environment as global endowments.  This is only possible

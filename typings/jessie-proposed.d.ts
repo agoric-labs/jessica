@@ -12,21 +12,3 @@ interface IMainDependencies {
     loadAsset: (asset: string) => Promise<string>;
     writeOutput: (asset: string, data: string) => Promise<void>;
 }
-
-interface ObjectConstructor {
-    readonly entries: ObjectEntries;
-}
-
-interface ObjectEntries {
-    /**
-     * Returns an array of key/values of the enumerable properties of an object
-     * @param o Object that contains the properties and methods. This can be an object that you created or an existing Document Object Model (DOM) object.
-     */
-    <T>(o: { [s: string]: T } | ArrayLike<T>): [string, T][];
-
-    /**
-     * Returns an array of key/values of the enumerable properties of an object
-     * @param o Object that contains the properties and methods. This can be an object that you created or an existing Document Object Model (DOM) object.
-     */
-    (o: {}): [string, any][];
-}

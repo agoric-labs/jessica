@@ -32,7 +32,7 @@ const writeOutput = (fname, str) => {
 };
 // Create a Jessie bootstrap environment for the endowments.
 import bootEnv from '../../lib/boot-env.mjs';
-const jessie = bootEnv((obj, index) => obj[index], mutableEnv);
+const jessie = bootEnv(mutableEnv);
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
 const doEval = (src, uri) => jessie.confine(src, jessie, { scriptName: uri });
