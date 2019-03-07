@@ -13,7 +13,7 @@ import tagString from '../../../lib/tag-string.mjs';
 function defaultJustinTag() {
   const pegTag = bootPeg(makePeg, bootPegAst);
   const jsonTag = makeJSON(pegTag);
-  const justinTag = makeJustin(pegTag, jsonTag);
+  const justinTag = makeJustin(pegTag.extends(jsonTag));
   return tagString(justinTag);
 }
 

@@ -56,9 +56,9 @@ function transformSingleQuote(s: string) {
   return `"${qs}"`;
 }
 
-function makeJustin(peg: IPegTag, jsonPeg: IPegParserTag) {
+function makeJustin(peg: IPegTag<any>) {
     const {SKIP} = peg;
-    return peg.extends(jsonPeg)`
+    return peg`
     # to be overridden or inherited
     start <- _WS assignExpr _EOF                       ${v => (..._a: any[]) => v};
 

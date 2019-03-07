@@ -15,7 +15,9 @@
 
 import './peg.mjs';
 
-function makePeg<T, U = any>(pegTag: IBootPegTag<T>, metaCompile: (defs: PegDef[]) => U): T {
+const makePeg: MakePeg = <T = IPegTag<any>, U = IPegTag<IPegParserTag<any>>>(
+      pegTag: IBootPegTag<T>,
+      metaCompile: (defs: PegDef[]) => (..._: any[]) => U) => {
       const {ACCEPT, HOLE, SKIP} = pegTag;
 
       function simple(prefix: string, list: PegExpr[]) {
@@ -136,6 +138,6 @@ END          <- '>' _Spacing;
 PLUSPLUS     <- '++' _Spacing;
 STARSTAR     <- '**' _Spacing;
 `;
-}
+};
 
 export default harden(makePeg);

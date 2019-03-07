@@ -1,5 +1,12 @@
-const tagString = (tag: (template: TemplateStringsArray, ...args: any[]) => any, uri?: string) => {
-    function tagged(template: TemplateStringsArray, ...args: any[]) {
+const tagString = <T =  any, U extends string = string>(tag: IPegParserTag<T, U>, uri?: string) => {
+    function tagged(config: U): IPegParserTag<T, U>;
+    function tagged(template: TemplateStringsArray, ...args: any[]): T;
+    function tagged(templateOrConfig: U | TemplateStringsArray, ...args: any[]):
+        T | IPegParserTag<T, U> {
+        if (typeof templateOrConfig === 'string') {
+            return tag(templateOrConfig);
+        }
+        const template = templateOrConfig;
         const cooked = template.reduce<string[]>((prior, t, i) => {
             prior.push(t, String(args[i]));
             return prior;

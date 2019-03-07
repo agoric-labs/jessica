@@ -10,26 +10,26 @@ import tagString from './tag-string.mjs';
 
 function bootEnv(endowments: object) {
     // Bootstrap a peg tag.
-    const pegTag = bootPeg<IPegTag>(makePeg, bootPegAst);
+    const pegTag = bootPeg<IPegTag<any>>(makePeg, bootPegAst);
 
     // Stack up the parser.
     const jsonTag = makeJSON(pegTag);
-    const justinTag = makeJustin(pegTag, jsonTag);
-    const jessieTag = makeJessie(pegTag, justinTag);
+    const justinTag = makeJustin(pegTag.extends(jsonTag));
+    const jessieTag = makeJessie(pegTag.extends(justinTag));
     const interpJessie = makeInterpJessie();
 
     const env = harden({
         ...endowments,
         confine: (src: string, evalenv: object, options?: ConfineOptions) => {
-            const ast = tagString(jessieTag, options.scriptName)`${src + '\n;'}`;
+            const ast = tagString<any[]>(jessieTag, options.scriptName)`${src + '\n;'}`;
             return harden(interpJessie(ast, evalenv, options || {}));
         },
         confineExpr: (src: string, evalenv: object, options?: ConfineOptions) => {
-            const ast = tagString(jessieTag, options.scriptName)`${'(' + src + '\n)'}`;
+            const ast = tagString<any[]>(jessieTag, options.scriptName)`${'(' + src + '\n)'}`;
             return harden(interpJessie.expr(ast, evalenv, options || {}));
         },
         eval: (src: string): any => {
-            const ast = tagString(jessieTag)`${src}`;
+            const ast = tagString<any[]>(jessieTag)`${src}`;
             return interpJessie(ast, env);
         },
     });

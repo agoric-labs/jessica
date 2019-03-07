@@ -14,8 +14,8 @@ import tagString from '../../../lib/tag-string.mjs';
 function defaultJessieTag() {
     const pegTag = bootPeg(makePeg, bootPegAst);
     const jsonTag = makeJSON(pegTag);
-    const justinTag = makeJustin(pegTag, jsonTag);
-    const jessieTag = makeJessie(pegTag, justinTag);
+    const justinTag = makeJustin(pegTag.extends(jsonTag));
+    const jessieTag = makeJessie(pegTag.extends(justinTag));
     return tagString(jessieTag);
 }
 
@@ -25,5 +25,5 @@ test('get/set', () => {
         ['functionDecl', ['def', 'doit'], [], ['block',
             [['return', ['get', ['use', 'bar'], 'abcd']]]]]
     ]]);
-    expect(jessieTag`function doit() { foo[1] = 123; }`).toEqual([]);
+    expect(jessieTag('DEBUG')`function doit() { foo[1] = 123; }`).toEqual([]);
 });

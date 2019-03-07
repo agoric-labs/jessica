@@ -6,9 +6,9 @@
 
 import './peg.mjs';
 
-function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
+function makeJessie(peg: IPegTag) {
     const {SKIP} = peg;
-    return peg.extends(justinPeg)`
+    return peg`
     # Override rather than inherit start production.
     # Only module syntax is permitted.
     start <- _WS moduleBody _EOF               ${b => (..._a: any[]) => ['module', b]};
@@ -51,8 +51,7 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
 
     pureAssignExpr <-
       arrowFunc
-    / dataLiteral
-    / lValue (EQUALS / assignOp) pureAssignExpr            ${(lv, op, rv) => [op, lv, rv]};
+    / dataLiteral;
 
     # In Jessie, an lValue is only a variable, a computed index-named
     # property (an array element), or a statically string-named
@@ -169,7 +168,7 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
 
     cantStartExprStatement <-
       ("{" / "function" / "async" _NO_NEWLINE "function"
-    / "class" / "let" / "[") _WS;
+    / "class" / "let" / "[");
 
     # to be overridden
     clause <- caseLabel+ LEFT_BRACE body terminator RIGHT_BRACE ${(cs, _, b, t, _2) => ['clause', cs, [...b, t]]};
@@ -218,10 +217,8 @@ function makeJessie(peg: IPegTag, justinPeg: IPegParserTag) {
       SEMI                                               ${_ => SKIP}
     / importDecl
     / exportDecl
-    / moduleStatement;
+    / moduleDeclaration;
 
-    moduleStatement <- moduleDeclaration
-    / pureAssignExpr SEMI;
     moduleDeclaration <-
       declOp moduleBinding ** COMMA SEMI                 ${(op, decls) => [op, decls]}
     / functionDecl;

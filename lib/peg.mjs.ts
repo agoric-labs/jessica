@@ -17,15 +17,10 @@ interface IBootPegTag<T> {
     SKIP: PegConstant;
 }
 
-interface IPegParserTag {
-    (template: TemplateStringsArray, ...args: PegHole[]): any;
+interface IPegParserTag<T = any, U extends string = string> {
+    (template: TemplateStringsArray, ...args: PegHole[]): T;
+    (config: U): IPegParserTag<T, U>;
     parserCreator: PegParserCreator;
-}
-
-type DebugTemplate = TemplateStringsArray | 'DEBUG';
-interface IDebugTemplateTag<T> {
-    (template: TemplateStringsArray, ...args: PegHole[]): IDebugTemplateTag<T> | T;
-    (debug: 'DEBUG'): (template: TemplateStringsArray, ...args: PegHole[]) => IDebugTemplateTag<T>;
 }
 
 interface IPegParser {
@@ -40,20 +35,17 @@ interface IPegParser {
 
 type PegParserCreator = (template: TemplateStringsArray, debug: boolean) => IPegParser | undefined;
 
-type ExtendedPegTag = (template: TemplateStringsArray, ...args: PegHole[]) => IPegTag;
-
-interface IPegTag {
-    (template: TemplateStringsArray, ...args: PegHole[]): IPegTag;
-    (debug: 'DEBUG'): (template: TemplateStringsArray, ...args: PegHole[]) => IPegTag;
-    parserCreator: PegParserCreator;
+interface IPegTag<T = any, U extends string = string> {
+    (template: TemplateStringsArray, ...args: PegHole[]): T;
+    (config: U): IPegTag<T, U>;
     ACCEPT: PegPredicate;
     FAIL: PegConstant;
     HOLE: PegPredicate;
     SKIP: PegConstant;
     EAT: PegEat;
-    // TODO: Have ExtendedPegTag be the same as IPegTag.
-    extends: (peg: IPegParserTag) => ExtendedPegTag;
-    _asExtending(baseQuasiParser: IPegParserTag): IPegTag;
+    extends: <V>(peg: IPegParserTag) => IPegTag<IPegParserTag<V>>;
+    _asExtending: <V>(baseQuasiParser: IPegParserTag) => IPegTag<IPegParserTag<V>>;
+    parserCreator: PegParserCreator;
 }
 
 // TODO: Fill out all the tree from PegDef.
@@ -61,4 +53,6 @@ type PegExpr = string | any[];
 type PegRuleOrPatt = (((..._args: any[]) => any) & {name: string}) | PegExpr;
 type PegDef = any[];
 
-type MakePeg = <T, U = any>(pegTag: IBootPegTag<T>, metaCompile: (defs: PegDef[]) => U) => T;
+type MakePeg = <T = IPegTag<any>, U = IPegTag<IPegParserTag<any>>>(
+    pegTag: IBootPegTag<T>,
+    metaCompile: (defs: PegDef[]) => (..._: any[]) => U) => T;
