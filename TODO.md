@@ -1,3 +1,9 @@
+* '\xFF' syntax for peg Tags and Justin.  Excise octal.
+
+* Use '**' more effectively, since it allows zero-or-more instances.
+
+* Remove endowments from structuredClone.
+
 * Use full SES!
 
 * Consider allowing `writeOutput` to create files if they are whitelisted in the `jesspipe` command line options.

@@ -36,7 +36,8 @@ element <- assignExpr;
 
 # The JavaScript and JSON grammars calls records "objects"
 
-record <- LEFT_BRACE RIGHT_BRACE           ${(_, _2) => ['record']}
+record <-
+  LEFT_BRACE RIGHT_BRACE           ${(_, _2) => ['record']}
 / LEFT_BRACE propDef ** COMMA RIGHT_BRACE  ${(_, ps, _2) => ['record', ps]};
 
 # to be extended
