@@ -606,9 +606,9 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
             SKIP,
         });
 
-        return function parserTag(...baseActions: any[]) {
+        return function parserTag<U>(...baseActions: any[]) {
             const parserTrait = makeParserTrait(...baseActions);
-            const _asExtending = <V, W>(baseQuasiParser: IPegParserTag<V>): IPegTag<W> => {
+            const _asExtending = <W, V = any>(baseQuasiParser: IPegParserTag<V>): IPegTag<W> => {
                 const parserCreator = parserTrait(baseQuasiParser.parserCreator);
                 return Object.assign(quasifyParser<V>(parserCreator), {
                     ACCEPT,
@@ -620,9 +620,9 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
                     extends: ext,
                 });
             };
-            const quasiParser = _asExtending<T, IPegTag<T>>(defaultBaseGrammar);
-            const ext = <V, W>(baseQuasiParser: IPegParserTag): IPegTag<W> | W => {
-                const makeTag: InitPegTag<V> =
+            const quasiParser = _asExtending<T, U>(defaultBaseGrammar);
+            const ext = <W, V = any>(baseQuasiParser: IPegParserTag<V>): IPegTag<W> => {
+                const tag0: InitPegTag<W> =
                     (templateOrFlag: string | TemplateStringsArray, ...substs: PegHole[]) => {
                         const flags: string[] = [];
 
@@ -652,22 +652,16 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
                         }
                         return tag(templateOrFlag, ...substs);
                     };
-                return Object.assign((templateOrFlag: string | TemplateStringsArray, ...subs: PegHole[]) => {
-                        if (typeof templateOrFlag === 'string') {
-                            return makeTag(templateOrFlag);
-                        }
-                        return makeTag(templateOrFlag, ...subs);
-                    },
-                    {
-                        ACCEPT,
-                        EAT,
-                        FAIL,
-                        HOLE,
-                        SKIP,
-                        _asExtending,
-                        extends: ext,
-                        parserCreator: baseQuasiParser.parserCreator,
-                    });
+                return Object.assign(tag0, {
+                    ACCEPT,
+                    EAT,
+                    FAIL,
+                    HOLE,
+                    SKIP,
+                    _asExtending,
+                    extends: ext,
+                    parserCreator: baseQuasiParser.parserCreator,
+                });
             };
             quasiParser.extends = ext;
             return quasiParser;
