@@ -1,8 +1,8 @@
+* Remove endowments from structuredClone.
+
 * '\xFF' syntax for peg Tags and Justin.  Excise octal.
 
 * Use '**' more effectively, since it allows zero-or-more instances.
-
-* Remove endowments from structuredClone.
 
 * Use full SES!
 
