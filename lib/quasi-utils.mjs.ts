@@ -1,4 +1,4 @@
-import './peg.mjs';
+/// <reference path="peg.d.ts"/>
 
 function qunpack(h: string, ms: Array<[string, Array<[string, any]>]>, t: string) {
   const result: Array<string | PegHole> = [h];

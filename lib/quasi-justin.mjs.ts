@@ -26,7 +26,8 @@
 // provide its expression language in a JS-like style. Chainmail
 // expressions need to be pure and should be decidable.
 
-import './peg.mjs';
+/// <reference path="peg.d.ts"/>
+
 import quasiUtils from './quasi-utils.mjs';
 
 const {qunpack} = quasiUtils;

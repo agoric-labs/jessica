@@ -4,7 +4,7 @@
 // See https://github.com/Agoric/Jessie/blob/master/README.md
 // for documentation of the Jessie grammar defined here.
 
-import './peg.mjs';
+/// <reference path="peg.d.ts"/>
 
 function makeJessie(peg: IPegTag) {
     const {SKIP} = peg;

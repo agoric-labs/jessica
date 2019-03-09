@@ -7,7 +7,7 @@
 
 // See also json.org
 
-import './peg.mjs';
+/// <reference path="peg.d.ts"/>
 
 function makeJSON(pegPeg: IPegTag) {
     const peg = pegPeg;

@@ -4,7 +4,6 @@
 // $ ts-node jesspipe.ts \
 //    MODULE [OPTIONS...] [-- [INFILE...]]
 
-/* tslint:disable:no-reference */
 /// <reference path="../../typings/ses.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 

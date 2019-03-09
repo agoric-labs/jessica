@@ -1,8 +1,9 @@
 // A lot of this code is lifted from:
 // https://github.com/erights/quasiParserGenerator/tree/master/src/bootbnf.js
 
+/// <reference path="peg.d.ts"/>
+
 import indent from './indent.mjs';
-import './peg.mjs';
 
 const LEFT_RECUR: PegConstant = harden({toString: () => 'LEFT_RECUR'});
 
@@ -620,7 +621,7 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
                     extends: ext,
                 });
             };
-            const quasiParser = _asExtending<T, U>(defaultBaseGrammar);
+            const quasiParser = _asExtending<IPegTag<T>, U>(defaultBaseGrammar);
             const ext = <W, V = any>(baseQuasiParser: IPegParserTag<V>): IPegTag<W> => {
                 const tag0: InitPegTag<W> =
                     (templateOrFlag: string | TemplateStringsArray, ...substs: PegHole[]) => {
@@ -632,9 +633,9 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
                                     flags.push(tmplOrFlag);
                                     return tag;
                                 }
-                                const parserBase = quasiParser(tmplOrFlag, ...subs)._asExtending<V>(baseQuasiParser);
-                                const parser = flags.reduce<IPegTag<V>>((p, flag) => p(flag), parserBase);
-                                return parser;
+                                const parserBase = quasiParser(tmplOrFlag, ...subs)._asExtending<W, V>(baseQuasiParser);
+                                const parser = flags.reduce<IPegTag<W>>((p, flag) => p(flag), parserBase);
+                                return parser(tmplOrFlag, ...subs);
                             },
                             {
                                 ACCEPT,

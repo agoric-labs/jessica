@@ -13,7 +13,7 @@
 // which are adapted from:
 // https://github.com/erights/quasiParserGenerator
 
-import './peg.mjs';
+/// <reference path="peg.d.ts"/>
 
 const makePeg: MakePeg = <T = IPegTag<any>, U = IPegTag<IPegParserTag<any>>>(
       pegTag: IBootPegTag<T>,

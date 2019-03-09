@@ -6,7 +6,6 @@
 // we are a main program, and we're changing global state for the
 // entire process.
 
-/* tslint:disable:no-reference */
 /// <reference path="../../typings/ses.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 

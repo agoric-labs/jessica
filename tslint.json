@@ -8,6 +8,7 @@
     "quotemark": false,
     "object-literal-key-quotes": [true, "as-needed"],
     "arrow-parens": false,
+    "no-reference": false,
     "trailing-comma": [true, {"singleline": "never"}],
     "no-console": [true, "log"]
   },
