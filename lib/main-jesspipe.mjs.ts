@@ -34,7 +34,7 @@ function jesspipe(deps: IMainDependencies, argv: string[]) {
 
     const doEval = (src: string, file: string) =>
         Promise.resolve(confine(src, endowments, {scriptName: file}));
-    repl(MODULE, (file) => Promise.resolve(readInput(file)), doEval,
+    return repl(MODULE, (file) => Promise.resolve(readInput(file)), doEval,
         deps.writeOutput, ARGV)
     .catch(e => {
       deps.writeOutput('-', '/* FIXME: Stub */\n');
