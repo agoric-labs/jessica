@@ -9,7 +9,7 @@
 // Michael FIG <michael+jessica@fig.org>, 2019-02-23
 
 interface IMainDependencies {
-    loadAsset: (asset: string) => Promise<string>;
+    readInput: (asset: string) => Promise<string>;
     writeOutput: (asset: string, data: string) => Promise<void>;
 }
 

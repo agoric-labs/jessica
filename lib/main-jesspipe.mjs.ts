@@ -1,4 +1,4 @@
-import makeLoadAsset from './loadAsset.mjs';
+import makeReadInput from './readInput.mjs';
 import repl from './repl.mjs';
 
 function jesspipe(deps: IMainDependencies, argv: string[]) {
@@ -31,11 +31,11 @@ function jesspipe(deps: IMainDependencies, argv: string[]) {
         ARGV.slice(dashdash + 1).forEach(file => CAN_LOAD_ASSETS.add(file));
     }
 
-    const loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, deps.loadAsset);
+    const readInput = makeReadInput(CAN_LOAD_ASSETS, deps.readInput);
 
     const doEval = (src: string, asset: string) =>
         Promise.resolve(confine(src, endowments, {scriptName: asset}));
-    repl(MODULE, loadAsset, doEval, deps.writeOutput, ARGV)
+    repl(MODULE, readInput, doEval, deps.writeOutput, ARGV)
     .catch(e => {
       deps.writeOutput('-', '/* FIXME: Stub */\n');
       slog.error`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;

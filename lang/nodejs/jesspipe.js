@@ -13,8 +13,8 @@ if (dashdash >= 0) {
     ARGV.slice(dashdash + 1).forEach(file => CAN_LOAD_ASSETS.add(file));
 }
 import * as fs from 'fs';
-import makeLoadAsset from '../../lib/loadAsset.mjs';
-const rawLoadAsset = (asset) => makePromise((resolve, reject) => {
+import makeReadInput from '../../lib/readInput.mjs';
+const rawReadInput = (asset) => makePromise((resolve, reject) => {
     fs.readFile(asset, { encoding: 'latin1' }, function readCb(err, data) {
         if (err) {
             return reject(err);
@@ -22,7 +22,7 @@ const rawLoadAsset = (asset) => makePromise((resolve, reject) => {
         return resolve(data);
     });
 });
-const loadAsset = makeLoadAsset(CAN_LOAD_ASSETS, rawLoadAsset);
+const readInput = makeReadInput(CAN_LOAD_ASSETS, rawReadInput);
 // Make a confined file writer.
 const writeOutput = (fname, str) => {
     if (fname !== '-') {
@@ -36,7 +36,7 @@ const jessie = bootEnv(mutableEnv);
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
 const doEval = (src, uri) => jessie.confine(src, jessie, { scriptName: uri });
-repl(MODULE, loadAsset, doEval, writeOutput, ARGV)
+repl(MODULE, readInput, doEval, writeOutput, ARGV)
     .catch(e => {
     writeOutput('-', '/* FIXME: Stub */\n');
     try {

@@ -1,5 +1,3 @@
-* loadAsset -> readContents
-
 * Remove endowments from structuredClone.
 
 * '\xFF' syntax for peg Tags and Justin.  Excise octal.
