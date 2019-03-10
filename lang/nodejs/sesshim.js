@@ -59,7 +59,7 @@ module.exports = (function(){
 `(function(${names.join(',')}) { "use strict"; return (${exprSrc}
   );
 })
-//# sourceURL=data:${encodeURIComponent(exprSrc)}
+//# sourceURL=data:${encodeURIComponent(exprSrc).slice(0, 48)}...
 `;
     const closedFunc = (1,eval)(closedFuncSrc);
     return closedFunc(...names.map(n => env[n]));

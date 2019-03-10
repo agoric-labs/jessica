@@ -71,8 +71,7 @@ function ERROR(self: IPegParser, pos: number) {
     const failStr = fails.length === 0 ?
         `stuck` : `looking for ${fails.join(', ')}`;
     const {sources} = self.template;
-    slog.error`Syntax error ${tokStr} ${failStr}
-    -------template--------
+    slog.info`-------template--------
     ${self.template.raw.reduce((prior, r, i) => {
         if (sources) {
             const s = sources[i];
@@ -81,7 +80,9 @@ function ERROR(self: IPegParser, pos: number) {
         prior += JSON.stringify(r) + '\n';
         return prior;
     }, '')}
-    -------`;
+    -------
+    ${failStr}`;
+    slog.error`Syntax error ${tokStr}`;
 }
 
 function makeTokStr(self: IPegParser, found: [number, number] | number) {
@@ -103,7 +104,7 @@ function DONE(self: IPegParser) {
                 const name = typeof ruleOrPatt === 'function' ?
                     ruleOrPatt.name : JSON.stringify(ruleOrPatt);
                 if (result === LEFT_RECUR) {
-                    slog.warn`${name}(${pos}) => left recursion detector`;
+                    slog.notice`${name}(${pos}) => left recursion detector`;
                 } else {
                     const [newPos, v] = result;
                     if (v === FAIL) {

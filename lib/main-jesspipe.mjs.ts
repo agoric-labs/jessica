@@ -38,7 +38,7 @@ function jesspipe(deps: IMainDependencies, argv: string[]) {
         deps.writeOutput, ARGV)
     .catch(e => {
       deps.writeOutput('-', '/* FIXME: Stub */\n');
-      slog.warn`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
+      slog.notice`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
     });
 }
 

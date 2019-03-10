@@ -81,7 +81,7 @@ const mySlog = makeSlog(
             return prior;
         }, [names[level] + ': ' + template[0]]);
 
-        if (level > levels.get('warn') || ca instanceof Error) {
+        if (level >= levels.get('warn') || ca instanceof Error) {
             // Use console.error to provide an inspectable result.
             console.error(...reduced);
         } else {

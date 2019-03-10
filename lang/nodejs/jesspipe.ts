@@ -48,5 +48,5 @@ const doEval = (src: string, uri?: string) =>
 repl(MODULE, (file: string) => Promise.resolve(readInput(file)), doEval, writeOutput, ARGV)
     .catch(e => {
         writeOutput('-', '/* FIXME: Stub */\n');
-        slog.warn`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
+        slog.notice`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
     });

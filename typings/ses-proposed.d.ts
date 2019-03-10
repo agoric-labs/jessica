@@ -26,17 +26,17 @@ type SlogName = 'panic' | 'alert' | 'crit' | 'error' | 'warn' | 'notice' |
 interface Slog extends SlogTag<string> {
     LEVELS: Map<SlogName, number>;
     NAMES: SlogName[];
-    panic: SlogTag<never>; // Displays to user, then exits the process.
-    alert: SlogTag<never>; // Displays to user, then throws error.
-    crit: SlogTag<never>; // Throws an error.
-    error: SlogTag<never>; // Throws an error.
-    warn: SlogTag<string>;
+    panic: SlogTag<never>; // Displays to user, waits for confirm, then exits.
+    alert: SlogTag<never>; // Displays to user, waits for confirm, then throws error.
+    crit: SlogTag<never>; // Displays to user, then throws error.
+    error: SlogTag<never>; // Throws error.
+    warn: SlogTag<string>; // Just logs.
     notice: SlogTag<string>;
     info: SlogTag<string>;
     debug: SlogTag<string>;
-    trace: SlogTag<string>;
+    trace: SlogTag<string>; // Normally invisible.
 
-    reject: SlogTag<Promise<any>>; // Returns a rejected Promise.
+    reject: SlogTag<Promise<never>>; // Returns a rejected Promise.
 }
 
 declare const slog: Hardened<Slog>;

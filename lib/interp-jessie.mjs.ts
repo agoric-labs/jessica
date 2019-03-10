@@ -132,6 +132,9 @@ function makeInterpJessie(importer: (path: string, evaluator: (ast: any[]) => an
     // TODO: Hoist all shallow nested function definitions to the block's toplevel.
 
     function interpJessie(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
+        const lastSlash = options.scriptName === undefined ? -1 : options.scriptName.lastIndexOf('/');
+        const thisDir = lastSlash < 0 ? '.' : options.scriptName.slice(0, lastSlash);
+
         const moduleBodyActions: Record<string, Evaluator> = {
             exportDefault: evalExportDefault,
             functionDecl: evalFunctionDecl,
@@ -163,11 +166,13 @@ function makeInterpJessie(importer: (path: string, evaluator: (ast: any[]) => an
             if (varBinding[0] !== 'def') {
                 slog.error`Unrecognized import variable binding ${{varBinding}}`;
             }
-
-            // FIXME: Take the input relative to our current path.
+            if (path[0] === '.') {
+                // Take the input relative to our current path.
+                path = `${thisDir}${path.slice(1)}`;
+            }
 
             // Interpret with no additional endowments.
-            const evaluator = (east: any[]) => interpJessie(east, {}, {scriptName: path});
+            const evaluator = (east: any[]) => interpJessie(east, endowments, {scriptName: path});
             const val = importer(path, evaluator);
             ectx.envp = makeHardenedBinding(ectx, varBinding[1], val);
             return val;

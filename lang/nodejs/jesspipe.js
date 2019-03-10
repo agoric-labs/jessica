@@ -32,5 +32,5 @@ const doEval = (src, uri) => jessie.confine(src, jessie, { scriptName: uri });
 repl(MODULE, (file) => Promise.resolve(readInput(file)), doEval, writeOutput, ARGV)
     .catch(e => {
     writeOutput('-', '/* FIXME: Stub */\n');
-    slog.warn `Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
+    slog.notice `Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
 });
