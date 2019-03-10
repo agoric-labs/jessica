@@ -81,13 +81,17 @@ const mySlog = makeSlog(
             return prior;
         }, [names[level] + ': ' + template[0]]);
 
-        if (level >= levels.get('warn') || ca instanceof Error) {
+        if (level >= levels.get('warn')) {
             // Use console.error to provide an inspectable result.
             console.error(...reduced);
         } else {
             // Record a location, too.
-            const at = new Error('at:');
-            console.error(...reduced, at);
+            const at0 = new Error().stack;
+            // Remove the current entry and our parent.
+            const at1 = at0.slice(at0.indexOf('\n') + 1);
+            const at2 = at1.slice(at1.indexOf('\n') + 1);
+            const at3 = at2.slice(at2.indexOf('\n'));
+            console.error(...reduced, at3);
         }
         if (names[level] === 'reject') {
             // Just return a promise rejection.
