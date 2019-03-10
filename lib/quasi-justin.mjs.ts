@@ -265,8 +265,8 @@ function makeJustin(peg: IPegTag<any>) {
     orElseOp <- "||" _WS;
 
     condExpr <-
-      orElseExpr
-    / orElseExpr QUESTION assignExpr COLON assignExpr   ${(c, _, t, _2, e) => ['cond', c, t, e]};
+      orElseExpr QUESTION assignExpr COLON assignExpr   ${(c, _, t, _2, e) => ['cond', c, t, e]}
+    / orElseExpr;
 
     # override, to be extended
     assignExpr <- condExpr;
