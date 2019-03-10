@@ -10,8 +10,8 @@ type PegEat = (self: any, pos: number, str: PegExpr) => [number, string | PegCon
 type PegAction = (...terms: any[]) => any;
 type PegHole = PegConstant | PegAction;
 
-interface IFlaggedTag<Base extends IFlaggedTag<Base, T>, T = any> {
-    (template: TemplateStringsArray, ...args: any[]): T;
+interface IFlaggedTag<Base extends IFlaggedTag<Base, T>, T = any, U = any> {
+    (template: TemplateStringsArray, ...args: U[]): T;
     (flag: string): Base;
 }
 
@@ -22,8 +22,9 @@ interface IBootPegTag<T = any> {
     SKIP: PegConstant;
 }
 
-interface IPegParserTag<T = any> extends IFlaggedTag<IPegParserTag, T> {
+interface IParserTag<T = any> extends IFlaggedTag<IParserTag<T>, T> {
     parserCreator: PegParserCreator;
+    _asExtending: <V, W>(baseQuasiParser: IParserTag<W>) => IPegTag<V>;
 }
 
 interface IPegParser {
@@ -38,14 +39,14 @@ interface IPegParser {
 
 type PegParserCreator = (template: TemplateStringsArray, debug: boolean) => IPegParser | undefined;
 
-interface IPegTag<T = any> extends IFlaggedTag<IPegTag, T> {
+interface IPegTag<T = any> extends IFlaggedTag<IPegTag<T>, T, PegHole> {
     ACCEPT: PegPredicate;
     FAIL: PegConstant;
     HOLE: PegPredicate;
     SKIP: PegConstant;
     EAT: PegEat;
-    extends: <V, W = any>(peg: IPegParserTag<W>) => IPegTag<V>;
-    _asExtending: <V, W = any>(baseQuasiParser: IPegParserTag<W>) => IPegTag<V>;
+    extends: <W>(peg: IParserTag<W>) => IPegTag<T>;
+    _asExtending: <W>(baseQuasiParser: IParserTag<W>) => IPegTag<T>;
     parserCreator: PegParserCreator;
 }
 
@@ -54,6 +55,6 @@ type PegExpr = string | any[];
 type PegRuleOrPatt = (((..._args: any[]) => any) & {name: string}) | PegExpr;
 type PegDef = any[];
 
-type MakePeg = <T = IPegTag<any>, U = IPegTag<IPegParserTag<any>>>(
+type MakePeg = <T = IPegTag<any>, U = IPegTag<IParserTag<any>>>(
     pegTag: IBootPegTag<T>,
     metaCompile: (defs: PegDef[]) => (..._: any[]) => U) => T;

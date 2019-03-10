@@ -1,33 +1,32 @@
-const tagString = <T =  any, U extends string = string>(tag: IPegParserTag<T, U>, uri?: string) => {
-    function tagged(config: U): IPegParserTag<T, U>;
+const tagString = <T>(tag: IParserTag<T>, uri?: string) => {
+    function tagged(flag: string): IParserTag<T>;
     function tagged(template: TemplateStringsArray, ...args: any[]): T;
-    function tagged(templateOrConfig: U | TemplateStringsArray, ...args: any[]):
-        T | IPegParserTag<T, U> {
-        if (typeof templateOrConfig === 'string') {
-            return tag(templateOrConfig);
+    function tagged(templateOrFlag: string | TemplateStringsArray, ...args: any[]):
+        T | IParserTag<T> {
+        if (typeof templateOrFlag === 'string') {
+            return tag(templateOrFlag);
         }
-        const template = templateOrConfig;
+        const template = templateOrFlag;
         const cooked = template.reduce<string[]>((prior, t, i) => {
             prior.push(t, String(args[i]));
             return prior;
         }, []);
         cooked.push(template[template.length - 1]);
-        const tmpl: string[] & {
-            raw?: TemplateStringsArray['raw'];
-            sources?: SourceLocation[];
-        } = [cooked.join('')];
-        const raw = args.reduce((prior, hole, i) => {
+        const cooked0 = cooked.join('');
+        const raw0 = args.reduce((prior, hole, i) => {
             prior.push(String(hole), template.raw[i + 1]);
             return prior;
         }, [template.raw[0]]).join('');
-        tmpl.raw = [raw];
-        tmpl.sources = [{
-            byte: 0,
-            column: 1,
-            line: 1,
-            uri,
-        }];
-        return tag(tmpl as TemplateStringsArray);
+        const tmpl = Object.assign([cooked0], {
+            raw: [raw0],
+            sources: [{
+                byte: 0,
+                column: 1,
+                line: 1,
+                uri,
+            }]
+        });
+        return tag(tmpl);
     }
     return harden(tagged);
 };

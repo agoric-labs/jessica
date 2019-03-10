@@ -15,7 +15,7 @@
 
 /// <reference path="peg.d.ts"/>
 
-const makePeg: MakePeg = <T = IPegTag<any>, U = IPegTag<IPegParserTag<any>>>(
+const makePeg: MakePeg = <T = IPegTag<any>, U = IPegTag<IParserTag<any>>>(
       pegTag: IBootPegTag<T>,
       metaCompile: (defs: PegDef[]) => (..._: any[]) => U) => {
       const {ACCEPT, HOLE, SKIP} = pegTag;

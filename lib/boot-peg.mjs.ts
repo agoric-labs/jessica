@@ -235,7 +235,7 @@ function unescape(cs: string): [string, number] {
     return [q, 2];
 }
 
-function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
+function bootPeg<T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[]) {
     function compile(sexp: PegExpr) {
         let numSubs = 0;              // # of holes implied by sexp, so far
 
@@ -540,14 +540,13 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
         return peval(sexp);
     }
 
-    type InitPegTag<V> = IFlaggedTag<IPegTag<V>, V>;
     type FlagTemplate = TemplateStringsArray | string;
 
     function quasiMemo<V>(quasiCurry: (template: TemplateStringsArray, debug: boolean) => IPegTag<T>,
-                          parserCreator: IPegParserTag['parserCreator']) {
+                          parserCreator: IParserTag['parserCreator']) {
         const wm = makeWeakMap();
         let debug = false;
-        const templateTag =             (templateOrFlag: FlagTemplate, ...subs: any[]) => {
+        const templateTag = (templateOrFlag: FlagTemplate, ...subs: any[]) => {
             if (typeof templateOrFlag === 'string') {
                 switch (templateOrFlag) {
                 case 'DEBUG':
@@ -607,9 +606,59 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
             SKIP,
         });
 
-        return function parserTag<U>(...baseActions: any[]) {
+        return function parserTag(...baseActions: any[]): IPegTag<T> {
             const parserTrait = makeParserTrait(...baseActions);
-            const _asExtending = <W, V = any>(baseQuasiParser: IPegParserTag<V>): IPegTag<W> => {
+            let _asExtending: <W, V = any>(baseQuasiParser: IParserTag<V>) => IPegTag<W>;
+            let quasiParser: IPegTag<T>;
+            const ext = <W, V = any>(baseQuasiParser: IParserTag<V>): IPegTag<W> => {
+                function tag0(flag: string): IPegTag<W>;
+                function tag0(template: TemplateStringsArray, ...substs: PegHole[]): W;
+                function tag0(templateOrFlag: FlagTemplate, ...substs: PegHole[]):
+                    W | IPegTag<W> {
+                    const flags: string[] = [];
+                    let tag: IPegTag<W>;
+                    function tag1(flag: string): IPegTag<W>;
+                    function tag1(template: TemplateStringsArray, ...subs: PegHole[]): W;
+                    function tag1(tmplOrFlag: FlagTemplate, ...subs: PegHole[]):
+                        W | IPegTag<W> {
+                        if (typeof tmplOrFlag === 'string') {
+                            flags.push(tmplOrFlag);
+                            return tag;
+                        }
+                        const boundParser = quasiParser(tmplOrFlag, ...subs);
+                        const parserBase = boundParser._asExtending(baseQuasiParser);
+                        const parser = flags.reduce<IPegTag<W>>((p, flag) => p(flag), parserBase);
+                        return parser;
+                    }
+
+                    tag = Object.assign(tag1, {
+                        ACCEPT,
+                        EAT,
+                        FAIL,
+                        HOLE,
+                        SKIP,
+                        _asExtending,
+                        extends: ext,
+                        parserCreator: quasiParser.parserCreator,
+                    });
+
+                    if (typeof templateOrFlag === 'string') {
+                        return tag(templateOrFlag);
+                    }
+                    return tag(templateOrFlag, ...substs);
+                }
+                return Object.assign(tag0, {
+                    ACCEPT,
+                    EAT,
+                    FAIL,
+                    HOLE,
+                    SKIP,
+                    _asExtending,
+                    extends: ext,
+                    parserCreator: quasiParser.parserCreator,
+                });
+            };
+            _asExtending = <W, V = any>(baseQuasiParser: IParserTag<V>): IPegTag<W> => {
                 const parserCreator = parserTrait(baseQuasiParser.parserCreator);
                 return Object.assign(quasifyParser<V>(parserCreator), {
                     ACCEPT,
@@ -621,50 +670,8 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
                     extends: ext,
                 });
             };
-            const quasiParser = _asExtending<IPegTag<T>, U>(defaultBaseGrammar);
-            const ext = <W, V = any>(baseQuasiParser: IPegParserTag<V>): IPegTag<W> => {
-                const tag0: InitPegTag<W> =
-                    (templateOrFlag: string | TemplateStringsArray, ...substs: PegHole[]) => {
-                        const flags: string[] = [];
-
-                        const tag: IPegTag<W> = Object.assign(
-                            (tmplOrFlag: string | TemplateStringsArray, ...subs: PegHole[]) => {
-                                if (typeof tmplOrFlag === 'string') {
-                                    flags.push(tmplOrFlag);
-                                    return tag;
-                                }
-                                const parserBase = quasiParser(tmplOrFlag, ...subs)._asExtending<W, V>(baseQuasiParser);
-                                const parser = flags.reduce<IPegTag<W>>((p, flag) => p(flag), parserBase);
-                                return parser(tmplOrFlag, ...subs);
-                            },
-                            {
-                                ACCEPT,
-                                EAT,
-                                FAIL,
-                                HOLE,
-                                SKIP,
-                                _asExtending,
-                                extends: ext,
-                                parserCreator: baseQuasiParser.parserCreator,
-                            });
-
-                        if (typeof templateOrFlag === 'string') {
-                            return tag(templateOrFlag);
-                        }
-                        return tag(templateOrFlag, ...substs);
-                    };
-                return Object.assign(tag0, {
-                    ACCEPT,
-                    EAT,
-                    FAIL,
-                    HOLE,
-                    SKIP,
-                    _asExtending,
-                    extends: ext,
-                    parserCreator: baseQuasiParser.parserCreator,
-                });
-            };
-            quasiParser.extends = ext;
+            const closedDefaultBaseGrammar = Object.assign(defaultBaseGrammar, {_asExtending});
+            quasiParser = _asExtending<T>(closedDefaultBaseGrammar);
             return quasiParser;
         };
     }
@@ -679,7 +686,8 @@ function bootPeg<T>(makePeg: MakePeg, bootPegAst: PegDef[]) {
     const bootPegActions = makePeg<any[], IPegTag<any>>(actionExtractorTag, metaCompile);
 
     // Create the parser tag from the AST and the actions.
-    const bootPegTag = metaCompile(bootPegAst)(...bootPegActions);
+    const compiledAst = metaCompile(bootPegAst);
+    const bootPegTag = compiledAst(...bootPegActions);
 
     // Use the parser tag to create another parser tag that returns the AST.
     const astExtractorTag = makePeg<IPegTag<any>, PegDef[]>(
