@@ -174,7 +174,19 @@ const HOLE: PegPredicate = (self, pos) => {
 const FAIL = harden({toString: () => 'FAIL'});
 const SKIP = harden({toString: () => 'SKIP'});
 
-const octalDigits = '01234567';
+const lHexDigits = '0123456789abcdef';
+const uHexDigits = 'ABCDEF';
+function hexDigit(c: string) {
+    let i = lHexDigits.indexOf(c);
+    if (i < 0) {
+        i = uHexDigits.indexOf(c) + 10;
+    }
+    if (i < 0) {
+        throw makeError(`Invalid hexadecimal number ${c}`);
+    }
+    return i;
+}
+
 function unescape(cs: string): [string, number] {
     if (cs[0] !== '\\') {
         return [cs[0], 1];
@@ -201,35 +213,10 @@ function unescape(cs: string): [string, number] {
     case 't':
         q = '\t';
         break;
-    case '0':
-        q = '\0';
-        break;
-    default:
-        let i = 1;
-        let c = octalDigits.indexOf(cs[i]);
-        if (c >= 0) {
-            // It's an octal escape, so consume a byte.
-            let ord = c;
-            if (c > 0) {
-                c = octalDigits.indexOf(cs[i + 1]);
-                if (c >= 0) {
-                    // Two-digit octal escape.
-                    i ++;
-                    ord *= 8;
-                    ord += c;
-                    c = octalDigits.indexOf(cs[i + 1]);
-                    if (c >= 0 && ord * 8 + c < 256) {
-                        // Three-digit octal escape.
-                        i ++;
-                        ord *= 8;
-                        ord += c;
-                    }
-                }
-            }
-            // We got an octal escape.
-            q = String.fromCharCode(ord);
-        }
-        return [q, 1 + i];
+    case 'x':
+        const ord = hexDigit(cs[2]) * 16 + hexDigit(cs[3]);
+        q = String.fromCharCode(ord);
+        return [q, 4];
     }
 
     return [q, 2];

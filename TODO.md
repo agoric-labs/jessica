@@ -1,6 +1,4 @@
-* '\xFF' syntax for peg Tags and Justin.  Excise octal.
-
-* Use '**' more effectively, since it allows zero-or-more instances.
+* '\xFF' syntax for Justin?
 
 * Use full SES!
 

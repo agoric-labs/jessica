@@ -69,16 +69,16 @@ HOLE <- &${HOLE} _WS;
 STRING <- < '"' (~'"' character)* '"' > _WS;
 
 utf8 <-
-  [\302-\337] utf8cont
-/ [\340-\357] utf8cont utf8cont
-/ [\360-\364] utf8cont utf8cont utf8cont;
+  [\xc2-\xdf] utf8cont
+/ [\xe0-\xef] utf8cont utf8cont
+/ [\xf0-\xf4] utf8cont utf8cont utf8cont;
 
-utf8cont <- [\200-\277];
+utf8cont <- [\x80-\xbf];
 
 character <-
   escape
 / '\\u' hex hex hex hex
-/ ~'\\' ([\40-\177] / utf8);
+/ ~'\\' ([\x20-\x7f] / utf8);
 
 escape <- '\\' ['"\\bfnrt];
 hex <- digit / [a-fA-F];
