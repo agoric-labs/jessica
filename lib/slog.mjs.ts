@@ -40,6 +40,7 @@ const makeSlog = (handler: SlogHandler): Slog => {
             slog = doit(defaultLevel, 'DEFAULT');
         }
 
+        // Can't use Object.assign because we depend on evaluation order.
         slog.panic = doit(i ++, 'panic');
         slog.alert = doit(i ++, 'alert');
         slog.crit = doit(i ++, 'crit');

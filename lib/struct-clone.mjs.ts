@@ -1,6 +1,6 @@
 // FIXME: Implement structured clone algorithm.
 
-function makeStructuredClone(ents: ObjectConstructor['entries']) {
+function makeStructuredClone() {
     function structuredClone<T>(data: T): T {
         switch (typeof(data)) {
             case 'string':

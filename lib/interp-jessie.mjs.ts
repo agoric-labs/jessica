@@ -95,7 +95,7 @@ function evalGet(ctx: IEvalContext, objExpr: any[], index: any) {
 type Def = ['def', string];
 
 function makeInterpJessie() {
-    const structuredClone = makeStructuredClone(Object.entries);
+    const structuredClone = makeStructuredClone();
     function evalData(ctx: IEvalContext, struct: any) {
         return structuredClone(struct);
     }
