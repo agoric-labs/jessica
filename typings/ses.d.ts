@@ -32,7 +32,6 @@ type HardenedObject<T> = {
 
 declare function harden<T>(arg: T): Hardened<T>;
 
-declare function makeError(reason: string): Hardened<any>;
 declare function makeMap(): Hardened<Map<any, any>>;
 declare function makeMap<K, V>(entries?: ReadonlyArray<[K, V]> | null): Hardened<Map<K, V>>;
 declare function makeMap<K, V>(iterable: Iterable<[K, V]>): Hardened<Map<K, V>>;

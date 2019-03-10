@@ -1,14 +1,14 @@
-const repl = (asset: string,
-              readAsset: (asset: string) => Promise<string>,
+const repl = (file: string,
+              readInput: (file: string) => Promise<string>,
               doEval: (data: string, uri: string) => Promise<any>,
-              writeOutput: (asset: string, data: string) => void,
+              writeOutput: (file: string, data: string) => void,
               argv: string[]) =>
     // Read...
-    harden(readAsset(asset)
+    harden(readInput(file)
     // Eval ...
-    .then(data => { slog.error('got data ${data}'); return doEval(data, asset); })
+    .then(data => doEval(data, file))
     // Execute as main, if a function.
-    .then(main => (typeof main === 'function') ? main({readAsset, writeOutput}, argv) : main)
+    .then(main => (typeof main === 'function') ? main({readInput, writeOutput}, argv) : main)
     // ... maybe Print.
     .then(val => {
         if (val !== undefined) {

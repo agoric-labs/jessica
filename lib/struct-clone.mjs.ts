@@ -13,7 +13,7 @@ function makeStructuredClone() {
                 return data;
 
             default:
-                throw makeError(`Cannot clone ${data}`);
+                slog.error`Cannot clone ${data}`;
         }
     }
     return harden(structuredClone);

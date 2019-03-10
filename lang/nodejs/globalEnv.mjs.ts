@@ -11,24 +11,6 @@
 
 import globalEnv from './globalEnv0.mjs';
 
-const makeError = (...args: any[]) => {
-    const err = new Error(...args);
-    if (err.stack) {
-        const firstNl = err.stack.indexOf('\n');
-        if (firstNl >= 0) {
-            const secondNl = err.stack.indexOf('\n', firstNl + 1);
-            if (secondNl >= 0) {
-                // Remove this frame from the stack trace.
-                err.stack = err.stack.slice(0, firstNl + 1) +
-                    err.stack.slice(secondNl + 1);
-            }
-        }
-        err.stack = err.stack.replace(/\(data:(.{20}).*\)$/mg, '(data:$1...)');
-    }
-    return harden(err);
-};
-
-globalEnv.makeError = harden(makeError);
 globalEnv.makeMap = harden((...args: any[]) => harden(new Map(...args)));
 globalEnv.makeSet = harden((...args: any[]) => harden(new Set(...args)));
 globalEnv.makePromise = harden((executor: any) => harden(new Promise(executor)));
@@ -70,10 +52,12 @@ const contextArg = (context: Map<string, any>, a: any) => {
         return a;
     }
 
-    if (context.has(valname)) {
+    if (valname[0] === '_') {
+        // Do nothing.
+    } else if (context.has(valname)) {
         const oval = context.get(valname);
         if (val !== oval) {
-            throw Error(`Context value ${valname} mismatch: ${JSON.stringify(val)} vs. ${JSON.stringify(oval)}`);
+            slog.error`Context value ${{valname}} mismatch: ${{val}} vs. ${{oval}}`;
         }
     } else {
         context.set(valname, val);
@@ -98,16 +82,24 @@ const mySlog = makeSlog(
         }, [names[level] + ': ' + template[0]]);
 
         if (level > levels.get('warn') || ca instanceof Error) {
+            // Use console.error to provide an inspectable result.
             console.error(...reduced);
         } else {
             // Record a location, too.
             const at = new Error('at:');
             console.error(...reduced, at);
         }
-        if (level <= levels.get('panic')) {
+        if (names[level] === 'reject') {
+            // Just return a promise rejection.
+            return Promise.reject(reduced.join(' '));
+        } else if (level <= levels.get('panic')) {
             // At least allow turns to finish.
             process.exitCode = 99;
+        } else if (level <= levels.get('error')) {
+            // Throw an exception without revealing stack.
+            throw reduced.join(' ');
         }
+        return reduced.join(' ');
     });
 globalEnv.slog = mySlog;
 

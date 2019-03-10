@@ -14,27 +14,29 @@ interface Bond {
   }
 declare const bond: Hardened<Bond>;
 
-interface SlogTag {
-    (template: TemplateStringsArray, ...args: any[]): any;
-    (context: {}): (template: TemplateStringsArray, ...args: any[]) => any;
+interface SlogTag<T> {
+    (template: TemplateStringsArray, ...args: any[]): T;
+    (context: {}): (template: TemplateStringsArray, ...args: any[]) => T;
 }
 
 type SlogName = 'panic' | 'alert' | 'crit' | 'error' | 'warn' | 'notice' |
-    'info' | 'debug' | 'trace' | 'DEFAULT';
+    'info' | 'debug' | 'trace' | 'DEFAULT' | 'reject';
 
 
-interface Slog extends SlogTag {
+interface Slog extends SlogTag<string> {
     LEVELS: Map<SlogName, number>;
     NAMES: SlogName[];
-    panic: SlogTag;
-    alert: SlogTag;
-    crit: SlogTag;
-    error: SlogTag;
-    warn: SlogTag;
-    notice: SlogTag;
-    info: SlogTag;
-    debug: SlogTag;
-    trace: SlogTag;
+    panic: SlogTag<never>; // Displays to user, then exits the process.
+    alert: SlogTag<never>; // Displays to user, then throws error.
+    crit: SlogTag<never>; // Throws an error.
+    error: SlogTag<never>; // Throws an error.
+    warn: SlogTag<string>;
+    notice: SlogTag<string>;
+    info: SlogTag<string>;
+    debug: SlogTag<string>;
+    trace: SlogTag<string>;
+
+    reject: SlogTag<Promise<any>>; // Returns a rejected Promise.
 }
 
 declare const slog: Hardened<Slog>;

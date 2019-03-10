@@ -48,7 +48,7 @@ function doEval(ctx: IEvalContext, ...nameArgs: any[]) {
     const [name, ...args] = nameArgs;
     const ee = ctx.actions[name];
     if (!ee) {
-        throw makeError(`No ${JSON.stringify(name)} implemented in ${ctx.name} context`);
+        slog.error`No ${{name}} implemented in ${ctx.name} context`;
     }
     return ee(ctx, ...args);
 }
@@ -65,7 +65,7 @@ function doApply(ctx: IEvalContext, args: any[], formals: string[], body: any[])
 function evalCall(ctx: IEvalContext, func: any[], args: any[][]) {
     const lambda = doEval(ctx, ...func);
     if (typeof lambda !== 'function') {
-        throw makeError(`Expected a function, not ${lambda}`);
+        slog.error`Expected a function, not ${{lambda}}`;
     }
     const evaledArgs = args.map((a) => doEval(ctx, ...a));
     return lambda(...evaledArgs);
@@ -79,7 +79,7 @@ function evalUse(ctx: IEvalContext, name: string) {
         }
         b = b[Binding.parent];
     }
-    throw makeError(`Cannot find binding for ${name} in current scope`);
+    slog.error`Cannot find binding for ${name} in current scope`;
 }
 
 function evalBlock(ctx: IEvalContext, statements: any[][]) {
@@ -94,20 +94,11 @@ function evalGet(ctx: IEvalContext, objExpr: any[], index: any) {
 
 type Def = ['def', string];
 
-function makeInterpJessie() {
+function makeInterpJessie(importer: (path: string, evaluator: (ast: any[]) => any) => any) {
     const structuredClone = makeStructuredClone();
     function evalData(ctx: IEvalContext, struct: any) {
         return structuredClone(struct);
     }
-
-    const moduleActions: Record<string, Evaluator> = {
-        module: evalModule,
-    };
-
-    const moduleBodyActions: Record<string, Evaluator> = {
-        exportDefault: evalExportDefault,
-        functionDecl: evalFunctionDecl,
-    };
 
     const exprActions: Record<string, Evaluator> = {
         call: evalCall,
@@ -127,23 +118,6 @@ function makeInterpJessie() {
         return doEval(exprCtx, ...expr);
     }
 
-    function evalModule(ctx: IEvalContext, body: any[]) {
-        const bodyCtx = {...ctx, actions: moduleBodyActions, name: 'module body'};
-        let didExport = false, exported: any;
-        for (const stmt of body) {
-            if (stmt[0] === 'exportDefault') {
-                if (didExport) {
-                    throw makeError(`Cannot use more than one "export default" statement`);
-                }
-                exported = doEval(bodyCtx, ...stmt);
-                didExport = true;
-            } else {
-                doEval(bodyCtx, ...stmt);
-            }
-        }
-        return exported;
-    }
-
     function evalFunctionDecl(ctx: IEvalContext, nameDef: Def, argDefs: Def[], body: any[]) {
         const [_ndef, name] = nameDef;
         const formals = argDefs.map(([_adef, arg]) => arg);
@@ -158,6 +132,47 @@ function makeInterpJessie() {
     // TODO: Hoist all shallow nested function definitions to the block's toplevel.
 
     function interpJessie(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
+        const moduleBodyActions: Record<string, Evaluator> = {
+            exportDefault: evalExportDefault,
+            functionDecl: evalFunctionDecl,
+            import: evalImport,
+        };
+
+        const moduleActions: Record<string, Evaluator> = {
+            module: evalModule,
+        };
+
+        function evalModule(ectx: IEvalContext, body: any[]) {
+            const bodyCtx = {...ectx, actions: moduleBodyActions, name: 'module body'};
+            let didExport = false, exported: any;
+            for (const stmt of body) {
+                if (stmt[0] === 'exportDefault') {
+                    if (didExport) {
+                        slog.error`Cannot use more than one "export default" statement`;
+                    }
+                    exported = doEval(bodyCtx, ...stmt);
+                    didExport = true;
+                } else {
+                    doEval(bodyCtx, ...stmt);
+                }
+            }
+            return exported;
+        }
+
+        function evalImport(ectx: IEvalContext, varBinding: any[], path: string) {
+            if (varBinding[0] !== 'def') {
+                slog.error`Unrecognized import variable binding ${{varBinding}}`;
+            }
+
+            // FIXME: Take the input relative to our current path.
+
+            // Interpret with no additional endowments.
+            const evaluator = (east: any[]) => interpJessie(east, {}, {scriptName: path});
+            const val = importer(path, evaluator);
+            ectx.envp = makeHardenedBinding(ectx, varBinding[1], val);
+            return val;
+        }
+
         // slog.info`AST: ${JSON.stringify(ast, undefined, 2)}`;
         const ctx: IEvalContext = {actions: moduleActions, name: 'module'};
         for (const [name, value] of Object.entries(endowments)) {

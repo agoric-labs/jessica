@@ -9,8 +9,8 @@
 // Michael FIG <michael+jessica@fig.org>, 2019-02-23
 
 interface IMainDependencies {
-    readInput: (asset: string) => Promise<string>;
-    writeOutput: (asset: string, data: string) => Promise<void>;
+    readInput: (file: string) => string;
+    writeOutput: (file: string, data: string) => void;
 }
 
 interface ObjectConstructor {

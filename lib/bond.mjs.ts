@@ -30,7 +30,7 @@ function makeBond(applyMethod: ApplyMethod) {
             maybeMethod = maybeThis;
         } else {
             if (typeof maybeThis !== 'object' || maybeThis === null) {
-                throw makeError(`Can only call bond(obj, index) on an object, not ${JSON.stringify(maybeThis)}`);
+                slog.error`Can only call bond(obj, index) on an object, not ${{maybeThis}}`;
             }
             maybeMethod = maybeThis[index];
         }

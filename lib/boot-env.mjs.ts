@@ -5,10 +5,11 @@ import makeJSON from './quasi-json.mjs';
 import makeJustin from './quasi-justin.mjs';
 import makePeg from './quasi-peg.mjs';
 
+import makeImporter from './importer.mjs';
 import makeInterpJessie from './interp-jessie.mjs';
 import tagString from './tag-string.mjs';
 
-function bootEnv(endowments: object) {
+function bootEnv(endowments: Record<string, any>, readInput: (file: string) => string) {
     // Bootstrap a peg tag.
     const pegTag = bootPeg<IPegTag<any>>(makePeg, bootPegAst);
 
@@ -16,7 +17,9 @@ function bootEnv(endowments: object) {
     const jsonTag = makeJSON(pegTag);
     const justinTag = makeJustin(pegTag.extends(jsonTag));
     const jessieTag = makeJessie(pegTag.extends(justinTag));
-    const interpJessie = makeInterpJessie();
+
+    const importer = makeImporter(readInput, jessieTag);
+    const interpJessie = makeInterpJessie(importer);
 
     const env = harden({
         ...endowments,

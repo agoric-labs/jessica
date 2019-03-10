@@ -8,23 +8,6 @@
 /// <reference path="../../typings/ses.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 import globalEnv from './globalEnv0.mjs';
-const makeError = (...args) => {
-    const err = new Error(...args);
-    if (err.stack) {
-        const firstNl = err.stack.indexOf('\n');
-        if (firstNl >= 0) {
-            const secondNl = err.stack.indexOf('\n', firstNl + 1);
-            if (secondNl >= 0) {
-                // Remove this frame from the stack trace.
-                err.stack = err.stack.slice(0, firstNl + 1) +
-                    err.stack.slice(secondNl + 1);
-            }
-        }
-        err.stack = err.stack.replace(/\(data:(.{20}).*\)$/mg, '(data:$1...)');
-    }
-    return harden(err);
-};
-globalEnv.makeError = harden(makeError);
 globalEnv.makeMap = harden((...args) => harden(new Map(...args)));
 globalEnv.makeSet = harden((...args) => harden(new Set(...args)));
 globalEnv.makePromise = harden((executor) => harden(new Promise(executor)));
@@ -66,10 +49,13 @@ const contextArg = (context, a) => {
         // No non-format arguments.
         return a;
     }
-    if (context.has(valname)) {
+    if (valname[0] === '_') {
+        // Do nothing.
+    }
+    else if (context.has(valname)) {
         const oval = context.get(valname);
         if (val !== oval) {
-            throw Error(`Context value ${valname} mismatch: ${JSON.stringify(val)} vs. ${JSON.stringify(oval)}`);
+            slog.error `Context value ${{ valname }} mismatch: ${{ val }} vs. ${{ oval }}`;
         }
     }
     else {
@@ -93,6 +79,7 @@ const mySlog = makeSlog((level, names, levels, context, template, args) => {
         return prior;
     }, [names[level] + ': ' + template[0]]);
     if (level > levels.get('warn') || ca instanceof Error) {
+        // Use console.error to provide an inspectable result.
         console.error(...reduced);
     }
     else {
@@ -100,10 +87,19 @@ const mySlog = makeSlog((level, names, levels, context, template, args) => {
         const at = new Error('at:');
         console.error(...reduced, at);
     }
-    if (level <= levels.get('panic')) {
+    if (names[level] === 'reject') {
+        // Just return a promise rejection.
+        return Promise.reject(reduced.join(' '));
+    }
+    else if (level <= levels.get('panic')) {
         // At least allow turns to finish.
         process.exitCode = 99;
     }
+    else if (level <= levels.get('error')) {
+        // Throw an exception without revealing stack.
+        throw reduced.join(' ');
+    }
+    return reduced.join(' ');
 });
 globalEnv.slog = mySlog;
 // We need a `bond` implementation for Jessie to be usable
