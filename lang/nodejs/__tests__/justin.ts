@@ -20,8 +20,8 @@ function defaultJustinTag() {
 test('data', () => {
   const justinTag = defaultJustinTag();
   expect(justinTag`12345`).toEqual(['data', 12345]);
-  expect(justinTag`{}`).toEqual(['record']);
-  expect(justinTag`[]`).toEqual(['array']);
+  expect(justinTag`{}`).toEqual(['record', []]);
+  expect(justinTag`[]`).toEqual(['array', []]);
   expect(justinTag`{"abc": 123}`).toEqual(['record',
     [['prop', ['data', 'abc'], ['data', 123]]]]);
   expect(justinTag`["abc", 123]`).toEqual(['array', [['data', 'abc'], ['data', 123]]]);

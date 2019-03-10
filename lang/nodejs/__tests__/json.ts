@@ -17,8 +17,8 @@ function defaultJsonTag() {
 
 test('data', () => {
   const jsonTag = defaultJsonTag();
-  expect(jsonTag`{}`).toEqual(['record']);
-  expect(jsonTag`[]`).toEqual(['array']);
+  expect(jsonTag`{}`).toEqual(['record', []]);
+  expect(jsonTag`[]`).toEqual(['array', []]);
   expect(jsonTag`{"abc": 123}`).toEqual(['record',
     [['prop', ['data', 'abc'], ['data', 123]]]]);
   expect(jsonTag`["abc", 123]`).toEqual(['array', [['data', 'abc'], ['data', 123]]]);
