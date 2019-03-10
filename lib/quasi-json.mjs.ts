@@ -25,7 +25,7 @@ dataStructure <-
 / record
 / HOLE                                    ${h => ['exprHole', h]};
 
-dataLiteral <- ("null" / "false" / "true" / NUMBER / STRING) _WS;
+dataLiteral <- (("null" / "false" / "true") _WSN / NUMBER / STRING) _WS;
 
 array <-
   LEFT_BRACKET element ** COMMA RIGHT_BRACKET ${(_, es, _2) => ['array', es]};
@@ -83,7 +83,7 @@ character <-
 escape <- '\\' ['"\\bfnrt];
 hex <- digit / [a-fA-F];
 
-NUMBER <- < int frac? exp? > _WS;
+NUMBER <- < int frac? exp? > _WSN;
 
 int <- [1-9] digit+
 / digit
@@ -95,7 +95,9 @@ digit <- [0-9];
 frac <- '.' digit+;
 exp <- [Ee] [+\-]? digit+;
 
-_WS <- ([\t\n\r ]+ _WS)?   ${_ => SKIP};
+# _WSN is whitespace or a non-ident character.
+_WSN <- ~[$A-Za-z_] _WS    ${_ => SKIP};
+_WS <- [\t\n\r ]*          ${_ => SKIP};
 `;
 
 }

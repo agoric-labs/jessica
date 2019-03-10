@@ -73,7 +73,9 @@ function makeJustin(peg: IPegTag<any>) {
     STARSTAR <- "**" _WS;
 
     # Define Javascript-style comments.
-    _WS <- (EOL_COMMENT / MULTILINE_COMMENT / super._WS) ${_ => SKIP};
+    # _WSN is whitespace or a non-ident character.
+    _WSN <- super._WSN _WS                              ${_ => SKIP};
+    _WS <- super._WS (EOL_COMMENT / MULTILINE_COMMENT / super._WS) ${_ => SKIP};
     EOL_COMMENT <- "//" (~[\n\r] .)* _WS;
     MULTILINE_COMMENT <- "/*" (~"*/" .)* "*/" _WS;
 
@@ -85,7 +87,7 @@ function makeJustin(peg: IPegTag<any>) {
     # Only match if whitespace doesn't contain newline
     _NO_NEWLINE <- ~IDENT [ \t]*     ${_ => SKIP};
 
-    IDENT_NAME <- ~"__proto__" (IDENT / RESERVED_WORD) _WS;
+    IDENT_NAME <- ~"__proto__" (IDENT / RESERVED_WORD);
 
     IDENT <- < [$A-Za-z_] [$A-Za-z0-9_]* > _WS;
 
@@ -94,7 +96,7 @@ function makeJustin(peg: IPegTag<any>) {
     RESERVED_WORD <-
       (KEYWORD / RESERVED_KEYWORD / FUTURE_RESERVED_WORD
     / "null" / "false" / "true"
-    / "async" / "arguments" / "eval" / "get" / "set") _WS;
+    / "async" / "arguments" / "eval" / "get" / "set") _WSN;
 
     KEYWORD <-
       ("break"
@@ -107,7 +109,7 @@ function makeJustin(peg: IPegTag<any>) {
     / "switch"
     / "throw" / "try" / "typeof"
     / "void"
-    / "while") _WS;
+    / "while") _WSN;
 
     # Unused by Justin but enumerated here, in order to omit them
     # from the IDENT token.
@@ -121,12 +123,12 @@ function makeJustin(peg: IPegTag<any>) {
     / "this"
     / "var"
     / "with"
-    / "yield") _WS;
+    / "yield") _WSN;
 
     FUTURE_RESERVED_WORD <-
       ("await" / "enum"
     / "implements" / "package" / "protected"
-    / "interface" / "private" / "public") _WS;
+    / "interface" / "private" / "public") _WSN;
 
     # Quasiliterals aka template literals
     QUASI_CHAR <- "\\" . / ~"\`" .;
@@ -139,7 +141,7 @@ function makeJustin(peg: IPegTag<any>) {
     # A.2 Expressions
 
     dataStructure <-
-      "undefined" _WS     ${_ => ['data', undefined]}
+      "undefined" _WSN     ${_ => ['data', undefined]}
     / super.dataStructure;
 
     # Optional trailing commas.
@@ -229,8 +231,8 @@ function makeJustin(peg: IPegTag<any>) {
     # to be extended
     # No prefix or postfix "++" or "--".
     # No "delete".
-    preOp <- ("void" / "typeof" / prePre) _WS;
-    prePre <- ("+" / "-" / "~" / "!") _WS                   ${op => `pre:${op}`};
+    preOp <- (("void" / "typeof") _WSN / prePre);
+    prePre <- ("+" / "-" / "~" / "!") _WS                 ${op => `pre:${op}`};
 
     # Different communities will think -x**y parses in different ways,
     # so the EcmaScript grammar forces parens to disambiguate.

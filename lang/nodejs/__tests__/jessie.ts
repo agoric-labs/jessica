@@ -22,12 +22,18 @@ function defaultJessieTag() {
 test('get/set', () => {
     const jessieTag = defaultJessieTag();
     expect(jessieTag`function doit() { return bar.abcd; }`).toEqual(['module', [
-        ['functionDecl', ['def', 'doit'], [], ['block',
-            [['return', ['get', ['use', 'bar'], 'abcd']]]]]
+        ['functionDecl', ['def', 'doit'], [], ['block', [
+            ['return', ['get', ['use', 'bar'], 'abcd']]
+        ]]]
     ]]);
     expect(jessieTag`function doit() { a ? b : c; }`).toEqual(['module', [
-        ['functionDecl', ['def', 'doit'], [], ['block',
-            [['cond', ['use', 'a'], ['use', 'b'], ['use', 'c']]]]]
+        ['functionDecl', ['def', 'doit'], [], ['block', [
+            ['cond', ['use', 'a'], ['use', 'b'], ['use', 'c']]
+        ]]]
     ]]);
-    // expect(jessieTag`function doit() { foo[1] = 123; }`).toEqual([]);
+    /* expect(jessieTag`function doit() { foo[1] = 123; }`).toEqual(['module', [
+        ['functionDecl', ['def', 'doit'], [], ['block', [
+            ['cond', ['use', 'a'], ['use', 'b'], ['use', 'c']]
+        ]]]
+    ]]); */
 });

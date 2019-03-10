@@ -86,8 +86,8 @@ function makeJessie(peg: IPegTag) {
     / IF LEFT_PAREN expr RIGHT_PAREN arm                   ${(_, _2, c, _3, t) => ['if', c, t]}
     / breakableStatement
     / terminator
-    / IDENT _WS COLON statement                             ${(label, _, stat) => ['label', label, stat]}
-    / IDENT _WS COLON functionDecl                          ${(label, _, func) => ['label', label, func]}
+    / IDENT COLON statement                                ${(label, _, stat) => ['label', label, stat]}
+    / IDENT COLON functionDecl                             ${(label, _, func) => ['label', label, func]}
     / TRY block catcher finalizer                          ${(_, b, c, f) => ['try', b, c, f]}
     / TRY block catcher                                    ${(_, b, c) => ['try', b, c]}
     / TRY block finalizer                                  ${(_, b, f) => ['try', b, f]}
@@ -107,10 +107,10 @@ function makeJessie(peg: IPegTag) {
 
     # Each case clause must end in a terminating statement.
     terminator <-
-      "continue" _NO_NEWLINE IDENT _WS SEMI             ${(_, label, _3) => ['continue', label]}
+      "continue" _NO_NEWLINE IDENT SEMI                ${(_, label, _3) => ['continue', label]}
     / "continue" _WS SEMI                              ${(_, _2) => ['continue']}
-    / "break" _NO_NEWLINE IDENT _WS SEMI                 ${(_, label, _2) => ['break', label]}
-    / "break" _WS SEMI                                  ${(_, _2) => ['break']}
+    / "break" _NO_NEWLINE IDENT SEMI                   ${(_, label, _2) => ['break', label]}
+    / "break" _WS SEMI                                 ${(_, _2) => ['break']}
     / "return" _NO_NEWLINE expr SEMI                   ${(_, e, _2) => ['return', e]}
     / "return" _WS SEMI                                ${(_, _2) => ['return']}
     / "throw" _NO_NEWLINE expr SEMI                    ${(_, e, _3) => ['throw', e]};
@@ -130,7 +130,7 @@ function makeJessie(peg: IPegTag) {
       declOp binding ** COMMA SEMI                    ${(op, decls, _) => [op, decls]}
     / functionDecl;
 
-    declOp <- ("const" / "let") _WS;
+    declOp <- ("const" / "let") _WSN;
 
     binding <-
       bindingPattern EQUALS assignExpr                ${(p, _, e) => ['bind', p, e]}
@@ -197,7 +197,7 @@ function makeJessie(peg: IPegTag) {
     / arrowParams _NO_NEWLINE ARROW assignExpr         ${(ps, _2, e) => ['lambda', ps, e]};
 
     arrowParams <-
-      IDENT _WS                                        ${id => [['def', id]]}
+      IDENT                                           ${id => [['def', id]]}
     / LEFT_PAREN param ** COMMA RIGHT_PAREN           ${(_, ps, _2) => ps};
 
     # to be extended
@@ -224,8 +224,9 @@ function makeJessie(peg: IPegTag) {
     / functionDecl;
 
     # Jessie modules only allow bindings without side-effects.
-    moduleBinding <- bindingPattern EQUALS pureAssignExpr  ${(p, _, e) => ['bind', p, e]}
-    / defVar EQUALS pureAssignExpr                         ${(p, _, e) => ['bind', p, e]}
+    moduleBinding <-
+      bindingPattern EQUALS pureAssignExpr               ${(p, _, e) => ['bind', p, e]}
+    / defVar EQUALS pureAssignExpr                       ${(p, _, e) => ['bind', p, e]}
     / defVar;
 
     importDecl <- IMPORT defVar FROM STRING SEMI  ${(i, v, _, s, _2) => [i, v, JSON.parse(s)]};
@@ -233,29 +234,29 @@ function makeJessie(peg: IPegTag) {
 
     # to be extended
     exportableExpr <-
-      ~("async" / "class") expr;
+      ~("async" _WSN / "class" _WSN) expr;
 
 
     # Lexical syntax
     ARROW <- "=>" _WS;
-    DEBUGGER <- "debugger" _WS;
-    IF <- "if" _WS;
-    ELSE <- "else" _WS;
-    FOR <- "for" _WS;
-    WHILE <- "while" _WS;
-    BREAK <- "break" _WS;
-    CONTINUE <- "continue" _WS;
-    SWITCH <- "switch" _WS;
-    TRY <- "try" _WS;
-    CATCH <- "catch" _WS;
-    FINALLY <- "finally" _WS;
-    GET <- "get" _WS;
-    SET <- "set" _WS;
-    IMPORT <- "import" _WS;
-    EXPORT <- "export" _WS;
-    FROM <- "from" _WS;
-    FUNCTION <- "function" _WS;
-    DEFAULT <- "default" _WS;
+    DEBUGGER <- "debugger" _WSN;
+    IF <- "if" _WSN;
+    ELSE <- "else" _WSN;
+    FOR <- "for" _WSN;
+    WHILE <- "while" _WSN;
+    BREAK <- "break" _WSN;
+    CONTINUE <- "continue" _WSN;
+    SWITCH <- "switch" _WSN;
+    TRY <- "try" _WSN;
+    CATCH <- "catch" _WSN;
+    FINALLY <- "finally" _WSN;
+    GET <- "get" _WSN;
+    SET <- "set" _WSN;
+    IMPORT <- "import" _WSN;
+    EXPORT <- "export" _WSN;
+    FROM <- "from" _WSN;
+    FUNCTION <- "function" _WSN;
+    DEFAULT <- "default" _WSN;
     EQUALS <- "=" _WS;
     SEMI <- ";" _WS;
   `;
