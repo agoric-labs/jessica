@@ -28,8 +28,9 @@ function bootEnv(endowments: Record<string, any>, readInput: (file: string) => s
             return harden(interpJessie(ast, evalenv, options || {}));
         },
         confineExpr: (src: string, evalenv: object, options?: ConfineOptions) => {
-            const ast = tagString<any[]>(jessieTag, options.scriptName)`${'(' + src + '\n)'}`;
-            return harden(interpJessie.expr(ast, evalenv, options || {}));
+            // FIXME: Use the `expr` starting point for jessieTag.
+            const ast = tagString<any[]>(jessieTag.expr, options.scriptName)`${'(' + src + '\n)'}`;
+            return harden(interpJessie(ast, evalenv, options || {}));
         },
         eval: (src: string): any => {
             const ast = tagString<any[]>(jessieTag)`${src}`;
