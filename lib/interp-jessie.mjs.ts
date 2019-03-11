@@ -6,17 +6,17 @@ interface IEvalOptions {
 }
 
 type Evaluator = (self: IEvalContext, ...args: any[]) => any;
-enum Binding {
-    parent = 0,
-    name = 1,
-    getter = 2,
-    setter = 3,
-}
+
+const BINDING_PARENT = 0;
+const BINDING_NAME = 1;
+const BINDING_GET = 2;
+const BINDING_SET = 3;
+
 interface IBinding {
-    [Binding.parent]: IBinding | undefined;
-    [Binding.name]: string;
-    [Binding.getter]: () => any;
-    [Binding.setter]?: (val: any) => typeof val;
+    [BINDING_PARENT]: IBinding | undefined;
+    [BINDING_NAME]: string;
+    [BINDING_GET]: () => any;
+    [BINDING_SET]?: (val: any) => typeof val;
 }
 
 interface IEval {
@@ -31,17 +31,6 @@ interface IEvalContext {
     import: (path: string) => any;
 }
 
-function makeConstBinding(self: IEvalContext, name: string, init?: any) {
-    return harden<IBinding>([self.envp, name, () => init]);
-}
-
-function makeMutableBinding(self: IEvalContext, name: string, init?: any) {
-    let slot = init;
-    return harden<IBinding>([self.envp, name,
-        () => slot, (val: any) => slot = val,
-    ]);
-}
-
 function makeBinding(self: IEvalContext, name: string, init?: any, mutable = true) {
     let slot = init;
     const setter = mutable && ((val: any) => slot = val);
@@ -52,7 +41,7 @@ const evaluators: Record<string, Evaluator> = {
     bind(self: IEvalContext, def, expr) {
         const name = doEval(self, ...def);
         const val = doEval(self, ...expr);
-        self.envp = makeBinding(self, name, val);
+        return [name, val];
     },
     block(self: IEvalContext, statements: any[][]) {
         // Produce the final value.
@@ -67,7 +56,10 @@ const evaluators: Record<string, Evaluator> = {
         return lambda(...evaledArgs);
     },
     const(self: IEvalContext, binds: any[][]) {
-        binds.forEach(b => doEval(self, ...b));
+        binds.forEach(b => {
+            const [name, val] = doEval(self, ...b);
+            self.envp = makeBinding(self, name, val);
+        });
     },
     data(self: IEvalContext, val: any) {
         return val;
@@ -78,7 +70,7 @@ const evaluators: Record<string, Evaluator> = {
     functionDecl(self: IEvalContext, def: any[], argDefs: any[][], body: any[]) {
         const lambda = evaluators.lambda(self, argDefs, body);
         const name = doEval(self, ...def);
-        self.envp = makeBinding(self, name, lambda);
+        self.envp = makeBinding(self, name, lambda, true);
     },
     get(self: IEvalContext, objExpr: any[], index: any) {
         const obj = doEval(self, ...objExpr);
@@ -128,10 +120,10 @@ const evaluators: Record<string, Evaluator> = {
     use(self: IEvalContext, name: string) {
         let b = self.envp;
         while (b !== undefined) {
-            if (b[Binding.name] === name) {
-                return b[Binding.getter]();
+            if (b[BINDING_NAME] === name) {
+                return b[BINDING_GET]();
             }
-            b = b[Binding.parent];
+            b = b[BINDING_PARENT];
         }
         slog.error`Cannot find binding for ${name} in current scope`;
     },
@@ -155,7 +147,7 @@ function doEval(self: IEvalContext, ...astArgs: any[]) {
 function doApply(self: IEvalContext, args: any[], formals: string[], body: any[]) {
     // Bind the formals.
     // TODO: Rest arguments.
-    formals.forEach((f, i) => self.envp = makeMutableBinding(self, f, args[i]));
+    formals.forEach((f, i) => self.envp = makeBinding(self, f, args[i]));
 
     // Evaluate the body.
     return doEval(self, ...body);
@@ -175,7 +167,7 @@ function makeInterpJessie(importer: (path: string, evaluator: (ast: any[]) => an
         // slog.info`AST: ${{ast}}`;
         for (const [name, value] of Object.entries(endowments)) {
             // slog.info`Adding ${name}, ${value} to bindings`;
-            self.envp = makeConstBinding(self, name, value);
+            self.envp = makeBinding(self, name, value);
         }
         return doEval(self, ...ast);
     }
