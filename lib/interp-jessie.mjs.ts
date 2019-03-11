@@ -49,6 +49,15 @@ function makeBinding(self: IEvalContext, name: string, init?: any, mutable = tru
 }
 
 const evaluators: Record<string, Evaluator> = {
+    bind(self: IEvalContext, def, expr) {
+        const name = doEval(self, ...def);
+        const val = doEval(self, ...expr);
+        self.envp = makeBinding(self, name, val);
+    },
+    block(self: IEvalContext, statements: any[][]) {
+        // Produce the final value.
+        return statements.reduce<any>((_, s) => doEval(self, ...s), undefined);
+    },
     call(self: IEvalContext, func: any[], args: any[][]) {
         const lambda = doEval(self, ...func);
         if (typeof lambda !== 'function') {
@@ -57,26 +66,34 @@ const evaluators: Record<string, Evaluator> = {
         const evaledArgs = args.map((a) => doEval(self, ...a));
         return lambda(...evaledArgs);
     },
-    data(self: IEvalContext, dataStruct: any) {
-        return dataStruct;
+    const(self: IEvalContext, binds: any[][]) {
+        binds.forEach(b => doEval(self, ...b));
     },
-    use(self: IEvalContext, name: string) {
-        let b = self.envp;
-        while (b !== undefined) {
-            if (b[Binding.name] === name) {
-                return b[Binding.getter]();
-            }
-            b = b[Binding.parent];
-        }
-        slog.error`Cannot find binding for ${name} in current scope`;
+    data(self: IEvalContext, val: any) {
+        return val;
     },
-    block(self: IEvalContext, statements: any[][]) {
-        // Produce the final value.
-        return statements.reduce<any>((_, s) => doEval(self, ...s), undefined);
+    def(self: IEvalContext, name: string) {
+        return name;
+    },
+    functionDecl(self: IEvalContext, def: any[], argDefs: any[][], body: any[]) {
+        const lambda = evaluators.lambda(self, argDefs, body);
+        const name = doEval(self, ...def);
+        self.envp = makeBinding(self, name, lambda);
     },
     get(self: IEvalContext, objExpr: any[], index: any) {
         const obj = doEval(self, ...objExpr);
         return obj[index];
+    },
+    import(self: IEvalContext, def: any[], path: string) {
+        const name = doEval(self, ...def);
+        if (path[0] === '.' && path[1] === '/') {
+            // Take the input relative to our current directory.
+            path = `${self.dir}${path.slice(1)}`;
+        }
+
+        // Interpret with the same endowments.
+        const val = self.import(path);
+        self.envp = makeBinding(self, name, val);
     },
     lambda(self: IEvalContext, argDefs: any[][], body: any[]) {
         // FIXME: Handle rest and default arguments.
@@ -86,22 +103,6 @@ const evaluators: Record<string, Evaluator> = {
             return doApply(selfCopy, args, formals, body);
         };
         return lambda;
-    },
-    functionDecl(self: IEvalContext, def: any[], argDefs: any[][], body: any[]) {
-        const lambda = evaluators.lambda(self, argDefs, body);
-        const name = doEval(self, ...def);
-        self.envp = makeBinding(self, name, lambda);
-    },
-    def(self: IEvalContext, name: string) {
-        return name;
-    },
-    const(self: IEvalContext, binds: any[][]) {
-        binds.forEach(b => doEval(self, ...b));
-    },
-    bind(self: IEvalContext, def, expr) {
-        const name = doEval(self, ...def);
-        const val = doEval(self, ...expr);
-        self.envp = makeBinding(self, name, val);
     },
     module(self: IEvalContext, body: any[]) {
         const oldEnv = self.envp;
@@ -124,16 +125,15 @@ const evaluators: Record<string, Evaluator> = {
             self.envp = oldEnv;
         }
     },
-    import(self: IEvalContext, def: any[], path: string) {
-        const name = doEval(self, ...def);
-        if (path[0] === '.' && path[1] === '/') {
-            // Take the input relative to our current directory.
-            path = `${self.dir}${path.slice(1)}`;
+    use(self: IEvalContext, name: string) {
+        let b = self.envp;
+        while (b !== undefined) {
+            if (b[Binding.name] === name) {
+                return b[Binding.getter]();
+            }
+            b = b[Binding.parent];
         }
-
-        // Interpret with the same endowments.
-        const val = self.import(path);
-        self.envp = makeBinding(self, name, val);
+        slog.error`Cannot find binding for ${name} in current scope`;
     },
 };
 
