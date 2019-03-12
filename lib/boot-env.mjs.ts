@@ -9,7 +9,10 @@ import makeImporter from './importer.mjs';
 import makeInterpJessie from './interp-jessie.mjs';
 import tagString from './tag-string.mjs';
 
-function bootEnv(endowments: Record<string, any>, readInput: (file: string) => string) {
+function bootEnv(
+    endowments: Record<string, any>,
+    readInput: (file: string) => string,
+    computedSet: (obj: Record<string | number, any>, index: string | number, value: any) => void) {
     // Bootstrap a peg tag.
     const pegTag = bootPeg<IPegTag<any>>(makePeg, bootPegAst);
 
@@ -19,7 +22,7 @@ function bootEnv(endowments: Record<string, any>, readInput: (file: string) => s
     const jessieTag = makeJessie(pegTag.extends(justinTag));
 
     const importer = makeImporter(readInput, jessieTag);
-    const interpJessie = makeInterpJessie(importer);
+    const interpJessie = makeInterpJessie(importer, computedSet);
 
     const env = harden({
         ...endowments,

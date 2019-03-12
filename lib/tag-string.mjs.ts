@@ -17,16 +17,16 @@ const tagString = <T>(tag: IParserTag<T>, uri?: string) => {
             prior.push(String(hole), template.raw[i + 1]);
             return prior;
         }, [template.raw[0]]).join('');
-        const tmpl = Object.assign([cooked0], {
-            raw: [raw0],
-            sources: [{
-                byte: 0,
-                column: 1,
-                line: 1,
-                uri,
-            }]
-        });
-        return tag(tmpl);
+        const sources0 = {
+            byte: 0,
+            column: 1,
+            line: 1,
+            uri,
+        };
+        const tmpl: any = [cooked0];
+        tmpl.raw = [raw0];
+        tmpl.sources = [sources0];
+        return tag(tmpl as TemplateStringsArray);
     }
     return harden(tagged);
 };

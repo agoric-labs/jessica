@@ -1,4 +1,5 @@
 const repl = (file: string,
+              computedSet: (obj: Record<string | number, any>, index: string | number, val: any) => void,
               readInput: (file: string) => Promise<string>,
               doEval: (data: string, uri: string) => Promise<any>,
               writeOutput: (file: string, data: string) => void,
@@ -8,7 +9,8 @@ const repl = (file: string,
     // Eval ...
     .then(data => doEval(data, file))
     // Execute as main, if a function.
-    .then(main => (typeof main === 'function') ? main({readInput, writeOutput}, argv) : main)
+    .then(main => (typeof main === 'function') ?
+        main({computedSet, readInput, writeOutput}, argv) : main)
     // ... maybe Print.
     .then(val => {
         if (val !== undefined) {

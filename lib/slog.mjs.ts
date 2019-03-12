@@ -7,9 +7,7 @@ type SlogHandler =
 const makeSlog = (handler: SlogHandler): Slog => {
     const levels = makeMap<SlogName, number>();
     const names: SlogName[] = [];
-    const slogTags: Record<string, SlogTag<string>> = {};
-    const slogTagsR: Record<string, SlogTag<Promise<never>>> = {};
-    const slogTagsN: Record<string, SlogTag<never>> = {};
+    let slog: Partial<Slog> & SlogTag<string>;
     for (const prep of [true, false]) {
         let i = 0;
         const doit = <T>(level: number, name: SlogName): SlogTag<T> => {
@@ -34,27 +32,26 @@ const makeSlog = (handler: SlogHandler): Slog => {
             return tag;
         };
 
-        if (!prep) {
+        if (prep) {
+            slog = doit<string>(-1, 'DEFAULT');
+        } else {
             const defaultLevel = levels.get('trace');
             levels.set('DEFAULT', defaultLevel);
+            slog = slog.trace;
         }
 
-        // Can't use Object.assign because we depend on evaluation order.
-        slogTagsN.panic = doit<never>(i ++, 'panic');
-        slogTagsN.alert = doit<never>(i ++, 'alert');
-        slogTagsN.crit = doit<never>(i ++, 'crit');
-        slogTagsN.error = doit<never>(i ++, 'error');
-        slogTagsR.reject = doit<Promise<never>>(i ++, 'reject');
-        slogTags.warn = doit<string>(i ++, 'warn');
-        slogTags.notice = doit<string>(i ++, 'notice');
-        slogTags.info = doit<string>(i ++, 'info');
-        slogTags.debug = doit<string>(i ++, 'debug');
-        slogTags.trace = doit<string>(i ++, 'trace');
+        slog.panic = doit<never>(i ++, 'panic');
+        slog.alert = doit<never>(i ++, 'alert');
+        slog.crit = doit<never>(i ++, 'crit');
+        slog.error = doit<never>(i ++, 'error');
+        slog.reject = doit<Promise<never>>(i ++, 'reject');
+        slog.warn = doit<string>(i ++, 'warn');
+        slog.notice = doit<string>(i ++, 'notice');
+        slog.info = doit<string>(i ++, 'info');
+        slog.debug = doit<string>(i ++, 'debug');
+        slog.trace = doit<string>(i ++, 'trace');
     }
-    const slog = slogTags as Record<SlogName, SlogTag<string>>;
-    const slogR = slogTagsR as Record<SlogName, SlogTag<Promise<never>>>;
-    const slogN = slogTagsN as Record<SlogName, SlogTag<never>>;
-    return harden(Object.assign(slog.trace, slog, slogR, slogN, {LEVELS: levels, NAMES: names}));
+    return harden(slog as Slog);
 };
 
 export default harden(makeSlog);

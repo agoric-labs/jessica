@@ -19,22 +19,17 @@ interface IBinding {
     [BINDING_SET]?: (val: any) => typeof val;
 }
 
-interface IEval {
-    0: string;
-    1: IEval;
-}
-
 interface IEvalContext {
+    computedSet: (obj: Record<string | number, any>, key: string | number, val: any) => void;
     dir: string;
-    evalStack?: Hardened<IEval>;
     envp?: Hardened<IBinding>;
     import: (path: string) => any;
 }
 
-function makeBinding(self: IEvalContext, name: string, init?: any, mutable = true) {
+function makeBinding(parent: IBinding, name: string, init?: any, mutable = true) {
     let slot = init;
     const setter = mutable && ((val: any) => slot = val);
-    return harden<IBinding>([self.envp, name, () => slot, setter]);
+    return harden<IBinding>([parent, name, () => slot, setter]);
 }
 
 const evaluators: Record<string, Evaluator> = {
@@ -49,16 +44,13 @@ const evaluators: Record<string, Evaluator> = {
     },
     call(self: IEvalContext, func: any[], args: any[][]) {
         const lambda = doEval(self, ...func);
-        if (typeof lambda !== 'function') {
-            slog.error`Expected a function, not ${{lambda}}`;
-        }
         const evaledArgs = args.map((a) => doEval(self, ...a));
         return lambda(...evaledArgs);
     },
     const(self: IEvalContext, binds: any[][]) {
         binds.forEach(b => {
             const [name, val] = doEval(self, ...b);
-            self.envp = makeBinding(self, name, val);
+            self.envp = makeBinding(self.envp, name, val);
         });
     },
     data(self: IEvalContext, val: any) {
@@ -70,7 +62,7 @@ const evaluators: Record<string, Evaluator> = {
     functionDecl(self: IEvalContext, def: any[], argDefs: any[][], body: any[]) {
         const lambda = evaluators.lambda(self, argDefs, body);
         const name = doEval(self, ...def);
-        self.envp = makeBinding(self, name, lambda, true);
+        self.envp = makeBinding(self.envp, name, lambda, true);
     },
     get(self: IEvalContext, objExpr: any[], index: any) {
         const obj = doEval(self, ...objExpr);
@@ -85,7 +77,7 @@ const evaluators: Record<string, Evaluator> = {
 
         // Interpret with the same endowments.
         const val = self.import(path);
-        self.envp = makeBinding(self, name, val);
+        self.envp = makeBinding(self.envp, name, val);
     },
     lambda(self: IEvalContext, argDefs: any[][], body: any[]) {
         // FIXME: Handle rest and default arguments.
@@ -117,6 +109,14 @@ const evaluators: Record<string, Evaluator> = {
             self.envp = oldEnv;
         }
     },
+    record(self: IEvalContext, propDefs: any[][]) {
+        const obj: Record<string | number, any> = {};
+        propDefs.forEach(b => {
+            const [name, val] = doEval(self, ...b);
+            self.computedSet(obj, name, val);
+        });
+        return obj;
+    },
     use(self: IEvalContext, name: string) {
         let b = self.envp;
         while (b !== undefined) {
@@ -131,43 +131,40 @@ const evaluators: Record<string, Evaluator> = {
 
 function doEval(self: IEvalContext, ...astArgs: any[]) {
     const [name, ...args] = astArgs;
-    const ee = evaluators[name];
-    if (!ee) {
+    const ev = evaluators[name];
+    if (!ev) {
         slog.error`No ${{name}} implementation`;
     }
-    const oldEvalStack = self.evalStack;
-    try {
-        self.evalStack = [name, self.evalStack];
-        return ee(self, ...args);
-    } finally {
-        self.evalStack = oldEvalStack;
-    }
+    return ev(self, ...args);
 }
 
 function doApply(self: IEvalContext, args: any[], formals: string[], body: any[]) {
     // Bind the formals.
     // TODO: Rest arguments.
-    formals.forEach((f, i) => self.envp = makeBinding(self, f, args[i]));
+    formals.forEach((f, i) => self.envp = makeBinding(self.envp, f, args[i]));
 
     // Evaluate the body.
     return doEval(self, ...body);
 }
 
-function makeInterpJessie(importer: (path: string, evaluator: (ast: any[]) => any) => any) {
+function makeInterpJessie(
+    importer: (path: string, evaluator: (ast: any[]) => any) => any,
+    computedSet: (obj: Record<string | number, any>, index: string | number, value: any) => void) {
     function interpJessie(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
         const lastSlash = options.scriptName === undefined ? -1 : options.scriptName.lastIndexOf('/');
         const thisDir = lastSlash < 0 ? '.' : options.scriptName.slice(0, lastSlash);
 
         const self: IEvalContext = {
+            computedSet,
             dir: thisDir,
-            import: (path: string) =>
+            import: (path) =>
                 importer(path, (iast: any[]) => interpJessie(iast, endowments, {scriptName: path})),
         };
 
         // slog.info`AST: ${{ast}}`;
         for (const [name, value] of Object.entries(endowments)) {
             // slog.info`Adding ${name}, ${value} to bindings`;
-            self.envp = makeBinding(self, name, value);
+            self.envp = makeBinding(self.envp, name, value);
         }
         return doEval(self, ...ast);
     }
