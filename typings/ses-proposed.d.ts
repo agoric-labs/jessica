@@ -8,6 +8,31 @@ interface TemplateStringsArray extends ReadonlyArray<string> {
     readonly sources?: ReadonlyArray<SourceLocation>;
 }
 
+// Hardening that carries over onto the return type.
+type PurifiedFunction<T> = (...args: ArgsType<T>) => Purified<RetType<T>>;
+interface PurifiedArray<T> extends HardenedArray<Purified<T>> {}
+type PurifiedObject<T> = {
+  readonly [K in keyof T]: Purified<T[K]>
+};
+
+type Purified<T> =
+  T extends Function ? T & PurifiedFunction<T> :
+  T extends Primitive ? Readonly<T> :
+  T extends Array<infer U> ? PurifiedArray<U> :
+  // The following are just hardened, as described in lib.jessie.d.ts
+  T extends Map<infer K, infer V> ? Map<K, V> :
+  T extends WeakMap<infer WK, infer WV> ? WeakMap<WK, WV> :
+  T extends Set<infer M> ? Set<M> :
+  T extends WeakSet<infer WM> ? WeakSet<WM> :
+  T extends Promise<infer R> ? Promise<R> :
+  // All others are manually purified.
+    PurifiedObject<T>;
+
+interface Purify {
+    <T>(arg: T): Purified<T>;
+}
+declare const purify: Hardened<Purify>;
+
 interface Bond {
     <T>(arg: T): T;
     <T, K extends keyof T>(arg: T, index: K): T[K];
@@ -17,6 +42,7 @@ declare const bond: Hardened<Bond>;
 interface SlogTag<T> {
     (template: TemplateStringsArray, ...args: any[]): T;
     (context: {}): (template: TemplateStringsArray, ...args: any[]) => T;
+    (contextOrTemplate: {} | TemplateStringsArray, ...args: any[]): ((template: TemplateStringsArray, ...args: any[]) => T) | T;
 }
 
 type SlogName = 'panic' | 'alert' | 'crit' | 'error' | 'warn' | 'notice' |

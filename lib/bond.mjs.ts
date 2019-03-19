@@ -1,7 +1,5 @@
 // Create a `bond` function for use in Jessie endowments.
 // https://github.com/Agoric/Jessie/issues/19
-//
-// TODO: This function desperately needs a test suite!
 
 type ApplyMethod = <T, U>(that: any, method: (...args: T[]) => U, args: T[]) => U;
 type AnyMethod = (this: any, ...args: any[]) => any;
