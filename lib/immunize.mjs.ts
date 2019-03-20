@@ -1,9 +1,9 @@
 // Create an `immunize` function for use in Jessie endowments.
 //
-// Recursively freeze the root, a la harden.  If it is an unhardened function
-// or contains a reachable property that is an unhardened function, that
-// function will be replaced by a hardened wrapper that immunizes its return
-// value.
+// Recursively freeze the root, a la harden.  If it is a function
+// or contains a reachable property that is an function, that
+// function will be replaced by a memoized hardened wrapper that
+// immunizes its return value.
 //
 // A baroque Proxy or frozen object cannot be immunized, but will still be
 // hardened.  These are objects that cannot possibly contain mutable Jessie
@@ -48,9 +48,12 @@ const makeImmunize = immunize((
         if (!wrapper) {
             // Make sure the function's return value is also immunized.
             wrapper = (...args: any[]) => newImmunize(fn(...args));
-            _wrapperMap.set(fn, wrapper);
 
-            // Copy over the wrapped function's properties (if any).
+            // Memoize our results.
+            _wrapperMap.set(fn, wrapper);
+            _wrapperMap.set(wrapper, wrapper);
+
+            // Copy in the wrapped function's properties (if any).
             // These are immunized in the next traversal.
             for (const [key, value] of Object.entries(fn)) {
                 setComputedIndex(wrapper, key, value);
