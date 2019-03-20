@@ -7,9 +7,9 @@
 // entire process.
 import * as sesshim from './sesshim.js';
 const globalEnv = {};
-// Export all of the SES shim.
-globalEnv.harden = sesshim.def;
+// Export parts of the SES shim.
+globalEnv.immunize = sesshim.def;
 globalEnv.confine = sesshim.confine;
-global.harden = sesshim.def;
+global.immunize = sesshim.def;
 global.confine = sesshim.confine;
 export default globalEnv;

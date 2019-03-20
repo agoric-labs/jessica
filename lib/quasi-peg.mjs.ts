@@ -16,7 +16,7 @@
 
 /// <reference path="peg.d.ts"/>
 
-const makePeg: MakePeg = <T = IPegTag<any>, U = IPegTag<IParserTag<any>>>(
+const makePeg = immunize<MakePeg>(<T = IPegTag<any>, U = IPegTag<IParserTag<any>>>(
       pegTag: IBootPegTag<T>,
       metaCompile: (defs: PegDef[]) => (..._: any[]) => U) => {
       const {ACCEPT, HOLE, SKIP} = pegTag;
@@ -138,6 +138,6 @@ END          <- '>' _Spacing;
 PLUSPLUS     <- '++' _Spacing;
 STARSTAR     <- '**' _Spacing;
 `;
-};
+});
 
-export default harden(makePeg);
+export default makePeg;

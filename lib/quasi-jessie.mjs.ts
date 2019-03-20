@@ -6,7 +6,7 @@
 
 /// <reference path="peg.d.ts"/>
 
-function makeJessie(peg: IPegTag) {
+const makeJessie = immunize((peg: IPegTag) => {
     const {SKIP} = peg;
     return peg`
     # Override rather than inherit start production.
@@ -228,14 +228,15 @@ function makeJessie(peg: IPegTag) {
       declOp moduleBinding ** COMMA SEMI                 ${(op, decls) => [op, decls]}
     / functionDecl;
 
-    # A recursively-hardened expression without side-effects.
-    purifiedExpr <-
-      "purify" _WS LEFT_PAREN pureExpr RIGHT_PAREN  ${(fname, _2, expr, _3) => ['call', fname, expr]};
+    # An immunized expression without side-effects.
+    immunizedExpr <-
+      dataLiteral
+    / "immunize" _WS LEFT_PAREN pureExpr RIGHT_PAREN  ${(fname, _2, expr, _3) => ['call', fname, expr]};
 
-    # Jessie modules only allow purified bindings.
+    # Jessie modules only allow immunized module-level bindings.
     moduleBinding <-
-      bindingPattern EQUALS purifiedExpr       ${(p, _, e) => ['bind', p, e]}
-    / defVar EQUALS purifiedExpr               ${(p, _, e) => ['bind', p, e]}
+      bindingPattern EQUALS immunizedExpr       ${(p, _, e) => ['bind', p, e]}
+    / defVar EQUALS immunizedExpr               ${(p, _, e) => ['bind', p, e]}
     / defVar;
 
     importDecl <- IMPORT defVar FROM STRING SEMI  ${(i, v, _, s, _2) => [i, v, JSON.parse(s)]};
@@ -243,7 +244,8 @@ function makeJessie(peg: IPegTag) {
 
     # to be extended
     exportableExpr <-
-      ~("async" _WSN / "class" _WSN) expr;
+      immunizedExpr
+    / IDENT_NAME;
 
 
     # Lexical syntax
@@ -269,6 +271,6 @@ function makeJessie(peg: IPegTag) {
     EQUALS <- "=" _WS;
     SEMI <- ";" _WS;
   `;
-}
+});
 
-export default harden(makeJessie);
+export default makeJessie;

@@ -10,10 +10,10 @@ import * as sesshim from './sesshim.js';
 
 const globalEnv: Record<string, any> = {};
 
-// Export all of the SES shim.
-globalEnv.harden = sesshim.def;
+// Export parts of the SES shim.
+globalEnv.immunize = sesshim.def;
 globalEnv.confine = sesshim.confine;
-(global as any).harden = sesshim.def;
+(global as any).immunize = sesshim.def;
 (global as any).confine = sesshim.confine;
 
 export default globalEnv;

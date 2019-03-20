@@ -7,7 +7,7 @@ function jesspipe(deps: IMainDependencies, argv: string[]) {
         confine,
         confineExpr,
         eval,
-        harden,
+        immunize,
         makeMap,
         makePromise,
         makeSet,

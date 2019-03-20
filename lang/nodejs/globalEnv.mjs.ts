@@ -11,11 +11,11 @@
 
 import globalEnv from './globalEnv0.mjs';
 
-globalEnv.makeMap = harden((...args: any[]) => harden(new Map(...args)));
-globalEnv.makeSet = harden((...args: any[]) => harden(new Set(...args)));
-globalEnv.makePromise = harden((executor: any) => harden(new Promise(executor)));
-globalEnv.makeWeakMap = harden((...args: any[]) => harden(new WeakMap(...args)));
-globalEnv.makeWeakSet = harden((...args: any[]) => harden(new WeakSet(...args)));
+globalEnv.makeMap = immunize((...args: any[]) => new Map(...args));
+globalEnv.makeSet = immunize((...args: any[]) => new Set(...args));
+globalEnv.makePromise = immunize((executor: any) => new Promise(executor));
+globalEnv.makeWeakMap = immunize((...args: any[]) => new WeakMap(...args));
+globalEnv.makeWeakSet = immunize((...args: any[]) => new WeakSet(...args));
 Object.keys(globalEnv).forEach(vname => {
     (global as any)[vname] = globalEnv[vname];
 });

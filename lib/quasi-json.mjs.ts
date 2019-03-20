@@ -9,7 +9,7 @@
 
 /// <reference path="peg.d.ts"/>
 
-function makeJSON(pegPeg: IPegTag) {
+const makeJSON = immunize((pegPeg: IPegTag) => {
     const peg = pegPeg;
     const {FAIL, HOLE, SKIP} = peg;
     return peg`
@@ -117,6 +117,6 @@ _WSN <- ~[$A-Za-z_] _WS    ${_ => SKIP};
 _WS <- [\t\n\r ]*          ${_ => SKIP};
 `;
 
-}
+});
 
-export default harden(makeJSON);
+export default makeJSON;

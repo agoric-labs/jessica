@@ -9,10 +9,10 @@ import makeImporter from './importer.mjs';
 import makeInterpJessie from './interp-jessie.mjs';
 import tagString from './tag-string.mjs';
 
-function bootEnv(
+const bootEnv = immunize((
     endowments: Record<string, any>,
     readInput: (file: string) => string,
-    setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => void) {
+    setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => void) => {
     // Bootstrap a peg tag.
     const pegTag = bootPeg<IPegTag<any>>(makePeg, bootPegAst);
 
@@ -24,23 +24,23 @@ function bootEnv(
     const importer = makeImporter(readInput, jessieTag);
     const interpJessie = makeInterpJessie(importer, setComputedIndex);
 
-    const env = harden({
+    const env = {
         ...endowments,
         confine: (src: string, evalenv: object, options?: ConfineOptions) => {
             const ast = tagString<any[]>(jessieTag, options.scriptName)`${src + '\n;'}`;
-            return harden(interpJessie(ast, evalenv, options || {}));
+            return interpJessie(ast, evalenv, options || {});
         },
         confineExpr: (src: string, evalenv: object, options?: ConfineOptions) => {
             // FIXME: Use the `expr` starting point for jessieTag.
             const ast = tagString<any[]>(jessieTag.expr, options.scriptName)`${'(' + src + '\n)'}`;
-            return harden(interpJessie(ast, evalenv, options || {}));
+            return interpJessie(ast, evalenv, options || {});
         },
         eval: (src: string): any => {
             const ast = tagString<any[]>(jessieTag)`${src}`;
             return interpJessie(ast, env);
         },
-    });
+    };
     return env;
-}
+});
 
-export default harden(bootEnv);
+export default bootEnv;

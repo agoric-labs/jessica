@@ -32,11 +32,11 @@ import quasiUtils from './quasi-utils.mjs';
 
 const {qunpack} = quasiUtils;
 
-function binary(left: PegExpr, rights: any[]) {
+const binary = immunize((left: PegExpr, rights: any[]) => {
     return rights.reduce<PegExpr>((prev, [op, right]) => [op, prev, right], left);
-}
+});
 
-function transformSingleQuote(s: string) {
+const transformSingleQuote = immunize((s: string) => {
   let i = 0, qs = '';
   while (i < s.length) {
     const c = s.slice(i, i + 1);
@@ -55,9 +55,9 @@ function transformSingleQuote(s: string) {
     }
   }
   return `"${qs}"`;
-}
+});
 
-function makeJustin(peg: IPegTag<any>) {
+const makeJustin = immunize((peg: IPegTag<any>) => {
     const {SKIP} = peg;
     return peg`
     # to be overridden or inherited
@@ -278,6 +278,6 @@ function makeJustin(peg: IPegTag<any>) {
     # base as the this-binding to the function found at base.name.
     expr <- assignExpr;
   `;
-}
+});
 
-export default harden(makeJustin);
+export default makeJustin;

@@ -5,7 +5,7 @@ type ApplyMethod = <T, U>(that: any, method: (...args: T[]) => U, args: T[]) => 
 type AnyMethod = (this: any, ...args: any[]) => any;
 type AnyArrow = (...args: any[]) => any;
 
-function makeBond(applyMethod: ApplyMethod) {
+const makeBond = immunize((applyMethod: ApplyMethod) => {
     const _bonded = makeWeakMap<object, WeakMap<AnyMethod, AnyArrow>>(),
         _bondedUndefinedThis = makeWeakMap<AnyMethod, AnyArrow>();
 
@@ -60,15 +60,15 @@ function makeBond(applyMethod: ApplyMethod) {
         }
 
         // Wrap the method similar to `bind`.
-        const bondedMethod = harden((...args: any[]) =>
-            applyMethod(actualThis, maybeMethod, args));
+        const bondedMethod = (...args: any[]) =>
+            applyMethod(actualThis, maybeMethod, args);
 
-        // Cache the hardened, bound method.
+        // Cache the immunized, bound method.
         bondedForThis.set(actualMethod, bondedMethod);
         return bondedMethod;
     }
 
     return bond<Bond>(bond);
-}
+});
 
-export default harden(makeBond);
+export default makeBond;

@@ -1,11 +1,12 @@
-const repl = (file: string,
-              setComputedIndex: (obj: Record<string | number, any>, index: string | number, val: any) => void,
-              readInput: (file: string) => Promise<string>,
-              doEval: (data: string, uri: string) => Promise<any>,
-              writeOutput: (file: string, data: string) => void,
-              argv: string[]) =>
+const repl = immunize((
+        file: string,
+        setComputedIndex: (obj: Record<string | number, any>, index: string | number, val: any) => void,
+        readInput: (file: string) => Promise<string>,
+        doEval: (data: string, uri: string) => Promise<any>,
+        writeOutput: (file: string, data: string) => void,
+        argv: string[]) =>
     // Read...
-    harden(readInput(file)
+    readInput(file)
     // Eval ...
     .then(data => doEval(data, file))
     // Execute as main, if a function.
@@ -18,4 +19,4 @@ const repl = (file: string,
         }
     }));
 
-export default harden(repl);
+export default repl;
