@@ -20,7 +20,7 @@
 // then copied from SES/src/bundle/deepFreeze.js
 // then copied from make-hardener/src/index.js
 
-/// <reference path="../../typings/lib.jessie.d.ts"/>
+/// <reference path="../../typings/ses.d.ts"/>
 function makeHardener(initialFringe: Iterable<any>, naivePrepareObject?: (obj: any) => void): typeof harden {
   const { freeze, getOwnPropertyDescriptors, getPrototypeOf } = Object;
   const { ownKeys } = Reflect;

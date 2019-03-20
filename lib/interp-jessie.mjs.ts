@@ -155,10 +155,10 @@ function makeInterpJessie(
         const thisDir = lastSlash < 0 ? '.' : options.scriptName.slice(0, lastSlash);
 
         const self: IEvalContext = {
-            setComputedIndex,
             dir: thisDir,
             import: (path) =>
                 importer(path, (iast: any[]) => interpJessie(iast, endowments, {scriptName: path})),
+            setComputedIndex,
         };
 
         // slog.info`AST: ${{ast}}`;

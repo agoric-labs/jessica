@@ -16,7 +16,7 @@ function makeImmunize(
             if (typeof value !== 'function') {
                 continue;
             }
-            const wrapped = wrap(value);
+            const wrapped = wrap(value as AnyFunction);
             try {
                 // This means: arg[key] = wrapper;
                 setComputedIndex(obj, key, wrapped);
@@ -50,13 +50,13 @@ function makeImmunize(
     // possibly be returned by members.
     function newImmunize<T>(root: T) {
         // We may need to wrap the root before immunizing its children.
-        const wrapper = (typeof root === 'function') ? wrap(root) : root;
+        const wrapper = (typeof root === 'function') ? wrap(root as AnyFunction) : root;
         return immunizeHardener(wrapper);
     }
 
     // Since we already immunize our return values, we can use
     // the original harden.
-    return immunizeHardener(newImmunize) as typeof immunize;
+    return immunizeHardener(newImmunize);
 }
 
 export default makeImmunize;

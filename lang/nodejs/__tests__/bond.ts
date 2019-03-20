@@ -1,4 +1,4 @@
-/// <reference types="jest"/>
+/// <reference types="../node_modules/@types/jest"/>
 import '../globalEnv.mjs';
 
 import makeBond from '../../../lib/bond.mjs';
