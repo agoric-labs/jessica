@@ -18,29 +18,26 @@
 // https://github.com/google/caja/blob/master/src/com/google/caja/ses/repairES5.js
 // then copied from proposal-frozen-realms deep-freeze.js
 // then copied from SES/src/bundle/deepFreeze.js
+// then copied from make-hardener/src/index.js
 
-function makeHardener(initialFringe, freeze) {
-  const { getOwnPropertyDescriptors, getPrototypeOf } = Object;
+/// <reference path="../../typings/lib.jessie.d.ts"/>
+function makeHardener(initialFringe: Iterable<any>, naivePrepareObject?: (obj: any) => void): typeof harden {
+  const { freeze, getOwnPropertyDescriptors, getPrototypeOf } = Object;
   const { ownKeys } = Reflect;
-
-  if (!freeze) {
-    // Default to Object.freeze.
-    freeze = Object.freeze;
-  }
 
   // Objects that we won't freeze, either because we've frozen them already,
   // or they were one of the initial roots (terminals). These objects form
   // the "fringe" of the hardened object graph.
   const fringeSet = new WeakSet(initialFringe);
 
-  function harden(root) {
+  function harden(root: any) {
     const toFreeze = new Set();
     const prototypes = new Map();
     const paths = new WeakMap();
 
     // If val is something we should be freezing but aren't yet,
     // add it to toFreeze.
-    function enqueue(val, path) {
+    function enqueue(val: any, path?: string) {
       if (Object(val) !== val) {
         // ignore primitives
         return;
@@ -59,12 +56,20 @@ function makeHardener(initialFringe, freeze) {
       paths.set(val, path);
     }
 
-    function freezeAndTraverse(obj) {
+    function freezeAndTraverse(obj: any) {
+      // Naively prepare the object for freezing.
+      // This is not expected to handle baroque combinations
+      // of Proxies or already-frozen objects, but it allows
+      // for the construction of Jessie's `immunize`.
+      if (naivePrepareObject) {
+        naivePrepareObject(obj);
+      }
+
       // Immediately freeze the object to ensure reactive
       // objects such as proxies won't add properties
       // during traversal, before they get frozen.
 
-      // Object are verified before being enqueued,
+      // Objects are verified before being enqueued,
       // therefore this is a valid candidate.
       // Throws if this fails (strict mode).
       freeze(obj);
@@ -93,7 +98,7 @@ function makeHardener(initialFringe, freeze) {
         // test could be confused. We use hasOwnProperty to be sure about
         // whether 'value' is present or not, which tells us for sure that this
         // is a data property.
-        const desc = descs[name];
+        const desc = descs[name as string];
         if ('value' in desc) {
           // todo uncurried form
           enqueue(desc.value, `${pathname}`);
@@ -121,6 +126,7 @@ function makeHardener(initialFringe, freeze) {
             msg =
               'a prototype of something is not already in the fringeset (and .toString failed)';
             try {
+              // tslint:disable:no-console
               console.log(msg);
               console.log('the prototype:', p);
               console.log('of something:', path);

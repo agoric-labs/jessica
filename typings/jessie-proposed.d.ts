@@ -9,7 +9,7 @@
 // Michael FIG <michael+jessica@fig.org>, 2019-02-23
 
 interface IMainDependencies {
-    computedSet: (obj: Record<string | number, any>, index: string | number, value: any) => void,
+    setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => void,
     readInput: (file: string) => string;
     writeOutput: (file: string, data: string) => void;
 }

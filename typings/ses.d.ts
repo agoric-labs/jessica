@@ -15,11 +15,8 @@ type Primitive = undefined | null | boolean | string | number | Function;
 type ArgsType<T> = T extends (...args: infer U) => any ? U : never;
 type RetType<T> = T extends (...args: any[]) => infer U ? U : never;
 
-// FIXME: Somehow specify that the resulting function is readonly.
-type HardenedFunction<T> = (...args: ArgsType<T>) => RetType<T>;
-
 type Hardened<T> =
-  T extends Function ? T & HardenedFunction<T> :
+  T extends Function ? T & HardenedObject<T> : // FIXME: Escape hatch.
   T extends Primitive ? Readonly<T> :
   T extends Array<infer U> ? HardenedArray<U> :
   // The following are always hardened, as described in lib.jessie.d.ts
