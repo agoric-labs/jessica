@@ -9,14 +9,14 @@ interface TemplateStringsArray extends ReadonlyArray<string> {
 }
 
 // Note that ImmuneFunctions should not be mutable.
-type ImmuneFunction<T> = (...args: ArgsType<T>) => Immune<RetType<T>>;
 interface ImmuneArray<T> extends HardenedArray<Immune<T>> {}
 type ImmuneObject<T> = {
   readonly [K in keyof T]: Immune<T[K]>
 };
+type ImmuneFunction<T> = T; // FIXME: Escape hatch.
 
 type Immune<T> =
-  T extends Function ? ImmuneObject<T> & ImmuneFunction<T> :
+  T extends Function ? ImmuneFunction<T> :
   T extends Primitive ? Readonly<T> :
   T extends Array<infer U> ? ImmuneArray<U> :
   // The following are just hardened, as described in lib.jessie.d.ts
