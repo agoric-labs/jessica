@@ -5,7 +5,8 @@
 // tslint:disable:no-console
 
 import * as fs from 'fs';
-import * as ts from "typescript";
+import * as ts from 'typescript';
+import * as util from 'util';
 
 // TODO: Don't hardcode this path, take it from a command-line option.
 const TSCONFIG_JSON = './tsconfig.json';
@@ -25,15 +26,44 @@ showDiagnostics(errors);
 if (errors.length) {
   process.exit(1);
 }
+interface IPositionable {
+  pos: number;
+  end: number;
+}
 
-const analyze: ts.TransformerFactory<ts.SourceFile> = (context) =>
+function setPos<T extends IPositionable>(src: IPositionable, dst: T): T {
+  dst.pos = src.pos;
+  dst.end = src.end;
+  const parent = (src as any).parent;
+  if (parent) {
+    (dst as any).parent = parent;
+  }
+  // console.log(`got ${util.inspect(dst)}`);
+  return dst;
+}
+
+const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
   (topNode) => {
     function moduleLevel(node: ts.Node) {
       switch (node.kind) {
-      // FIXME: Restrict the allowed module expressions.
-      default:
-        return node;
+      case ts.SyntaxKind.VariableStatement: {
+        const varStmt = node as ts.VariableStatement;
+        // tslint:disable:no-bitwise
+        if (!(varStmt.declarationList.flags & ts.NodeFlags.Const)) {
+          report(node, `Module-level declarations must be const`);
+        }
+        break;
       }
+
+      case ts.SyntaxKind.NotEmittedStatement:
+      case ts.SyntaxKind.ExportAssignment:
+      case ts.SyntaxKind.ImportDeclaration:
+        break;
+
+      default:
+        report(node, `Unexpected module-level expression ${ts.SyntaxKind[node.kind]}`);
+      }
+      return node;
     }
 
     function pureExpr(node: ts.Node) {
@@ -51,6 +81,21 @@ const analyze: ts.TransformerFactory<ts.SourceFile> = (context) =>
         return node;
       }
     }
+
+    function report(node: ts.Node, message: string) {
+      let start: number;
+      try {
+        start = node.getStart();
+      } catch (e) {
+        // console.log(e, ts.SyntaxKind[node.kind], node);
+        start = 0;
+      }
+      const {line, character} = topNode.getLineAndCharacterOfPosition(start);
+      console.log(
+        `${topNode.fileName}: ${line + 1}:${character + 1}: ${message}`
+      );
+    }
+
     ts.forEachChild(topNode, moduleLevel);
     return topNode;
   };
@@ -66,11 +111,7 @@ const immunize: ts.TransformerFactory<ts.SourceFile> = (context) =>
         // Handle `export` statements.
         const exportAssign = node as ts.ExportAssignment;
         const immunized = immunizeExpr(exportAssign.expression);
-        if (!exportAssign.name) {
-          return ts.createExportDefault(immunized);
-        }
-        return ts.createExportAssignment(exportAssign.decorators, exportAssign.modifiers,
-          exportAssign.isExportEquals, immunized);
+        return setPos(node, ts.createExportDefault(immunized));
       }
 
       // Handle `const` statements.
@@ -78,14 +119,15 @@ const immunize: ts.TransformerFactory<ts.SourceFile> = (context) =>
         const varStmt = node as ts.VariableStatement;
         const decls = varStmt.declarationList.declarations.map(decl => {
           const immunized = decl.initializer ? immunizeExpr(decl.initializer) : undefined;
-          return ts.createVariableDeclaration(decl.name, undefined, immunized);
+          return setPos(decl, ts.createVariableDeclaration(decl.name, undefined, immunized));
         });
-        const varList = ts.createVariableDeclarationList(decls, ts.NodeFlags.Const);
-        return ts.createVariableStatement(varStmt.modifiers, varList);
+        const varList = setPos(varStmt.declarationList,
+          ts.createVariableDeclarationList(decls, ts.NodeFlags.Const));
+        setPos(varStmt.declarationList.declarations, varList.declarations);
+        return setPos(node, ts.createVariableStatement(varStmt.modifiers, varList));
       }
 
       default:
-        // console.log('toplevel', ts.SyntaxKind[node.kind]);
         return node;
       }
     }
@@ -124,7 +166,8 @@ const bondify: ts.TransformerFactory<ts.SourceFile> = (context) =>
   };
 
 const tessie2jessie: ts.CustomTransformers = {
-  after: [analyze, immunize, bondify],
+  after: [lint],
+  before: [immunize, bondify],
 };
 
 compile(process.argv.slice(2), opts, tessie2jessie);

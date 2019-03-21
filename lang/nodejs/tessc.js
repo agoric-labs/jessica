@@ -22,13 +22,35 @@ showDiagnostics(errors);
 if (errors.length) {
     process.exit(1);
 }
-const analyze = (context) => (topNode) => {
+function setPos(src, dst) {
+    dst.pos = src.pos;
+    dst.end = src.end;
+    const parent = src.parent;
+    if (parent) {
+        dst.parent = parent;
+    }
+    // console.log(`got ${util.inspect(dst)}`);
+    return dst;
+}
+const lint = (context) => (topNode) => {
     function moduleLevel(node) {
         switch (node.kind) {
-            // FIXME: Restrict the allowed module expressions.
+            case ts.SyntaxKind.VariableStatement: {
+                const varStmt = node;
+                // tslint:disable:no-bitwise
+                if (!(varStmt.declarationList.flags & ts.NodeFlags.Const)) {
+                    report(node, `Module-level declarations must be const`);
+                }
+                break;
+            }
+            case ts.SyntaxKind.NotEmittedStatement:
+            case ts.SyntaxKind.ExportAssignment:
+            case ts.SyntaxKind.ImportDeclaration:
+                break;
             default:
-                return node;
+                report(node, `Unexpected module-level expression ${ts.SyntaxKind[node.kind]}`);
         }
+        return node;
     }
     function pureExpr(node) {
         switch (node.kind) {
@@ -44,6 +66,18 @@ const analyze = (context) => (topNode) => {
                 return node;
         }
     }
+    function report(node, message) {
+        let start;
+        try {
+            start = node.getStart();
+        }
+        catch (e) {
+            // console.log(e, ts.SyntaxKind[node.kind], node);
+            start = 0;
+        }
+        const { line, character } = topNode.getLineAndCharacterOfPosition(start);
+        console.log(`${topNode.fileName}: ${line + 1}:${character + 1}: ${message}`);
+    }
     ts.forEachChild(topNode, moduleLevel);
     return topNode;
 };
@@ -57,23 +91,20 @@ const immunize = (context) => (rootNode) => {
                 // Handle `export` statements.
                 const exportAssign = node;
                 const immunized = immunizeExpr(exportAssign.expression);
-                if (!exportAssign.name) {
-                    return ts.createExportDefault(immunized);
-                }
-                return ts.createExportAssignment(exportAssign.decorators, exportAssign.modifiers, exportAssign.isExportEquals, immunized);
+                return setPos(node, ts.createExportDefault(immunized));
             }
             // Handle `const` statements.
             case ts.SyntaxKind.VariableStatement: {
                 const varStmt = node;
                 const decls = varStmt.declarationList.declarations.map(decl => {
                     const immunized = decl.initializer ? immunizeExpr(decl.initializer) : undefined;
-                    return ts.createVariableDeclaration(decl.name, undefined, immunized);
+                    return setPos(decl, ts.createVariableDeclaration(decl.name, undefined, immunized));
                 });
-                const varList = ts.createVariableDeclarationList(decls, ts.NodeFlags.Const);
-                return ts.createVariableStatement(varStmt.modifiers, varList);
+                const varList = setPos(varStmt.declarationList, ts.createVariableDeclarationList(decls, ts.NodeFlags.Const));
+                setPos(varStmt.declarationList.declarations, varList.declarations);
+                return setPos(node, ts.createVariableStatement(varStmt.modifiers, varList));
             }
             default:
-                // console.log('toplevel', ts.SyntaxKind[node.kind]);
                 return node;
         }
     }
@@ -106,7 +137,8 @@ const bondify = (context) => (topNode) => {
     return topNode;
 };
 const tessie2jessie = {
-    after: [analyze, immunize, bondify],
+    after: [lint],
+    before: [immunize, bondify],
 };
 compile(process.argv.slice(2), opts, tessie2jessie);
 function showDiagnostics(errs) {
