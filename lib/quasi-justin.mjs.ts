@@ -59,7 +59,7 @@ const transformSingleQuote = immunize((s: string) => {
 
 const makeJustin = immunize((peg: IPegTag<any>) => {
     const {SKIP} = peg;
-    return peg`
+    return bond(peg)`
     # to be overridden or inherited
     start <- _WS assignExpr _EOF                       ${v => (..._a: any[]) => v};
 

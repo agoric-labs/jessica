@@ -10,13 +10,13 @@ const makeBond = immunize((applyMethod: ApplyMethod) => {
         _bondedUndefinedThis = makeWeakMap<AnyMethod, AnyArrow>();
 
     /**
-     *  Given an object and an index, either
-     * return a fresh method bound to the object,
+     * Given an object and an index, either
+     * return a fresh method bound to the object that immunizes its args,
      * a (cached) method we already bound,
      * or a plain value.
      *
      * Given an undefined index,
-     * return a fresh arrow function bound to undefined,
+     * return a fresh arrow function bound to undefined that immunizes its args,
      * a (cached) arrow we already bound,
      * or a plain value.
      */
@@ -60,8 +60,11 @@ const makeBond = immunize((applyMethod: ApplyMethod) => {
         }
 
         // Wrap the method similar to `bind`.
+        // Immunize the arguments, since they may come from an internal
+        // object that has not been returned for the module-level
+        // immunize to act on.
         const bondedMethod = (...args: any[]) =>
-            applyMethod(actualThis, maybeMethod, args);
+            applyMethod(actualThis, maybeMethod, args.map(immunize));
 
         // Cache the immunized, bound method.
         bondedForThis.set(actualMethod, bondedMethod);

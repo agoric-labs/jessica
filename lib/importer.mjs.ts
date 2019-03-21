@@ -1,6 +1,8 @@
 import tagString from './tag-string.mjs';
 
 const makeImporter = immunize((readInput: (file: string) => string, languageTag: IParserTag<any[]>) => {
+    readInput = bond(readInput);
+    languageTag = bond(languageTag);
     const importCache = makeMap<string, any>();
 
     const IMPORT_RECURSION = {

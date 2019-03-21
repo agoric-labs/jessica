@@ -9,10 +9,9 @@
 
 /// <reference path="peg.d.ts"/>
 
-const makeJSON = immunize((pegPeg: IPegTag) => {
-    const peg = pegPeg;
+const makeJSON = immunize((peg: IPegTag) => {
     const {FAIL, HOLE, SKIP} = peg;
-    return peg`
+    return bond(peg)`
 # to be overridden or inherited
 start <- _WS assignExpr _EOF                ${v => (..._a: any[]) => v};
 

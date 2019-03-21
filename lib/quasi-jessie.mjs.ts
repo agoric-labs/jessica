@@ -8,7 +8,7 @@
 
 const makeJessie = immunize((peg: IPegTag) => {
     const {SKIP} = peg;
-    return peg`
+    return bond(peg)`
     # Override rather than inherit start production.
     # Only module syntax is permitted.
     start <- _WS moduleBody _EOF               ${b => (..._a: any[]) => ['module', b]};

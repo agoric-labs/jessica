@@ -150,6 +150,8 @@ const doApply = immunize((self: IEvalContext, args: any[], formals: string[], bo
 const makeInterpJessie = immunize((
     importer: (path: string, evaluator: (ast: any[]) => any) => any,
     setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => void) => {
+    importer = bond(importer);
+    setComputedIndex = bond(setComputedIndex);
     function interpJessie(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
         const lastSlash = options.scriptName === undefined ? -1 : options.scriptName.lastIndexOf('/');
         const thisDir = lastSlash < 0 ? '.' : options.scriptName.slice(0, lastSlash);

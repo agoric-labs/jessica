@@ -5,6 +5,7 @@ type SlogHandler =
         template: TemplateStringsArray, args: any[]) => any;
 
 const makeSlog = immunize((handler: SlogHandler): Slog => {
+    handler = bond(handler);
     const levels = makeMap<SlogName, number>();
     const names: SlogName[] = [];
     let slog: Partial<Slog> & SlogTag<string>;

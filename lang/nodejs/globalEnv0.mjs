@@ -10,6 +10,9 @@ const globalEnv = {};
 // Export parts of the SES shim.
 globalEnv.immunize = sesshim.def;
 globalEnv.confine = sesshim.confine;
-global.immunize = sesshim.def;
-global.confine = sesshim.confine;
+// Bootstrap one-argument bond.
+globalEnv.bond = (fn) => (...args) => fn.apply(undefined, args.map(immunize));
+global.immunize = globalEnv.immunize;
+global.confine = globalEnv.confine;
+global.bond = globalEnv.bond;
 export default globalEnv;

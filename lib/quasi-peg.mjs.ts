@@ -52,11 +52,11 @@ const makePeg = immunize<MakePeg>(<T = IPegTag<any>, U = IPegTag<IParserTag<any>
             return [term];
       }
 
-      return pegTag`
+      return bond(pegTag)`
 # Hierarchical syntax
 
 Grammar      <- _Spacing Definition+ _EndOfFile
-                    ${metaCompile};
+                    ${bond(metaCompile)};
 
 Definition   <- Identifier LEFTARROW Expression SEMI &${ACCEPT}
                     ${(i, _, e, _2) => ['def', i, e]};
