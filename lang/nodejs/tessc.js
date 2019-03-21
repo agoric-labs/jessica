@@ -54,6 +54,7 @@ const immunize = (context) => (rootNode) => {
     function moduleStatement(node) {
         switch (node.kind) {
             case ts.SyntaxKind.ExportAssignment: {
+                // Handle `export` statements.
                 const exportAssign = node;
                 const immunized = immunizeExpr(exportAssign.expression);
                 if (!exportAssign.name) {
@@ -61,25 +62,32 @@ const immunize = (context) => (rootNode) => {
                 }
                 return ts.createExportAssignment(exportAssign.decorators, exportAssign.modifiers, exportAssign.isExportEquals, immunized);
             }
-            // FIXME: Handle `const` statements.
+            // Handle `const` statements.
+            case ts.SyntaxKind.VariableStatement: {
+                const varStmt = node;
+                const decls = varStmt.declarationList.declarations.map(decl => {
+                    const immunized = decl.initializer ? immunizeExpr(decl.initializer) : undefined;
+                    return ts.createVariableDeclaration(decl.name, undefined, immunized);
+                });
+                const varList = ts.createVariableDeclarationList(decls, ts.NodeFlags.Const);
+                return ts.createVariableStatement(varStmt.modifiers, varList);
+            }
             default:
+                // console.log('toplevel', ts.SyntaxKind[node.kind]);
                 return node;
         }
     }
     function immunizeExpr(expr) {
-        switch (expr.kind) {
-            case ts.SyntaxKind.CallExpression: {
-                // May already be immunized.
-                const callExpr = expr;
-                const lhs = callExpr.expression;
-                if (lhs.kind === ts.SyntaxKind.Identifier) {
-                    const id = lhs;
-                    if (id.text === 'immunize') {
-                        // Already immunized.
-                        return expr;
-                    }
+        if (expr.kind === ts.SyntaxKind.CallExpression) {
+            // May already be immunized.
+            const callExpr = expr;
+            const lhs = callExpr.expression;
+            if (lhs.kind === ts.SyntaxKind.Identifier) {
+                const id = lhs;
+                if (id.text === 'immunize') {
+                    // Already immunized.
+                    return expr;
                 }
-                break;
             }
         }
         return ts.createCall(ts.createIdentifier('immunize'), undefined, [expr]);
