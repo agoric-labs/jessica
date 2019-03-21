@@ -1,10 +1,11 @@
 "use strict";
-// tse.ts - The Tessie (Typescript-to-Jessie) compiler.
+// tessc.ts - The Tessie (Typescript-to-Jessie) Compiler.
 // Michael FIG <michael+jessica@fig.org>, 2019-03-20
 Object.defineProperty(exports, "__esModule", { value: true });
 // tslint:disable:no-console
-const ts = require("typescript");
 const fs = require("fs");
+const ts = require("typescript");
+// TODO: Don't hardcode this path, take it from a command-line option.
 const TSCONFIG_JSON = './tsconfig.json';
 const tsConfigJSON = fs.readFileSync(TSCONFIG_JSON, { encoding: 'utf-8' });
 const tsConfig = JSON.parse(tsConfigJSON);

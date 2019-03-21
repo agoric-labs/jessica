@@ -14,6 +14,6 @@
     "exclude": [
         "node_modules/**",
         "**/__tests__/*.ts",
-        "tse.ts"
+        "tessc.ts"
     ]
 }

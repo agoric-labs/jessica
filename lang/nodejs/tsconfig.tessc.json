@@ -9,6 +9,6 @@
         "types": ["node"]
     },
     "include": [
-        "tse.ts",
+        "tessc.ts",
     ]
 }
