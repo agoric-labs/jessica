@@ -1,4 +1,4 @@
-const repl = immunize((
+const repl = (
         file: string,
         setComputedIndex: (obj: Record<string | number, any>, index: string | number, val: any) => void,
         readInput: (file: string) => Promise<string>,
@@ -17,6 +17,6 @@ const repl = immunize((
         if (val !== undefined) {
             writeOutput('-', JSON.stringify(val, undefined, '  ') + '\n');
         }
-    }));
+    });
 
 export default repl;

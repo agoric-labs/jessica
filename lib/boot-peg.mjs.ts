@@ -7,7 +7,7 @@ import indent from './indent.mjs';
 
 const LEFT_RECUR = immunize<PegConstant>({toString: () => 'LEFT_RECUR'});
 
-const RUN = immunize((self: IPegParser, ruleOrPatt: PegRuleOrPatt, pos: number, name: string) => {
+const RUN = (self: IPegParser, ruleOrPatt: PegRuleOrPatt, pos: number, name: string) => {
     if (self._debug) {
         slog.info`run(f, ${pos}, ${name})`;
     }
@@ -35,9 +35,9 @@ const RUN = immunize((self: IPegParser, ruleOrPatt: PegRuleOrPatt, pos: number, 
         posm.set(ruleOrPatt, result);
     }
     return result;
-});
+};
 
-const lastFailures = immunize((self: IPegParser): [number, string[]] => {
+const lastFailures = (self: IPegParser): [number, string[]] => {
     let maxPos = 0;
     let fails: string[] = [];
     for (const [pos, posm] of self._memo) {
@@ -59,9 +59,9 @@ const lastFailures = immunize((self: IPegParser): [number, string[]] => {
         }
     }
     return [maxPos, fails];
-});
+};
 
-const ERROR = immunize((self: IPegParser, pos: number) => {
+const ERROR = (self: IPegParser, pos: number) => {
     const [last, fails] = lastFailures(self);
     const found = FIND(self.template, last);
     const tokStr = Array.isArray(found) ?
@@ -83,9 +83,9 @@ const ERROR = immunize((self: IPegParser, pos: number) => {
     -------
     ${failStr}`;
     slog.error`Syntax error ${tokStr}`;
-});
+};
 
-const makeTokStr = immunize((self: IPegParser, found: [number, number] | number) => {
+const makeTokStr = (self: IPegParser, found: [number, number] | number) => {
     if (Array.isArray(found)) {
         const segment = self.template[found[0]];
         return `${JSON.stringify(segment[found[1]])} #${found[0]}:${found[1]}`;
@@ -94,9 +94,9 @@ const makeTokStr = immunize((self: IPegParser, found: [number, number] | number)
         return `hole #${found}`;
     }
     return undefined;
-});
+};
 
-const DONE = immunize((self: IPegParser) => {
+const DONE = (self: IPegParser) => {
     if (self._debug) {
         for (const [pos, posm] of self._memo) {
             const fails = [];
@@ -120,9 +120,9 @@ const DONE = immunize((self: IPegParser) => {
         }
         slog.info`hits: ${self._hits(0)}, misses: ${self._misses(0)}`;
     }
-});
+};
 
-const FIND = immunize((template: TemplateStringsArray, pos: number):
+const FIND = (template: TemplateStringsArray, pos: number):
     [number, number] | number | undefined => {
     const {raw} = template;
     const numSubs = raw.length - 1;
@@ -137,14 +137,14 @@ const FIND = immunize((template: TemplateStringsArray, pos: number):
         }
         relpos -= seglen + 1; // "+1" for the skipped hole
     }
-});
+};
 
-const ACCEPT = immunize<PegPredicate>((self, pos) => {
+const ACCEPT: PegPredicate = (self, pos) => {
     // Not really needed: useful for incremental compilation.
     return [pos, []];
-});
+};
 
-const EAT = immunize<PegEat>((self, pos, str) => {
+const EAT: PegEat = (self, pos, str) => {
     // if (self._debug) {
     //    slog.warn`Have ${self.template}`;
     // }
@@ -161,23 +161,23 @@ const EAT = immunize<PegEat>((self, pos, str) => {
         }
     }
     return [pos, FAIL];
-});
+};
 
-const HOLE = immunize<PegPredicate>((self, pos) => {
+const HOLE: PegPredicate = (self, pos) => {
     const found = FIND(self.template, pos);
     if (typeof found === 'number') {
         return [pos + 1, found];
     }
     return [pos, FAIL];
-});
+};
 
-const FAIL = immunize({toString: () => 'FAIL'});
-const SKIP = immunize({toString: () => 'SKIP'});
+const FAIL = {toString: () => 'FAIL'};
+const SKIP = {toString: () => 'SKIP'};
 
 const lHexDigits = '0123456789abcdef';
 const uHexDigits = 'ABCDEF';
 
-const hexDigit = immunize((c: string) => {
+const hexDigit = (c: string) => {
     let i = lHexDigits.indexOf(c);
     if (i < 0) {
         i = uHexDigits.indexOf(c) + 10;
@@ -186,9 +186,9 @@ const hexDigit = immunize((c: string) => {
         slog.error`Invalid hexadecimal number ${{c}}`;
     }
     return i;
-});
+};
 
-const unescape = immunize((cs: string): [string, number] => {
+const unescape = (cs: string): [string, number] => {
     if (cs[0] !== '\\') {
         return [cs[0], 1];
     }
@@ -221,9 +221,9 @@ const unescape = immunize((cs: string): [string, number] => {
     }
 
     return [q, 2];
-});
+};
 
-const bootPeg = immunize(<T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[]) => {
+const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[]) => {
     function compile(sexp: PegExpr) {
         let numSubs = 0;              // # of holes implied by sexp, so far
 
@@ -576,7 +576,7 @@ const bootPeg = immunize(<T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: 
             }
             return pair;
         }
-        return quasiMemo<V>(baseCurry, bond(parserCreator));
+        return quasiMemo<V>(baseCurry, parserCreator);
     }
 
     const defaultBaseGrammar = quasifyParser(_template => undefined);
@@ -696,6 +696,6 @@ const bootPeg = immunize(<T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: 
     // Use the metaCompiler to generate another parser.
     const finalPegTag = makePeg<IPegTag<T>, IPegTag<IPegTag<T>>>(bootPegTag, metaCompile);
     return finalPegTag;
-});
+};
 
 export default bootPeg;

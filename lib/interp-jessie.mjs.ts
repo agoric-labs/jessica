@@ -26,13 +26,13 @@ interface IEvalContext {
     import: (path: string) => any;
 }
 
-const makeBinding = immunize((parent: IBinding, name: string, init?: any, mutable = true): IBinding => {
+const makeBinding = (parent: IBinding, name: string, init?: any, mutable = true): IBinding => {
     let slot = init;
     const setter = mutable && ((val: any) => slot = val);
     return [parent, name, () => slot, setter];
-});
+};
 
-const evaluators: ImmuneObject<Record<string, Evaluator>> = immunize<Record<string, Evaluator>>({
+const evaluators: Record<string, Evaluator> = {
     bind(self: IEvalContext, def, expr) {
         const name = doEval(self, ...def);
         const val = doEval(self, ...expr);
@@ -127,31 +127,29 @@ const evaluators: ImmuneObject<Record<string, Evaluator>> = immunize<Record<stri
         }
         slog.error`Cannot find binding for ${name} in current scope`;
     },
-});
+};
 
-const doEval = immunize((self: IEvalContext, ...astArgs: any[]) => {
+const doEval = (self: IEvalContext, ...astArgs: any[]) => {
     const [name, ...args] = astArgs;
     const ev = evaluators[name];
     if (!ev) {
         slog.error`No ${{name}} implementation`;
     }
     return ev(self, ...args);
-});
+};
 
-const doApply = immunize((self: IEvalContext, args: any[], formals: string[], body: any[]) => {
+const doApply = (self: IEvalContext, args: any[], formals: string[], body: any[]) => {
     // Bind the formals.
     // TODO: Rest arguments.
     formals.forEach((f, i) => self.envp = makeBinding(self.envp, f, args[i]));
 
     // Evaluate the body.
     return doEval(self, ...body);
-});
+};
 
-const makeInterpJessie = immunize((
+const makeInterpJessie = (
     importer: (path: string, evaluator: (ast: any[]) => any) => any,
     setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => void) => {
-    importer = bond(importer);
-    setComputedIndex = bond(setComputedIndex);
     function interpJessie(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
         const lastSlash = options.scriptName === undefined ? -1 : options.scriptName.lastIndexOf('/');
         const thisDir = lastSlash < 0 ? '.' : options.scriptName.slice(0, lastSlash);
@@ -172,6 +170,6 @@ const makeInterpJessie = immunize((
     }
 
     return interpJessie;
-});
+};
 
 export default makeInterpJessie;

@@ -9,9 +9,9 @@
 
 /// <reference path="peg.d.ts"/>
 
-const makeJSON = immunize((peg: IPegTag) => {
+const makeJSON = (peg: IPegTag) => {
     const {FAIL, HOLE, SKIP} = peg;
-    return bond(peg)`
+    return peg`
 # to be overridden or inherited
 start <- _WS assignExpr _EOF                ${v => (..._a: any[]) => v};
 
@@ -116,6 +116,6 @@ _WSN <- ~[$A-Za-z_] _WS    ${_ => SKIP};
 _WS <- [\t\n\r ]*          ${_ => SKIP};
 `;
 
-});
+};
 
 export default makeJSON;

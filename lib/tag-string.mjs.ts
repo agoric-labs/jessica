@@ -1,4 +1,4 @@
-const tagString = immunize(<T>(tag: IParserTag<T>, uri?: string) => {
+const tagString = <T>(tag: IParserTag<T>, uri?: string) => {
     function tagged(flag: string): IParserTag<T>;
     function tagged(template: TemplateStringsArray, ...args: any[]): T;
     function tagged(templateOrFlag: string | TemplateStringsArray, ...args: any[]):
@@ -29,6 +29,6 @@ const tagString = immunize(<T>(tag: IParserTag<T>, uri?: string) => {
         return tag(tmpl as TemplateStringsArray);
     }
     return tagged;
-});
+};
 
 export default tagString;

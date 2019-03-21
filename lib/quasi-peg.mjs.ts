@@ -16,7 +16,7 @@
 
 /// <reference path="peg.d.ts"/>
 
-const makePeg = immunize<MakePeg>(<T = IPegTag<any>, U = IPegTag<IParserTag<any>>>(
+const makePeg = <T = IPegTag<any>, U = IPegTag<IParserTag<any>>>(
       pegTag: IBootPegTag<T>,
       metaCompile: (defs: PegDef[]) => (..._: any[]) => U) => {
       const {ACCEPT, HOLE, SKIP} = pegTag;
@@ -52,11 +52,11 @@ const makePeg = immunize<MakePeg>(<T = IPegTag<any>, U = IPegTag<IParserTag<any>
             return [term];
       }
 
-      return bond(pegTag)`
+      return pegTag`
 # Hierarchical syntax
 
 Grammar      <- _Spacing Definition+ _EndOfFile
-                    ${bond(metaCompile)};
+                    ${metaCompile};
 
 Definition   <- Identifier LEFTARROW Expression SEMI &${ACCEPT}
                     ${(i, _, e, _2) => ['def', i, e]};
@@ -138,6 +138,6 @@ END          <- '>' _Spacing;
 PLUSPLUS     <- '++' _Spacing;
 STARSTAR     <- '**' _Spacing;
 `;
-});
+};
 
 export default makePeg;

@@ -11,7 +11,7 @@
 // this incompleteness does not compromise Jessie.
 
 type AnyFunction = (...args: any[]) => any;
-const makeImmunize = immunize((
+const makeImmunize = (
     makeHarden: (naivePrepareObject: (obj: any) => void) => typeof harden,
     setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => void) => {
 
@@ -80,6 +80,6 @@ const makeImmunize = immunize((
     }
 
     return newImmunize;
-});
+};
 
 export default makeImmunize;

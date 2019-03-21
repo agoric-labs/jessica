@@ -9,7 +9,7 @@ import makeImporter from './importer.mjs';
 import makeInterpJessie from './interp-jessie.mjs';
 import tagString from './tag-string.mjs';
 
-const bootEnv = immunize((
+const bootEnv = (
     endowments: Record<string, any>,
     readInput: (file: string) => string,
     setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => void) => {
@@ -41,6 +41,6 @@ const bootEnv = immunize((
         },
     };
     return env;
-});
+};
 
 export default bootEnv;

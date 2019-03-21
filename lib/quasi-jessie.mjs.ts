@@ -6,9 +6,9 @@
 
 /// <reference path="peg.d.ts"/>
 
-const makeJessie = immunize((peg: IPegTag) => {
+const makeJessie = (peg: IPegTag) => {
     const {SKIP} = peg;
-    return bond(peg)`
+    return peg`
     # Override rather than inherit start production.
     # Only module syntax is permitted.
     start <- _WS moduleBody _EOF               ${b => (..._a: any[]) => ['module', b]};
@@ -243,9 +243,7 @@ const makeJessie = immunize((peg: IPegTag) => {
     exportDecl <- EXPORT DEFAULT exportableExpr SEMI ${(_, _2, e, _3) => ['exportDefault', e]};
 
     # to be extended
-    exportableExpr <-
-      immunizedExpr
-    / IDENT_NAME;
+    exportableExpr <- immunizedExpr;
 
 
     # Lexical syntax
@@ -271,6 +269,6 @@ const makeJessie = immunize((peg: IPegTag) => {
     EQUALS <- "=" _WS;
     SEMI <- ";" _WS;
   `;
-});
+};
 
 export default makeJessie;

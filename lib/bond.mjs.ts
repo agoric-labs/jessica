@@ -5,7 +5,7 @@ type ApplyMethod = <T, U>(that: any, method: (...args: T[]) => U, args: T[]) => 
 type AnyMethod = (this: any, ...args: any[]) => any;
 type AnyArrow = (...args: any[]) => any;
 
-const makeBond = immunize((applyMethod: ApplyMethod) => {
+const makeBond = (applyMethod: ApplyMethod) => {
     const _bonded = makeWeakMap<object, WeakMap<AnyMethod, AnyArrow>>(),
         _bondedUndefinedThis = makeWeakMap<AnyMethod, AnyArrow>();
 
@@ -72,6 +72,6 @@ const makeBond = immunize((applyMethod: ApplyMethod) => {
     }
 
     return bond<Bond>(bond);
-});
+};
 
 export default makeBond;

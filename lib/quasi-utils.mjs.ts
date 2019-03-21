@@ -1,6 +1,6 @@
 /// <reference path="peg.d.ts"/>
 
-const qunpack = immunize((h: string, ms: Array<[string, Array<[string, any]>]>, t: string) => {
+const qunpack = (h: string, ms: Array<[string, Array<[string, any]>]>, t: string) => {
   const result: Array<string | PegHole> = [h];
   if (ms.length === 1) {
     const [[m, pairs]] = ms;
@@ -11,9 +11,9 @@ const qunpack = immunize((h: string, ms: Array<[string, Array<[string, any]>]>, 
   }
   result.push(t);
   return result;
-});
+};
 
-const qrepack = immunize((parts: any[]) => {
+const qrepack = (parts: any[]) => {
   // TODO bug: We only provide the raw form at this time. I
   // apologize once again for allowing a cooked form into the
   // standard.
@@ -26,6 +26,6 @@ const qrepack = immunize((parts: any[]) => {
   }
   const template = {raw};
   return [['data', template], ...argExprs];
-});
+};
 
 export default immunize({qunpack, qrepack});

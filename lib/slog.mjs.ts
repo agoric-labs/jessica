@@ -4,8 +4,7 @@ type SlogHandler =
         levels: Map<SlogName, number>, context: SlogContext,
         template: TemplateStringsArray, args: any[]) => any;
 
-const makeSlog = immunize((handler: SlogHandler): Slog => {
-    handler = bond(handler);
+const makeSlog = (handler: SlogHandler): Slog => {
     const levels = makeMap<SlogName, number>();
     const names: SlogName[] = [];
     let slog: Partial<Slog> & SlogTag<string>;
@@ -53,6 +52,6 @@ const makeSlog = immunize((handler: SlogHandler): Slog => {
         slog.trace = doit<string>(i ++, 'trace');
     }
     return slog as Slog;
-});
+};
 
 export default makeSlog;
