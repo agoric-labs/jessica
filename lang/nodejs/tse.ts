@@ -1,12 +1,44 @@
 // tse.ts - The Tessie (Typescript-to-Jessie) compiler.
 // Michael FIG <michael+jessica@fig.org>, 2019-03-20
 
-/// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 // tslint:disable:no-console
 
 import * as ts from "typescript";
 
-function showDiagnostics(errs: ts.Diagnostic[]) {
+
+import * as fs from 'fs';
+const TSCONFIG_JSON = './tsconfig.json';
+const tsConfigJSON = fs.readFileSync(TSCONFIG_JSON, {encoding: 'utf-8'});
+const tsConfig = JSON.parse(tsConfigJSON);
+
+const co = tsConfig.compilerOptions;
+if (co.target !== 'jessie') {
+  console.log(`Tessie only knows how to compile target: "jessie", not ${co.target}`);
+  process.exit(1);
+}
+// Set the target to something Typescript understands.
+co.target = 'esnext';
+
+const {errors, options: opts} = ts.convertCompilerOptionsFromJson(co, ".", TSCONFIG_JSON);
+showDiagnostics(errors);
+if (errors.length) {
+  process.exit(1);
+}
+
+const bondifySourceFile: ts.TransformerFactory<ts.SourceFile> = (context) =>
+  (node) => {
+    // FIXME: first pass, find all the trusted function arguments.
+    // FIXME: second pass, insert the required bonds.
+    // console.log('have', node);
+    return node;
+  };
+
+const tessie2jessie: ts.CustomTransformers = {
+  after: [bondifySourceFile],
+};
+
+compile(process.argv.slice(2), opts, tessie2jessie);
+function showDiagnostics(errs: ReadonlyArray<ts.Diagnostic>) {
   errs.forEach(diagnostic => {
     if (diagnostic.file) {
       const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
@@ -27,37 +59,29 @@ function showDiagnostics(errs: ts.Diagnostic[]) {
   });
 }
 
-function compile(fileNames: string[], options: ts.CompilerOptions): void {
+function compile(fileNames: string[], options: ts.CompilerOptions,
+                 transformers: ts.CustomTransformers): void {
   const program = ts.createProgram(fileNames, options);
-  const emitResult = program.emit();
+  showDiagnostics(ts.getPreEmitDiagnostics(program));
 
-  const allDiagnostics = ts
-    .getPreEmitDiagnostics(program)
-    .concat(emitResult.diagnostics);
+  // Emit *.mjs.ts directly to *.mjs.
+  let exitCode = 0;
+  for (const src of program.getSourceFiles()) {
+    const writeFile: ts.WriteFileCallback = (fileName, data, writeBOM, onError, sourceFiles) => {
+      const out = fileName.replace(/(\.mjs)\.js$/, '$1');
+      try {
+        fs.writeFileSync(out, data);
+      } catch (e) {
+        onError(e);
+      }
+    };
+    const emitResult = program.emit(src, writeFile, undefined, undefined, transformers);
+    showDiagnostics(emitResult.diagnostics);
+    if (emitResult.emitSkipped) {
+      exitCode = 1;
+    }
+  }
 
-  showDiagnostics(allDiagnostics);
-
-  const exitCode = emitResult.emitSkipped ? 1 : 0;
   // console.log(`Process exiting with code '${exitCode}'.`);
   process.exit(exitCode);
 }
-
-import * as fs from 'fs';
-const TSCONFIG_JSON = './tsconfig.json';
-const tsConfigJSON = fs.readFileSync(TSCONFIG_JSON, {encoding: 'utf-8'});
-const tsConfig = JSON.parse(tsConfigJSON);
-
-const co = tsConfig.compilerOptions;
-if (co.target !== 'jessie') {
-  console.log(`Tessie only knows how to compile target: "jessie", not ${co.target}`);
-  process.exit(1);
-}
-// Set the target to something Typescript understands.
-co.target = 'esnext';
-
-const {errors, options: opts} = ts.convertCompilerOptionsFromJson(co, ".", TSCONFIG_JSON);
-showDiagnostics(errors);
-if (errors.length) {
-  process.exit(1);
-}
-compile(process.argv.slice(2), opts);
