@@ -46,8 +46,16 @@ const makeImmunize = immunize((
     function wrap(fn: AnyFunction): ImmuneFunction<AnyFunction> {
         let wrapper = _wrapperMap.get(fn);
         if (!wrapper) {
-            // Make sure the function's return value is also immunized.
-            wrapper = (...args: any[]) => newImmunize(fn(...args));
+            // Make sure the function's return/throw value is also immunized.
+            wrapper = (...args: any[]) => {
+                let ret: any;
+                try {
+                    ret = fn(...args);
+                } catch (e) {
+                    throw newImmunize(e);
+                }
+                return newImmunize(ret);
+            };
 
             // Memoize our results.
             _wrapperMap.set(fn, wrapper);
