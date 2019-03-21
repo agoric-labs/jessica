@@ -32,23 +32,45 @@ function setPos(src, dst) {
     // console.log(`got ${util.inspect(dst)}`);
     return dst;
 }
-const lint = (context) => (topNode) => {
+let analyzeErrors = 0;
+const throwOnError = (context) => (topNode) => {
+    if (analyzeErrors) {
+        process.exit(1);
+    }
+    return topNode;
+};
+const analyze = (context) => (topNode) => {
     function moduleLevel(node) {
         switch (node.kind) {
             case ts.SyntaxKind.VariableStatement: {
                 const varStmt = node;
-                // tslint:disable:no-bitwise
-                if (!(varStmt.declarationList.flags & ts.NodeFlags.Const)) {
+                /*
+                FIXME: Try to find out if the declaration is exported.
+                varStmt.declarationList.declarations.forEach(decl => {
+                  const dflags = ts.getCombinedNodeFlags(decl.name.);
+                  // tslint:disable-next-line:no-bitwise
+                  if (dflags & ts.NodeFlags.ExportContext) {
+                    report(decl, `Cannot use named export ${decl.name.getText()}`);
+                  }
+                });
+                */
+                const flags = ts.getCombinedNodeFlags(varStmt.declarationList);
+                // tslint:disable-next-line:no-bitwise
+                if (!(flags & ts.NodeFlags.Const)) {
+                    console.log(varStmt);
                     report(node, `Module-level declarations must be const`);
                 }
                 break;
             }
             case ts.SyntaxKind.NotEmittedStatement:
             case ts.SyntaxKind.ExportAssignment:
+            case ts.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.InterfaceDeclaration:
             case ts.SyntaxKind.ImportDeclaration:
+                // Safe Typescript declarations.
                 break;
             default:
-                report(node, `Unexpected module-level expression ${ts.SyntaxKind[node.kind]}`);
+                report(node, `Unexpected module-level node ${ts.SyntaxKind[node.kind]}`);
         }
         return node;
     }
@@ -77,6 +99,7 @@ const lint = (context) => (topNode) => {
         }
         const { line, character } = topNode.getLineAndCharacterOfPosition(start);
         console.log(`${topNode.fileName}: ${line + 1}:${character + 1}: ${message}`);
+        analyzeErrors++;
     }
     ts.forEachChild(topNode, moduleLevel);
     return topNode;
@@ -137,8 +160,7 @@ const bondify = (context) => (topNode) => {
     return topNode;
 };
 const tessie2jessie = {
-    after: [lint],
-    before: [immunize, bondify],
+    before: [analyze, throwOnError, immunize, bondify],
 };
 compile(process.argv.slice(2), opts, tessie2jessie);
 function showDiagnostics(errs) {

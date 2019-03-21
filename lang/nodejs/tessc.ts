@@ -42,14 +42,34 @@ function setPos<T extends IPositionable>(src: IPositionable, dst: T): T {
   return dst;
 }
 
-const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
+let analyzeErrors = 0;
+const throwOnError: ts.TransformerFactory<ts.SourceFile> = (context) =>
+  (topNode) => {
+    if (analyzeErrors) {
+      process.exit(1);
+    }
+    return topNode;
+  };
+const analyze: ts.TransformerFactory<ts.SourceFile> = (context) =>
   (topNode) => {
     function moduleLevel(node: ts.Node) {
       switch (node.kind) {
       case ts.SyntaxKind.VariableStatement: {
         const varStmt = node as ts.VariableStatement;
-        // tslint:disable:no-bitwise
-        if (!(varStmt.declarationList.flags & ts.NodeFlags.Const)) {
+        /*
+        FIXME: Try to find out if the declaration is exported.
+        varStmt.declarationList.declarations.forEach(decl => {
+          const dflags = ts.getCombinedNodeFlags(decl.name.);
+          // tslint:disable-next-line:no-bitwise
+          if (dflags & ts.NodeFlags.ExportContext) {
+            report(decl, `Cannot use named export ${decl.name.getText()}`);
+          }
+        });
+        */
+        const flags = ts.getCombinedNodeFlags(varStmt.declarationList);
+        // tslint:disable-next-line:no-bitwise
+        if (!(flags & ts.NodeFlags.Const)) {
+          console.log(varStmt);
           report(node, `Module-level declarations must be const`);
         }
         break;
@@ -57,11 +77,14 @@ const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
 
       case ts.SyntaxKind.NotEmittedStatement:
       case ts.SyntaxKind.ExportAssignment:
+      case ts.SyntaxKind.TypeAliasDeclaration:
+      case ts.SyntaxKind.InterfaceDeclaration:
       case ts.SyntaxKind.ImportDeclaration:
+        // Safe Typescript declarations.
         break;
 
       default:
-        report(node, `Unexpected module-level expression ${ts.SyntaxKind[node.kind]}`);
+        report(node, `Unexpected module-level node ${ts.SyntaxKind[node.kind]}`);
       }
       return node;
     }
@@ -94,6 +117,7 @@ const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
       console.log(
         `${topNode.fileName}: ${line + 1}:${character + 1}: ${message}`
       );
+      analyzeErrors ++;
     }
 
     ts.forEachChild(topNode, moduleLevel);
@@ -121,6 +145,7 @@ const immunize: ts.TransformerFactory<ts.SourceFile> = (context) =>
           const immunized = decl.initializer ? immunizeExpr(decl.initializer) : undefined;
           return setPos(decl, ts.createVariableDeclaration(decl.name, undefined, immunized));
         });
+
         const varList = setPos(varStmt.declarationList,
           ts.createVariableDeclarationList(decls, ts.NodeFlags.Const));
         setPos(varStmt.declarationList.declarations, varList.declarations);
@@ -166,8 +191,7 @@ const bondify: ts.TransformerFactory<ts.SourceFile> = (context) =>
   };
 
 const tessie2jessie: ts.CustomTransformers = {
-  after: [lint],
-  before: [immunize, bondify],
+  before: [analyze, throwOnError, immunize, bondify],
 };
 
 compile(process.argv.slice(2), opts, tessie2jessie);

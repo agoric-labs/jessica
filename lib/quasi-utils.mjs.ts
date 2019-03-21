@@ -28,4 +28,4 @@ const qrepack = (parts: any[]) => {
   return [['data', template], ...argExprs];
 };
 
-export default immunize({qunpack, qrepack});
+export default {qunpack, qrepack};
