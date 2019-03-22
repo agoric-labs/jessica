@@ -22,7 +22,7 @@ const setComputedIndex = (obj: Record<string | number, any>, key: string | numbe
     if (key === '__proto__') {
         slog.error`Cannot set ${{key}} object member`;
     }
-    obj[key] = val;
+    return obj[key] = val;
 };
 
 function defaultEnv(reader: (file: string) => string) {

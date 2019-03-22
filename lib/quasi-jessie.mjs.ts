@@ -95,7 +95,7 @@ const makeJessie = (peg: IPegTag) => {
     / IDENT COLON functionDecl                             ${(label, _, func) => ['label', label, func]}
     / TRY block catcher finalizer                          ${(_, b, c, f) => ['try', b, c, f]}
     / TRY block catcher                                    ${(_, b, c) => ['try', b, c]}
-    / TRY block finalizer                                  ${(_, b, f) => ['try', b, f]}
+    / TRY block finalizer                                  ${(_, b, f) => ['try', b, undefined, f]}
     / DEBUGGER SEMI                                        ${(_, _2) => ['debugger']}
     / exprStatement;
 

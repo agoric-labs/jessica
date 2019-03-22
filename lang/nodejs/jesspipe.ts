@@ -43,7 +43,7 @@ const setComputedIndex = (obj: Record<string | number, any>, key: string | numbe
     if (key === '__proto__') {
         slog.error`Cannot set ${{key}} object member`;
     }
-    obj[key] = val;
+    return obj[key] = val;
 };
 const jessie = bootEnv(mutableEnv, readInput, setComputedIndex);
 
