@@ -25,17 +25,17 @@ const writeOutput = (fname, str) => {
 };
 // Create a Jessie bootstrap environment for the endowments.
 import bootEnv from '../../lib/boot-env.mjs';
-const computedSet = (obj, key, val) => {
+const setComputedIndex = (obj, key, val) => {
     if (key === '__proto__') {
         slog.error `Cannot set ${{ key }} object member`;
     }
     obj[key] = val;
 };
-const jessie = bootEnv(mutableEnv, readInput, computedSet);
+const jessie = bootEnv(mutableEnv, readInput, setComputedIndex);
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
 const doEval = (src, uri) => jessie.confine(src, jessie, { scriptName: uri });
-repl(MODULE, computedSet, (file) => Promise.resolve(readInput(file)), doEval, writeOutput, ARGV)
+repl(MODULE, setComputedIndex, (file) => Promise.resolve(readInput(file)), doEval, writeOutput, ARGV)
     .catch(e => {
     writeOutput('-', '/* FIXME: Stub */\n');
     slog.notice `Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;

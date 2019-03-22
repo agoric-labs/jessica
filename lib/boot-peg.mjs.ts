@@ -5,9 +5,9 @@
 
 import indent from './indent.mjs';
 
-const LEFT_RECUR: PegConstant = harden({toString: () => 'LEFT_RECUR'});
+const LEFT_RECUR: PegConstant = {toString: () => 'LEFT_RECUR'};
 
-function RUN(self: IPegParser, ruleOrPatt: PegRuleOrPatt, pos: number, name: string) {
+const RUN = (self: IPegParser, ruleOrPatt: PegRuleOrPatt, pos: number, name: string) => {
     if (self._debug) {
         slog.info`run(f, ${pos}, ${name})`;
     }
@@ -35,9 +35,9 @@ function RUN(self: IPegParser, ruleOrPatt: PegRuleOrPatt, pos: number, name: str
         posm.set(ruleOrPatt, result);
     }
     return result;
-}
+};
 
-function lastFailures(self: IPegParser): [number, string[]] {
+const lastFailures = (self: IPegParser): [number, string[]] => {
     let maxPos = 0;
     let fails: string[] = [];
     for (const [pos, posm] of self._memo) {
@@ -59,9 +59,9 @@ function lastFailures(self: IPegParser): [number, string[]] {
         }
     }
     return [maxPos, fails];
-}
+};
 
-function ERROR(self: IPegParser, pos: number) {
+const ERROR = (self: IPegParser, pos: number) => {
     const [last, fails] = lastFailures(self);
     const found = FIND(self.template, last);
     const tokStr = Array.isArray(found) ?
@@ -83,9 +83,9 @@ function ERROR(self: IPegParser, pos: number) {
     -------
     ${failStr}`;
     slog.error`Syntax error ${tokStr}`;
-}
+};
 
-function makeTokStr(self: IPegParser, found: [number, number] | number) {
+const makeTokStr = (self: IPegParser, found: [number, number] | number) => {
     if (Array.isArray(found)) {
         const segment = self.template[found[0]];
         return `${JSON.stringify(segment[found[1]])} #${found[0]}:${found[1]}`;
@@ -94,9 +94,9 @@ function makeTokStr(self: IPegParser, found: [number, number] | number) {
         return `hole #${found}`;
     }
     return undefined;
-}
+};
 
-function DONE(self: IPegParser) {
+const DONE = (self: IPegParser) => {
     if (self._debug) {
         for (const [pos, posm] of self._memo) {
             const fails = [];
@@ -120,10 +120,10 @@ function DONE(self: IPegParser) {
         }
         slog.info`hits: ${self._hits(0)}, misses: ${self._misses(0)}`;
     }
-}
+};
 
-function FIND(template: TemplateStringsArray, pos: number):
-    [number, number] | number | undefined {
+const FIND = (template: TemplateStringsArray, pos: number):
+    [number, number] | number | undefined => {
     const {raw} = template;
     const numSubs = raw.length - 1;
     let relpos = pos;
@@ -137,8 +137,7 @@ function FIND(template: TemplateStringsArray, pos: number):
         }
         relpos -= seglen + 1; // "+1" for the skipped hole
     }
-    return undefined;
-}
+};
 
 const ACCEPT: PegPredicate = (self, pos) => {
     // Not really needed: useful for incremental compilation.
@@ -172,12 +171,13 @@ const HOLE: PegPredicate = (self, pos) => {
     return [pos, FAIL];
 };
 
-const FAIL = harden({toString: () => 'FAIL'});
-const SKIP = harden({toString: () => 'SKIP'});
+const FAIL = {toString: () => 'FAIL'};
+const SKIP = {toString: () => 'SKIP'};
 
 const lHexDigits = '0123456789abcdef';
 const uHexDigits = 'ABCDEF';
-function hexDigit(c: string) {
+
+const hexDigit = (c: string) => {
     let i = lHexDigits.indexOf(c);
     if (i < 0) {
         i = uHexDigits.indexOf(c) + 10;
@@ -186,9 +186,9 @@ function hexDigit(c: string) {
         slog.error`Invalid hexadecimal number ${{c}}`;
     }
     return i;
-}
+};
 
-function unescape(cs: string): [string, number] {
+const unescape = (cs: string): [string, number] => {
     if (cs[0] !== '\\') {
         return [cs[0], 1];
     }
@@ -221,9 +221,9 @@ function unescape(cs: string): [string, number] {
     }
 
     return [q, 2];
-}
+};
 
-function bootPeg<T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[]) {
+const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[]) => {
     function compile(sexp: PegExpr) {
         let numSubs = 0;              // # of holes implied by sexp, so far
 
@@ -252,7 +252,7 @@ function bootPeg<T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
             return `${prefix}_${alphaCount++}`;
         }
 
-        const vtable: {[index: string]: (...args: any[]) => string} = harden({
+        const vtable: {[index: string]: (...args: any[]) => string} = {
             peg(...rules: PegDef[]) {
                 // The following line also initializes numSubs
                 const rulesSrc = rules.map(peval).join('\n');
@@ -509,7 +509,7 @@ function bootPeg<T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
     value = (value === FAIL) ? SKIP : FAIL;
     pos = ${posSrc};`;
             },
-        });
+        };
 
         function peval(expr: PegExpr): string {
             if (typeof expr === 'string') {
@@ -576,7 +576,7 @@ function bootPeg<T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
             }
             return pair;
         }
-        return quasiMemo<V>(baseCurry, bond(parserCreator));
+        return quasiMemo<V>(baseCurry, parserCreator);
     }
 
     const defaultBaseGrammar = quasifyParser(_template => undefined);
@@ -689,13 +689,13 @@ function bootPeg<T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
     const a = JSON.stringify(bootPegAst, undefined, '  ');
     const b = JSON.stringify(reparsedPegAst, undefined, '  ');
     if (a !== b) {
-        slog.info`// boot-pegast.mjs.ts - AUTOMATICALLY GENERATED by boot-peg.mjs.ts\nexport default harden(${{b}});`;
+        slog.info`// boot-pegast.mjs.ts - AUTOMATICALLY GENERATED by boot-peg.mjs.ts\nexport default ${{b}};`;
         slog.panic`reparsedPegAst does not match src/boot-pegast.mjs.ts`;
     }
 
     // Use the metaCompiler to generate another parser.
     const finalPegTag = makePeg<IPegTag<T>, IPegTag<IPegTag<T>>>(bootPegTag, metaCompile);
-    return harden(finalPegTag);
-}
+    return finalPegTag;
+};
 
-export default harden(bootPeg);
+export default bootPeg;

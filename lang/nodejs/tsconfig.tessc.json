@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noImplicitAny": true,
+        "noEmitOnError": true,
+        "alwaysStrict": true,
+        "types": ["node"]
+    },
+    "include": [
+        "tessc.ts",
+    ]
+}

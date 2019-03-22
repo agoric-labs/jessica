@@ -65,7 +65,9 @@ interface Iterator<T> {
   readonly throw?: (e?: any) => IteratorResult<T>;
 }
 
-type Function = IFunction<any, any>;
+interface Function {
+  (...args: any[]): any;
+}
 interface IFunction<R, A> {
   (...args: A[]): R;
 }

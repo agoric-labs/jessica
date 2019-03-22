@@ -10,10 +10,16 @@ import * as sesshim from './sesshim.js';
 
 const globalEnv: Record<string, any> = {};
 
-// Export all of the SES shim.
-globalEnv.harden = sesshim.def;
+// Export parts of the SES shim.
+globalEnv.immunize = sesshim.def;
 globalEnv.confine = sesshim.confine;
-(global as any).harden = sesshim.def;
-(global as any).confine = sesshim.confine;
+
+// Bootstrap one-argument bond.
+globalEnv.bond = (fn: (...args: any[]) => any) =>
+    (...args: any[]) => fn.apply(undefined, args.map(immunize));
+
+(global as any).immunize = globalEnv.immunize;
+(global as any).confine = globalEnv.confine;
+(global as any).bond = globalEnv.bond;
 
 export default globalEnv;

@@ -1,13 +1,13 @@
 import makeReadInput from './readInput.mjs';
 import repl from './repl.mjs';
 
-function jesspipe(deps: IMainDependencies, argv: string[]) {
+const jesspipe = (deps: IMainDependencies, argv: string[]) => {
     const endowments = {
         bond,
         confine,
         confineExpr,
         eval,
-        harden,
+        immunize,
         makeMap,
         makePromise,
         makeSet,
@@ -34,12 +34,12 @@ function jesspipe(deps: IMainDependencies, argv: string[]) {
 
     const doEval = (src: string, file: string) =>
         Promise.resolve(confine(src, endowments, {scriptName: file}));
-    return repl(MODULE, deps.computedSet, (file) => Promise.resolve(readInput(file)), doEval,
+    return repl(MODULE, deps.setComputedIndex, (file) => Promise.resolve(readInput(file)), doEval,
         deps.writeOutput, ARGV)
     .catch(e => {
       deps.writeOutput('-', '/* FIXME: Stub */\n');
       slog.notice`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
     });
-}
+};
 
 export default jesspipe;

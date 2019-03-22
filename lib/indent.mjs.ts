@@ -1,4 +1,4 @@
-function indent(template: TemplateStringsArray, ...substs: any[]) {
+const indent = (template: TemplateStringsArray, ...substs: any[]) => {
     const result = [];
     let newnewline = '\n';
     for (let i = 0, ilen = substs.length; i < ilen; i++) {
@@ -24,6 +24,6 @@ function indent(template: TemplateStringsArray, ...substs: any[]) {
     }
     result.push(template[substs.length]);
     return result.join('');
-}
+};
 
-export default harden(indent);
+export default indent;

@@ -51,7 +51,7 @@ const makeSlog = (handler: SlogHandler): Slog => {
         slog.debug = doit<string>(i ++, 'debug');
         slog.trace = doit<string>(i ++, 'trace');
     }
-    return harden(slog as Slog);
+    return slog as Slog;
 };
 
-export default harden(makeSlog);
+export default makeSlog;

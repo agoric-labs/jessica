@@ -32,11 +32,11 @@ import quasiUtils from './quasi-utils.mjs';
 
 const {qunpack} = quasiUtils;
 
-function binary(left: PegExpr, rights: any[]) {
+const binary = (left: PegExpr, rights: any[]) => {
     return rights.reduce<PegExpr>((prev, [op, right]) => [op, prev, right], left);
-}
+};
 
-function transformSingleQuote(s: string) {
+const transformSingleQuote = (s: string) => {
   let i = 0, qs = '';
   while (i < s.length) {
     const c = s.slice(i, i + 1);
@@ -55,9 +55,9 @@ function transformSingleQuote(s: string) {
     }
   }
   return `"${qs}"`;
-}
+};
 
-function makeJustin(peg: IPegTag<any>) {
+const makeJustin = (peg: IPegTag<any>) => {
     const {SKIP} = peg;
     return peg`
     # to be overridden or inherited
@@ -274,10 +274,10 @@ function makeJustin(peg: IPegTag<any>) {
     assignExpr <- condExpr;
 
     # The comma expression is not in Justin and Jessie because we
-    # have bond(base, 'name')(args) in order to avoid passing
+    # have base, 'name')(args) in order to avoid passing
     # base as the this-binding to the function found at base.name.
     expr <- assignExpr;
   `;
-}
+};
 
-export default harden(makeJustin);
+export default makeJustin;

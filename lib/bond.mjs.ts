@@ -1,24 +1,22 @@
 // Create a `bond` function for use in Jessie endowments.
 // https://github.com/Agoric/Jessie/issues/19
-//
-// TODO: This function desperately needs a test suite!
 
 type ApplyMethod = <T, U>(that: any, method: (...args: T[]) => U, args: T[]) => U;
 type AnyMethod = (this: any, ...args: any[]) => any;
 type AnyArrow = (...args: any[]) => any;
 
-function makeBond(applyMethod: ApplyMethod) {
+const makeBond = (applyMethod: ApplyMethod) => {
     const _bonded = makeWeakMap<object, WeakMap<AnyMethod, AnyArrow>>(),
         _bondedUndefinedThis = makeWeakMap<AnyMethod, AnyArrow>();
 
     /**
-     *  Given an object and an index, either
-     * return a fresh method bound to the object,
+     * Given an object and an index, either
+     * return a fresh method bound to the object that immunizes its args,
      * a (cached) method we already bound,
      * or a plain value.
      *
      * Given an undefined index,
-     * return a fresh arrow function bound to undefined,
+     * return a fresh arrow function bound to undefined that immunizes its args,
      * a (cached) arrow we already bound,
      * or a plain value.
      */
@@ -62,15 +60,18 @@ function makeBond(applyMethod: ApplyMethod) {
         }
 
         // Wrap the method similar to `bind`.
-        const bondedMethod = harden((...args: any[]) =>
-            applyMethod(actualThis, maybeMethod, args));
+        // Immunize the arguments, since they may come from an internal
+        // object that has not been returned for the module-level
+        // immunize to act on.
+        const bondedMethod = (...args: any[]) =>
+            applyMethod(actualThis, maybeMethod, args.map(immunize));
 
-        // Cache the hardened, bound method.
+        // Cache the immunized, bound method.
         bondedForThis.set(actualMethod, bondedMethod);
         return bondedMethod;
     }
 
     return bond<Bond>(bond);
-}
+};
 
-export default harden(makeBond);
+export default makeBond;

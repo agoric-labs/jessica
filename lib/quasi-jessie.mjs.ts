@@ -6,7 +6,7 @@
 
 /// <reference path="peg.d.ts"/>
 
-function makeJessie(peg: IPegTag) {
+const makeJessie = (peg: IPegTag) => {
     const {SKIP} = peg;
     return peg`
     # Override rather than inherit start production.
@@ -31,6 +31,10 @@ function makeJessie(peg: IPegTag) {
       super.propDef
     / methodDef;
 
+    purePropDef <-
+      super.purePropDef
+    / methodDef;
+
     # Extend to recognize proposed eventual get syntax.
     memberPostOp <-
       super.memberPostOp
@@ -49,9 +53,10 @@ function makeJessie(peg: IPegTag) {
     / super.assignExpr
     / lValue (EQUALS / assignOp) assignExpr                ${(lv, op, rv) => [op, lv, rv]};
 
-    pureAssignExpr <-
+    # An expression without side-effects.
+    pureExpr <-
       arrowFunc
-    / dataLiteral;
+    / super.pureExpr;
 
     # In Jessie, an lValue is only a variable, a computed index-named
     # property (an array element), or a statically string-named
@@ -223,18 +228,22 @@ function makeJessie(peg: IPegTag) {
       declOp moduleBinding ** COMMA SEMI                 ${(op, decls) => [op, decls]}
     / functionDecl;
 
-    # Jessie modules only allow bindings without side-effects.
+    # An immunized expression without side-effects.
+    immunizedExpr <-
+      dataLiteral
+    / "immunize" _WS LEFT_PAREN pureExpr RIGHT_PAREN  ${(fname, _2, expr, _3) => ['call', fname, expr]};
+
+    # Jessie modules only allow immunized module-level bindings.
     moduleBinding <-
-      bindingPattern EQUALS pureAssignExpr               ${(p, _, e) => ['bind', p, e]}
-    / defVar EQUALS pureAssignExpr                       ${(p, _, e) => ['bind', p, e]}
+      bindingPattern EQUALS immunizedExpr       ${(p, _, e) => ['bind', p, e]}
+    / defVar EQUALS immunizedExpr               ${(p, _, e) => ['bind', p, e]}
     / defVar;
 
     importDecl <- IMPORT defVar FROM STRING SEMI  ${(i, v, _, s, _2) => [i, v, JSON.parse(s)]};
     exportDecl <- EXPORT DEFAULT exportableExpr SEMI ${(_, _2, e, _3) => ['exportDefault', e]};
 
     # to be extended
-    exportableExpr <-
-      ~("async" _WSN / "class" _WSN) expr;
+    exportableExpr <- immunizedExpr;
 
 
     # Lexical syntax
@@ -260,6 +269,6 @@ function makeJessie(peg: IPegTag) {
     EQUALS <- "=" _WS;
     SEMI <- ";" _WS;
   `;
-}
+};
 
-export default harden(makeJessie);
+export default makeJessie;

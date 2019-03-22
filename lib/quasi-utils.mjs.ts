@@ -1,6 +1,6 @@
 /// <reference path="peg.d.ts"/>
 
-function qunpack(h: string, ms: Array<[string, Array<[string, any]>]>, t: string) {
+const qunpack = (h: string, ms: Array<[string, Array<[string, any]>]>, t: string) => {
   const result: Array<string | PegHole> = [h];
   if (ms.length === 1) {
     const [[m, pairs]] = ms;
@@ -11,9 +11,9 @@ function qunpack(h: string, ms: Array<[string, Array<[string, any]>]>, t: string
   }
   result.push(t);
   return result;
-}
+};
 
-function qrepack(parts: any[]) {
+const qrepack = (parts: any[]) => {
   // TODO bug: We only provide the raw form at this time. I
   // apologize once again for allowing a cooked form into the
   // standard.
@@ -24,8 +24,8 @@ function qrepack(parts: any[]) {
     argExprs.push(parts[i]);
     raw.push(parts[i + 1]);
   }
-  const template = harden({raw});
+  const template = {raw};
   return [['data', template], ...argExprs];
-}
+};
 
-export default harden({qunpack, qrepack});
+export default {qunpack, qrepack};

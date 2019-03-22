@@ -8,11 +8,11 @@
 /// <reference path="../../typings/ses.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 import globalEnv from './globalEnv0.mjs';
-globalEnv.makeMap = harden((...args) => harden(new Map(...args)));
-globalEnv.makeSet = harden((...args) => harden(new Set(...args)));
-globalEnv.makePromise = harden((executor) => harden(new Promise(executor)));
-globalEnv.makeWeakMap = harden((...args) => harden(new WeakMap(...args)));
-globalEnv.makeWeakSet = harden((...args) => harden(new WeakSet(...args)));
+globalEnv.makeMap = immunize((...args) => new Map(...args));
+globalEnv.makeSet = immunize((...args) => new Set(...args));
+globalEnv.makePromise = immunize((executor) => new Promise(executor));
+globalEnv.makeWeakMap = immunize((...args) => new WeakMap(...args));
+globalEnv.makeWeakSet = immunize((...args) => new WeakSet(...args));
 Object.keys(globalEnv).forEach(vname => {
     global[vname] = globalEnv[vname];
 });

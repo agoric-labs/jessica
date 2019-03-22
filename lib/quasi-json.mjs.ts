@@ -9,8 +9,7 @@
 
 /// <reference path="peg.d.ts"/>
 
-function makeJSON(pegPeg: IPegTag) {
-    const peg = pegPeg;
+const makeJSON = (peg: IPegTag) => {
     const {FAIL, HOLE, SKIP} = peg;
     return peg`
 # to be overridden or inherited
@@ -25,7 +24,18 @@ dataStructure <-
 / record
 / HOLE                                    ${h => ['exprHole', h]};
 
+# An expression without side-effects.
+# to be extended
+pureExpr <-
+  dataLiteral                             ${n => ['data', JSON.parse(n)]}
+/ pureArray
+/ pureRecord
+/ HOLE                                    ${h => ['exprHole', h]};
+
 dataLiteral <- (("null" / "false" / "true") _WSN / NUMBER / STRING) _WS;
+
+pureArray <-
+  LEFT_BRACKET pureExpr ** COMMA RIGHT_BRACKET ${(_, es, _2) => ['array', es]};
 
 array <-
   LEFT_BRACKET element ** COMMA RIGHT_BRACKET ${(_, es, _2) => ['array', es]};
@@ -35,8 +45,14 @@ element <- assignExpr;
 
 # The JavaScript and JSON grammars calls records "objects"
 
+pureRecord <-
+  LEFT_BRACE purePropDef ** COMMA RIGHT_BRACE  ${(_, ps, _2) => ['record', ps]};
+
 record <-
   LEFT_BRACE propDef ** COMMA RIGHT_BRACE  ${(_, ps, _2) => ['record', ps]};
+
+# to be extended
+purePropDef <- propName COLON pureExpr     ${(k, _, e) => ['prop', k, e]};
 
 # to be extended
 propDef <- propName COLON assignExpr       ${(k, _, e) => ['prop', k, e]};
@@ -100,6 +116,6 @@ _WSN <- ~[$A-Za-z_] _WS    ${_ => SKIP};
 _WS <- [\t\n\r ]*          ${_ => SKIP};
 `;
 
-}
+};
 
-export default harden(makeJSON);
+export default makeJSON;
