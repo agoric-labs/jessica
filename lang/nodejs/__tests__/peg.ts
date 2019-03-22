@@ -51,11 +51,11 @@ test('json', () => {
     / HOLE                 ${h => (...subs: any[]) => subs[h]};
     prim <- (STRING / NUMBER / "true" / "false" / "null") WS;
 
-    array <- LEFT_BRACKET value ** COMMA RIGHT_BRACKET
+    array <- LEFT_BRACKET value ** _COMMA RIGHT_BRACKET
                            ${(_, vs: Array<(...a: any[]) => any>, _2) =>
                              (...subs: any[]) =>
                                 vs.map(v => v(...subs))};
-    record <- LEFT_BRACE pair ** COMMA RIGHT_BRACE
+    record <- LEFT_BRACE pair ** _COMMA RIGHT_BRACE
                            ${(_, pairs, _2) => (...subs: any[]) => {
                                const result: Record<string, any> = {};
                                for (const [k, v] of pairs) {
@@ -72,7 +72,7 @@ test('json', () => {
     STRING <- <["] (~[\\"] .)* ["]> WS;
     HOLE <- &${HOLE} WS;
     MINUS <- "-" WS;
-    COMMA <- "," WS;
+    _COMMA <- "," WS        ${(_) => SKIP};
     COLON <- ":" WS;
     LEFT_BRACKET <- "[" WS;
     RIGHT_BRACKET <- "]" WS;

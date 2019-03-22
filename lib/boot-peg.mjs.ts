@@ -304,7 +304,7 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
     },`;
             },
             empty() {
-                return `value = [];`;
+                return `value = SKIP;`;
             },
             fail() {
                 return `value = FAIL;`;
@@ -374,10 +374,12 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
                 const sSrc = nextVar('s');
                 const pattSrc = peval(patt);
                 const sepSrc = peval(sep);
+                const sepValSrc = nextVar('sepVal');
                 // after first iteration, backtrack to before the separator
                 return indent`
     ${sSrc} = [];
     ${posSrc} = pos;
+    ${sepValSrc} = SKIP;
     while (true) {
       ${startSrc} = pos;
       ${pattSrc}
@@ -385,10 +387,12 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
         pos = ${posSrc};
         break;
       }
+      if (${sepValSrc} !== SKIP) ${sSrc}.push(${sepValSrc});
       if (value !== SKIP) ${sSrc}.push(value);
       ${posSrc} = pos;
       ${sepSrc}
       if (value === FAIL) break;
+      ${sepValSrc} = value;
       if (pos === ${startSrc}) break;
     }
     value = ${sSrc};`;

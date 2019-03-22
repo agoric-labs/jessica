@@ -133,9 +133,9 @@ const makeJustin = (peg: IPegTag<any>) => {
     # Quasiliterals aka template literals
     QUASI_CHAR <- "\\" . / ~"\`" .;
     QUASI_ALL <- "\`" < (~"\${" QUASI_CHAR)* > "\`" _WS;
-    QUASI_HEAD <- "\`" < (~"\${" QUASI_CHAR)* "\${" >;
-    QUASI_MID <- < "}" (~"\${" QUASI_CHAR)* "\${" >;
-    QUASI_TAIL <- < "}" (~"\${" QUASI_CHAR)* > "\`" _WS;
+    QUASI_HEAD <- "\`" < (~"\${" QUASI_CHAR)* > "\${";
+    QUASI_MID <- "}" < (~"\${" QUASI_CHAR)* > "\${";
+    QUASI_TAIL <- "}" < (~"\${" QUASI_CHAR)* > "\`" _WS;
 
 
     # A.2 Expressions
@@ -147,11 +147,11 @@ const makeJustin = (peg: IPegTag<any>) => {
     # Optional trailing commas.
     record <-
       super.record
-    / LEFT_BRACE propDef ** COMMA COMMA? RIGHT_BRACE  ${(_, ps, _2) => ['record', ps]};
+    / LEFT_BRACE propDef ** _COMMA _COMMA? RIGHT_BRACE      ${(_, ps, _2) => ['record', ps]};
 
     array <-
       super.array
-    / LEFT_BRACKET (element ** COMMA) COMMA? RIGHT_BRACKET ${(_, es, _2) => ['array', es]};
+    / LEFT_BRACKET element ** _COMMA _COMMA? RIGHT_BRACKET  ${(_, es, _2) => ['array', es]};
 
     useVar <- IDENT                                       ${id => ['use', id]};
 
@@ -219,7 +219,7 @@ const makeJustin = (peg: IPegTag<any>) => {
       NUMBER                                               ${n => ['data', JSON.parse(n)]}
     / PLUS unaryExpr                                       ${(_, e) => [`pre:+`, e]};
 
-    args <- LEFT_PAREN arg ** COMMA RIGHT_PAREN            ${(_, args, _2) => args};
+    args <- LEFT_PAREN arg ** _COMMA RIGHT_PAREN            ${(_, args, _2) => args};
 
     arg <-
       assignExpr

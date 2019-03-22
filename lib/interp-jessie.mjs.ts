@@ -1,5 +1,7 @@
 // TODO: Hoisting of functionDecls.
 
+import qutils from './quasi-utils.mjs';
+
 interface IEvalOptions {
     [key: string]: any;
     scriptName?: string;
@@ -33,6 +35,20 @@ const makeBinding = (parent: IBinding, name: string, init?: any, mutable = true)
 };
 
 const evaluators: Record<string, Evaluator> = {
+    array(self: IEvalContext, elems: any[][]) {
+        const arr = elems.reduce((prior, el) => {
+            const val = doEval(self, ...el);
+            if (el[0] === 'spread') {
+                for (const v of val) {
+                    prior.push(v);
+                }
+            } else {
+                prior.push(val);
+            }
+            return prior;
+        }, []);
+        return arr;
+    },
     arrow(self: IEvalContext, argDefs: any[][], body: any[]) {
         return evaluators.lambda(self, argDefs, body);
     },
@@ -118,10 +134,34 @@ const evaluators: Record<string, Evaluator> = {
     record(self: IEvalContext, propDefs: any[][]) {
         const obj: Record<string | number, any> = {};
         propDefs.forEach(b => {
-            const [name, val] = doEval(self, ...b);
-            self.setComputedIndex(obj, name, val);
+            if (b[0] === 'spreadObj') {
+                const spreader = doEval(self, ...b);
+                for (const [name, val] of Object.entries(spreader)) {
+                    self.setComputedIndex(obj, name, val);
+                }
+            } else {
+                const [name, val] = doEval(self, ...b);
+                self.setComputedIndex(obj, name, val);
+            }
         });
         return obj;
+    },
+    spread(self: IEvalContext, arrExpr: any[][]) {
+        const arr = doEval(self, ...arrExpr);
+        return arr;
+    },
+    spreadObj(self: IEvalContext, objExpr: any[]) {
+        const obj = doEval(self, ...objExpr);
+        return obj;
+    },
+    tag(self: IEvalContext, tagExpr: any[], quasiExpr: any[]) {
+        const tag = doEval(self, ...tagExpr);
+        const args = doEval(self, ...quasiExpr);
+        return tag(...args);
+    },
+    quasi(self: IEvalContext, parts: any[]) {
+        const argsExpr = qutils.qrepack(parts);
+        return argsExpr.map(arg => doEval(self, ...arg));
     },
     use(self: IEvalContext, name: string) {
         let b = self.envp;

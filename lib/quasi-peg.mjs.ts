@@ -60,7 +60,7 @@ Grammar      <- _Spacing Definition+ _EndOfFile
 
 Definition   <- Identifier LEFTARROW Expression SEMI &${ACCEPT}
                     ${(i, _, e, _2) => ['def', i, e]};
-Expression   <- Sequence ** SLASH
+Expression   <- Sequence ** _SLASH
                     ${list => simple('or', list)};
 Sequence     <- (Prefix*
                     ${list => simple('seq', list)})
@@ -116,7 +116,7 @@ Char         <- '\\' [abefnrtv'"\[\]\\\`\$]
               / '\\' '-'
               / ~'\\' .;
 LEFTARROW    <- '<-' _Spacing;
-SLASH        <- '/' _Spacing;
+_SLASH        <- '/' _Spacing              ${_ => SKIP};
 SEMI         <- ';' _Spacing;
 AND          <- '&' _Spacing;
 NOT          <- '~' _Spacing;

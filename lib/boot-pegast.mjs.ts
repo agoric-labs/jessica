@@ -39,7 +39,7 @@ export default [
         [
           "**",
           "Sequence",
-          "SLASH"
+          "_SLASH"
         ]
       ]
     ],
@@ -450,9 +450,10 @@ export default [
     ],
     [
       "def",
-      "SLASH",
+      "_SLASH",
       [
-        "val0",
+        "act",
+        18,
         [
           "lit",
           "/"
@@ -573,7 +574,7 @@ export default [
       "_Spacing",
       [
         "act",
-        18,
+        19,
         [
           "*",
           [
@@ -688,7 +689,7 @@ export default [
         "val0",
         [
           "pred",
-          19
+          20
         ],
         "_Spacing"
       ]

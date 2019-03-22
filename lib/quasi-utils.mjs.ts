@@ -1,16 +1,7 @@
 /// <reference path="peg.d.ts"/>
 
-const qunpack = (h: string, ms: Array<[string, Array<[string, any]>]>, t: string) => {
-  const result: Array<string | PegHole> = [h];
-  if (ms.length === 1) {
-    const [[m, pairs]] = ms;
-    result.push(m);
-    for (const [q, e] of pairs) {
-      result.push(q, e);
-    }
-  }
-  result.push(t);
-  return result;
+const qunpack = (h: string, ms: any[], t: string) => {
+  return [h, ...ms, t];
 };
 
 const qrepack = (parts: any[]) => {

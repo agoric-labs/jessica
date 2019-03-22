@@ -35,10 +35,10 @@ pureExpr <-
 dataLiteral <- (("null" / "false" / "true") _WSN / NUMBER / STRING) _WS;
 
 pureArray <-
-  LEFT_BRACKET pureExpr ** COMMA RIGHT_BRACKET ${(_, es, _2) => ['array', es]};
+  LEFT_BRACKET pureExpr ** _COMMA RIGHT_BRACKET ${(_, es, _2) => ['array', es]};
 
 array <-
-  LEFT_BRACKET element ** COMMA RIGHT_BRACKET ${(_, es, _2) => ['array', es]};
+  LEFT_BRACKET element ** _COMMA RIGHT_BRACKET ${(_, es, _2) => ['array', es]};
 
 # to be extended
 element <- assignExpr;
@@ -46,10 +46,10 @@ element <- assignExpr;
 # The JavaScript and JSON grammars calls records "objects"
 
 pureRecord <-
-  LEFT_BRACE purePropDef ** COMMA RIGHT_BRACE  ${(_, ps, _2) => ['record', ps]};
+  LEFT_BRACE purePropDef ** _COMMA RIGHT_BRACE  ${(_, ps, _2) => ['record', ps]};
 
 record <-
-  LEFT_BRACE propDef ** COMMA RIGHT_BRACE  ${(_, ps, _2) => ['record', ps]};
+  LEFT_BRACE propDef ** _COMMA RIGHT_BRACE  ${(_, ps, _2) => ['record', ps]};
 
 # to be extended
 purePropDef <- propName COLON pureExpr     ${(k, _, e) => ['prop', k, e]};
@@ -77,7 +77,7 @@ LEFT_BRACKET <- "[" _WS;
 RIGHT_BRACKET <- "]" _WS;
 LEFT_BRACE <- "{" _WS;
 RIGHT_BRACE <- "}" _WS;
-COMMA <- "," _WS;
+_COMMA <- "," _WS                     ${_ => SKIP};
 COLON <- ":" _WS;
 MINUS <- "-" _WS;
 HOLE <- &${HOLE} _WS;

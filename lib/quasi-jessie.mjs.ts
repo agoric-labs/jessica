@@ -132,7 +132,7 @@ const makeJessie = (peg: IPegTag) => {
     # No "class" declaration.
     # No generator, async, or async iterator function.
     declaration <-
-      declOp binding ** COMMA SEMI                    ${(op, decls, _) => [op, decls]}
+      declOp binding ** _COMMA SEMI                    ${(op, decls, _) => [op, decls]}
     / functionDecl;
 
     declOp <- ("const" / "let") _WSN;
@@ -143,8 +143,8 @@ const makeJessie = (peg: IPegTag) => {
     / defVar;
 
     bindingPattern <-
-      LEFT_BRACKET elementParam ** COMMA RIGHT_BRACKET     ${(_, ps, _2) => ['matchArray', ps]}
-    / LEFT_BRACE propParam ** COMMA RIGHT_BRACE            ${(_, ps, _2) => ['matchRecord', ps]};
+      LEFT_BRACKET elementParam ** _COMMA RIGHT_BRACKET     ${(_, ps, _2) => ['matchArray', ps]}
+    / LEFT_BRACE propParam ** _COMMA RIGHT_BRACE            ${(_, ps, _2) => ['matchRecord', ps]};
 
     pattern <-
       bindingPattern
@@ -188,11 +188,11 @@ const makeJessie = (peg: IPegTag) => {
     # A.4 Functions and Classes
 
     functionDecl <-
-      FUNCTION defVar LEFT_PAREN param ** COMMA RIGHT_PAREN block
+      FUNCTION defVar LEFT_PAREN param ** _COMMA RIGHT_PAREN block
                                                       ${(_, n, _2, p, _3, b) => ['functionDecl', n, p, b]};
 
     functionExpr <-
-      FUNCTION defVar? LEFT_PAREN param ** COMMA RIGHT_PAREN block
+      FUNCTION defVar? LEFT_PAREN param ** _COMMA RIGHT_PAREN block
                                                       ${(_, n, _2, p, _3, b) => ['functionExpr', n, p, b]};
 
     # The assignExpr form must come after the block form, to make proper use
@@ -203,7 +203,7 @@ const makeJessie = (peg: IPegTag) => {
 
     arrowParams <-
       IDENT                                           ${id => [['def', id]]}
-    / LEFT_PAREN param ** COMMA RIGHT_PAREN           ${(_, ps, _2) => ps};
+    / LEFT_PAREN param ** _COMMA RIGHT_PAREN           ${(_, ps, _2) => ps};
 
     # to be extended
     methodDef <-
@@ -212,7 +212,7 @@ const makeJessie = (peg: IPegTag) => {
     / SET propName LEFT_PAREN param RIGHT_PAREN block      ${(_, n, _2, p, _3, b) => ['setter', n, [p], b]};
 
     method <-
-      propName LEFT_PAREN param ** COMMA RIGHT_PAREN block ${(n, _, p, _2, b) => ['method', n, p, b]};
+      propName LEFT_PAREN param ** _COMMA RIGHT_PAREN block ${(n, _, p, _2, b) => ['method', n, p, b]};
 
 
     # A.5 Scripts and Modules
@@ -225,7 +225,7 @@ const makeJessie = (peg: IPegTag) => {
     / moduleDeclaration;
 
     moduleDeclaration <-
-      declOp moduleBinding ** COMMA SEMI                 ${(op, decls) => [op, decls]}
+      declOp moduleBinding ** _COMMA SEMI                 ${(op, decls) => [op, decls]}
     / functionDecl;
 
     # An immunized expression without side-effects.
