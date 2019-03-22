@@ -33,6 +33,9 @@ const makeBinding = (parent: IBinding, name: string, init?: any, mutable = true)
 };
 
 const evaluators: Record<string, Evaluator> = {
+    arrow(self: IEvalContext, argDefs: any[][], body: any[]) {
+        return evaluators.lambda(self, argDefs, body);
+    },
     bind(self: IEvalContext, def, expr) {
         const name = doEval(self, ...def);
         const val = doEval(self, ...expr);
