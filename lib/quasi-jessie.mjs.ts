@@ -50,8 +50,8 @@ const makeJessie = (peg: IPegTag) => {
     # to be extended
     assignExpr <-
       arrowFunc
-    / super.assignExpr
-    / lValue (EQUALS / assignOp) assignExpr                ${(lv, op, rv) => [op, lv, rv]};
+    / lValue (EQUALS / assignOp) assignExpr                ${(lv, op, rv) => [op, lv, rv]}
+    / super.assignExpr;
 
     # An expression without side-effects.
     pureExpr <-
@@ -67,11 +67,11 @@ const makeJessie = (peg: IPegTag) => {
 
     # to be overridden or extended
     lValue <-
-      useVar
-    / primaryExpr LEFT_BRACKET indexExpr RIGHT_BRACKET     ${(pe, _, e, _2) => ['index', pe, e]}
+      primaryExpr LEFT_BRACKET indexExpr RIGHT_BRACKET     ${(pe, _, e, _2) => ['index', pe, e]}
     / primaryExpr LATER LEFT_BRACKET indexExpr RIGHT_BRACKET ${(pe, _, _2, e, _3) => ['indexLater', pe, e]}
     / primaryExpr DOT IDENT_NAME                           ${(pe, _, id) => ['get', pe, id]}
-    / primaryExpr LATER IDENT_NAME                         ${(pe, _, id) => ['getLater', pe, id]};
+    / primaryExpr LATER IDENT_NAME                         ${(pe, _, id) => ['getLater', pe, id]}
+    / useVar;
 
     assignOp <-
       ("*=" / "/=" / "%=" / "+=" / "-="
@@ -231,7 +231,8 @@ const makeJessie = (peg: IPegTag) => {
     # An immunized expression without side-effects.
     immunizedExpr <-
       dataLiteral
-    / "immunize" _WS LEFT_PAREN pureExpr RIGHT_PAREN  ${(fname, _2, expr, _3) => ['call', fname, expr]};
+    / "immunize" _WS LEFT_PAREN pureExpr RIGHT_PAREN  ${(fname, _2, expr, _3) =>
+                                                          ['call', ['use', fname], [expr]]};
 
     # Jessie modules only allow immunized module-level bindings.
     moduleBinding <-

@@ -153,7 +153,6 @@ const makeJustin = (peg: IPegTag<any>) => {
       super.array
     / LEFT_BRACKET (element ** COMMA) COMMA? RIGHT_BRACKET ${(_, es, _2) => ['array', es]};
 
-
     useVar <- IDENT                                       ${id => ['use', id]};
 
     # Justin does not contain variable definitions, only uses. However,
@@ -167,6 +166,11 @@ const makeJustin = (peg: IPegTag<any>) => {
       super.primaryExpr
     / quasiExpr
     / LEFT_PAREN expr RIGHT_PAREN                         ${(_, e, _2) => e}
+    / useVar;
+
+    pureExpr <-
+      super.pureExpr
+    / LEFT_PAREN pureExpr RIGHT_PAREN                     ${(_, e, _2) => e}
     / useVar;
 
     element <-
@@ -212,7 +216,7 @@ const makeJustin = (peg: IPegTag<any>) => {
     # Restrict index access to number-names, including
     # floating point, NaN, Infinity, and -Infinity.
     indexExpr <-
-      NUMBER                                               ${n => ['data', n]}
+      NUMBER                                               ${n => ['data', JSON.parse(n)]}
     / PLUS unaryExpr                                       ${(_, e) => [`pre:+`, e]};
 
     args <- LEFT_PAREN arg ** COMMA RIGHT_PAREN            ${(_, args, _2) => args};
