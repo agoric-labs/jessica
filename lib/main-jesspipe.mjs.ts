@@ -1,7 +1,9 @@
 import makeReadInput from './readInput.mjs';
 import repl from './repl.mjs';
 
-function jesspipe(deps: IMainDependencies, argv: string[]) {
+export const foo = 123;
+export const bar = foo;
+const jesspipe = (deps: IMainDependencies, argv: string[]) => {
     const endowments = {
         bond,
         confine,
@@ -40,6 +42,6 @@ function jesspipe(deps: IMainDependencies, argv: string[]) {
       deps.writeOutput('-', '/* FIXME: Stub */\n');
       slog.notice`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
     });
-}
+};
 
 export default jesspipe;

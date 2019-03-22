@@ -42,41 +42,32 @@ function setPos<T extends IPositionable>(src: IPositionable, dst: T): T {
   return dst;
 }
 
-let analyzeErrors = 0;
-const throwOnError: ts.TransformerFactory<ts.SourceFile> = (context) =>
+const analyze: ts.TransformerFactory<ts.SourceFile> = (context) =>
   (topNode) => {
-    if (analyzeErrors) {
-      process.exit(1);
-    }
     return topNode;
   };
-const analyze: ts.TransformerFactory<ts.SourceFile> = (context) =>
+
+let linterErrors = 0;
+const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
   (topNode) => {
     function moduleLevel(node: ts.Node) {
       switch (node.kind) {
       case ts.SyntaxKind.VariableStatement: {
         const varStmt = node as ts.VariableStatement;
-        /*
-        FIXME: Try to find out if the declaration is exported.
-        varStmt.declarationList.declarations.forEach(decl => {
-          const dflags = ts.getCombinedNodeFlags(decl.name.);
-          // tslint:disable-next-line:no-bitwise
-          if (dflags & ts.NodeFlags.ExportContext) {
-            report(decl, `Cannot use named export ${decl.name.getText()}`);
-          }
-        });
-        */
         const flags = ts.getCombinedNodeFlags(varStmt.declarationList);
         // tslint:disable-next-line:no-bitwise
         if (!(flags & ts.NodeFlags.Const)) {
-          console.log(varStmt);
           report(node, `Module-level declarations must be const`);
         }
         break;
       }
 
-      case ts.SyntaxKind.NotEmittedStatement:
+      case ts.SyntaxKind.ExportDeclaration:
+        console.log('have', node);
+        break;
+
       case ts.SyntaxKind.ExportAssignment:
+      case ts.SyntaxKind.NotEmittedStatement:
       case ts.SyntaxKind.TypeAliasDeclaration:
       case ts.SyntaxKind.InterfaceDeclaration:
       case ts.SyntaxKind.ImportDeclaration:
@@ -106,6 +97,9 @@ const analyze: ts.TransformerFactory<ts.SourceFile> = (context) =>
     }
 
     function report(node: ts.Node, message: string) {
+      // Don't actually emit.
+      linterErrors ++;
+
       let start: number;
       try {
         start = node.getStart();
@@ -115,13 +109,11 @@ const analyze: ts.TransformerFactory<ts.SourceFile> = (context) =>
       }
       const {line, character} = topNode.getLineAndCharacterOfPosition(start);
       console.log(
-        `${topNode.fileName}: ${line + 1}:${character + 1}: ${message}`
+        `${topNode.fileName}:${line + 1}:${character + 1}: ${message}`
       );
-      analyzeErrors ++;
     }
 
-    ts.forEachChild(topNode, moduleLevel);
-    return topNode;
+    return ts.visitEachChild(topNode, moduleLevel, context);
   };
 
 const immunize: ts.TransformerFactory<ts.SourceFile> = (context) =>
@@ -142,19 +134,21 @@ const immunize: ts.TransformerFactory<ts.SourceFile> = (context) =>
       case ts.SyntaxKind.VariableStatement: {
         const varStmt = node as ts.VariableStatement;
         const decls = varStmt.declarationList.declarations.map(decl => {
+          if (decl.initializer && ts.isLiteralExpression(decl.initializer)) {
+            // Don't need to immunize literals.
+            return decl;
+          }
           const immunized = decl.initializer ? immunizeExpr(decl.initializer) : undefined;
           return setPos(decl, ts.createVariableDeclaration(decl.name, undefined, immunized));
         });
 
         const varList = setPos(varStmt.declarationList,
-          ts.createVariableDeclarationList(decls, ts.NodeFlags.Const));
+          ts.createVariableDeclarationList(decls, varStmt.declarationList.flags));
         setPos(varStmt.declarationList.declarations, varList.declarations);
         return setPos(node, ts.createVariableStatement(varStmt.modifiers, varList));
       }
-
-      default:
-        return node;
       }
+      return node;
     }
 
     function immunizeExpr(expr: ts.Expression) {
@@ -191,7 +185,7 @@ const bondify: ts.TransformerFactory<ts.SourceFile> = (context) =>
   };
 
 const tessie2jessie: ts.CustomTransformers = {
-  before: [analyze, throwOnError, immunize, bondify],
+  before: [analyze, immunize, bondify, lint],
 };
 
 compile(process.argv.slice(2), opts, tessie2jessie);
@@ -224,7 +218,11 @@ function compile(fileNames: string[], options: ts.CompilerOptions,
   // Emit *.mjs.ts directly to *.mjs.
   let exitCode = 0;
   for (const src of program.getSourceFiles()) {
+    linterErrors = 0;
     const writeFile: ts.WriteFileCallback = (fileName, data, writeBOM, onError, sourceFiles) => {
+      if (linterErrors) {
+        return;
+      }
       const out = fileName.replace(/(\.mjs)\.js$/, '$1');
       try {
         fs.writeFileSync(out, data);
@@ -234,7 +232,7 @@ function compile(fileNames: string[], options: ts.CompilerOptions,
     };
     const emitResult = program.emit(src, writeFile, undefined, undefined, transformers);
     showDiagnostics(emitResult.diagnostics);
-    if (emitResult.emitSkipped) {
+    if (emitResult.emitSkipped || linterErrors) {
       exitCode = 1;
     }
   }

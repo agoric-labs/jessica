@@ -32,38 +32,27 @@ function setPos(src, dst) {
     // console.log(`got ${util.inspect(dst)}`);
     return dst;
 }
-let analyzeErrors = 0;
-const throwOnError = (context) => (topNode) => {
-    if (analyzeErrors) {
-        process.exit(1);
-    }
+const analyze = (context) => (topNode) => {
     return topNode;
 };
-const analyze = (context) => (topNode) => {
+let linterErrors = 0;
+const lint = (context) => (topNode) => {
     function moduleLevel(node) {
         switch (node.kind) {
             case ts.SyntaxKind.VariableStatement: {
                 const varStmt = node;
-                /*
-                FIXME: Try to find out if the declaration is exported.
-                varStmt.declarationList.declarations.forEach(decl => {
-                  const dflags = ts.getCombinedNodeFlags(decl.name.);
-                  // tslint:disable-next-line:no-bitwise
-                  if (dflags & ts.NodeFlags.ExportContext) {
-                    report(decl, `Cannot use named export ${decl.name.getText()}`);
-                  }
-                });
-                */
                 const flags = ts.getCombinedNodeFlags(varStmt.declarationList);
                 // tslint:disable-next-line:no-bitwise
                 if (!(flags & ts.NodeFlags.Const)) {
-                    console.log(varStmt);
                     report(node, `Module-level declarations must be const`);
                 }
                 break;
             }
-            case ts.SyntaxKind.NotEmittedStatement:
+            case ts.SyntaxKind.ExportDeclaration:
+                console.log('have', node);
+                break;
             case ts.SyntaxKind.ExportAssignment:
+            case ts.SyntaxKind.NotEmittedStatement:
             case ts.SyntaxKind.TypeAliasDeclaration:
             case ts.SyntaxKind.InterfaceDeclaration:
             case ts.SyntaxKind.ImportDeclaration:
@@ -89,6 +78,8 @@ const analyze = (context) => (topNode) => {
         }
     }
     function report(node, message) {
+        // Don't actually emit.
+        linterErrors++;
         let start;
         try {
             start = node.getStart();
@@ -98,11 +89,9 @@ const analyze = (context) => (topNode) => {
             start = 0;
         }
         const { line, character } = topNode.getLineAndCharacterOfPosition(start);
-        console.log(`${topNode.fileName}: ${line + 1}:${character + 1}: ${message}`);
-        analyzeErrors++;
+        console.log(`${topNode.fileName}:${line + 1}:${character + 1}: ${message}`);
     }
-    ts.forEachChild(topNode, moduleLevel);
-    return topNode;
+    return ts.visitEachChild(topNode, moduleLevel, context);
 };
 const immunize = (context) => (rootNode) => {
     function moduleRoot(node) {
@@ -120,16 +109,19 @@ const immunize = (context) => (rootNode) => {
             case ts.SyntaxKind.VariableStatement: {
                 const varStmt = node;
                 const decls = varStmt.declarationList.declarations.map(decl => {
+                    if (decl.initializer && ts.isLiteralExpression(decl.initializer)) {
+                        // Don't need to immunize literals.
+                        return decl;
+                    }
                     const immunized = decl.initializer ? immunizeExpr(decl.initializer) : undefined;
                     return setPos(decl, ts.createVariableDeclaration(decl.name, undefined, immunized));
                 });
-                const varList = setPos(varStmt.declarationList, ts.createVariableDeclarationList(decls, ts.NodeFlags.Const));
+                const varList = setPos(varStmt.declarationList, ts.createVariableDeclarationList(decls, varStmt.declarationList.flags));
                 setPos(varStmt.declarationList.declarations, varList.declarations);
                 return setPos(node, ts.createVariableStatement(varStmt.modifiers, varList));
             }
-            default:
-                return node;
         }
+        return node;
     }
     function immunizeExpr(expr) {
         if (expr.kind === ts.SyntaxKind.CallExpression) {
@@ -160,7 +152,7 @@ const bondify = (context) => (topNode) => {
     return topNode;
 };
 const tessie2jessie = {
-    before: [analyze, throwOnError, immunize, bondify],
+    before: [analyze, immunize, bondify, lint],
 };
 compile(process.argv.slice(2), opts, tessie2jessie);
 function showDiagnostics(errs) {
@@ -181,7 +173,11 @@ function compile(fileNames, options, transformers) {
     // Emit *.mjs.ts directly to *.mjs.
     let exitCode = 0;
     for (const src of program.getSourceFiles()) {
+        linterErrors = 0;
         const writeFile = (fileName, data, writeBOM, onError, sourceFiles) => {
+            if (linterErrors) {
+                return;
+            }
             const out = fileName.replace(/(\.mjs)\.js$/, '$1');
             try {
                 fs.writeFileSync(out, data);
@@ -192,7 +188,7 @@ function compile(fileNames, options, transformers) {
         };
         const emitResult = program.emit(src, writeFile, undefined, undefined, transformers);
         showDiagnostics(emitResult.diagnostics);
-        if (emitResult.emitSkipped) {
+        if (emitResult.emitSkipped || linterErrors) {
             exitCode = 1;
         }
     }
