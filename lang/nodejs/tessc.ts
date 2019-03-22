@@ -272,8 +272,11 @@ function compile(fileNames: string[], options: ts.CompilerOptions,
         return;
       }
       const out = fileName.replace(/(\.mjs)\.js$/, '$1');
+      const srcBase = sourceFiles[0].fileName.replace(/^.*\//, '');
       try {
-        fs.writeFileSync(out, data);
+        fs.writeFileSync(out, `\
+// DO NOT EDIT - Generated automatically from ${srcBase} by tessc
+${data}`);
       } catch (e) {
         onError(e);
       }
