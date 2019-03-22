@@ -1,6 +1,10 @@
 // tessc.ts - The Tessie (Typescript-to-Jessie) Compiler.
 // Michael FIG <michael+jessica@fig.org>, 2019-03-20
 
+// TODO: Parse command line options for a tsconfig.json instead of using
+// the one in the current directory.
+// TODO: Also, use its include/exclude rules.
+
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 // tslint:disable:no-console
 
@@ -8,7 +12,6 @@ import * as fs from 'fs';
 import * as ts from 'typescript';
 import * as util from 'util';
 
-// TODO: Don't hardcode this path, take it from a command-line option.
 const TSCONFIG_JSON = './tsconfig.json';
 const tsConfigJSON = fs.readFileSync(TSCONFIG_JSON, {encoding: 'utf-8'});
 const tsConfig = JSON.parse(tsConfigJSON);
@@ -18,6 +21,7 @@ if (co.target !== 'jessie') {
   console.log(`Tessie only knows how to compile target: "jessie", not ${co.target}`);
   process.exit(1);
 }
+
 // Set the target to something Typescript understands.
 co.target = 'esnext';
 
@@ -54,6 +58,12 @@ const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
       switch (node.kind) {
       case ts.SyntaxKind.VariableStatement: {
         const varStmt = node as ts.VariableStatement;
+        const exported = varStmt.modifiers ?
+          varStmt.modifiers.filter(mod => mod.kind === ts.SyntaxKind.ExportKeyword) :
+          [];
+        if (exported.length > 0) {
+          report(node, `Module cannot contain named exports`);
+        }
         const flags = ts.getCombinedNodeFlags(varStmt.declarationList);
         // tslint:disable-next-line:no-bitwise
         if (!(flags & ts.NodeFlags.Const)) {
@@ -109,7 +119,7 @@ const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
       }
       const {line, character} = topNode.getLineAndCharacterOfPosition(start);
       console.log(
-        `${topNode.fileName}:${line + 1}:${character + 1}: ${message}`
+        `${topNode.fileName}:${line + 1}:${character + 1}: Tessie: ${message}`
       );
     }
 
@@ -130,7 +140,7 @@ const immunize: ts.TransformerFactory<ts.SourceFile> = (context) =>
         return setPos(node, ts.createExportDefault(immunized));
       }
 
-      // Handle `const` statements.
+      // Immunize declarations.
       case ts.SyntaxKind.VariableStatement: {
         const varStmt = node as ts.VariableStatement;
         const decls = varStmt.declarationList.declarations.map(decl => {

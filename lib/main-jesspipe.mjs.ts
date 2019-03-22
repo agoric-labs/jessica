@@ -1,8 +1,6 @@
 import makeReadInput from './readInput.mjs';
 import repl from './repl.mjs';
 
-export const foo = 123;
-export const bar = foo;
 const jesspipe = (deps: IMainDependencies, argv: string[]) => {
     const endowments = {
         bond,

@@ -5,7 +5,7 @@
 
 import indent from './indent.mjs';
 
-const LEFT_RECUR = immunize<PegConstant>({toString: () => 'LEFT_RECUR'});
+const LEFT_RECUR: PegConstant = {toString: () => 'LEFT_RECUR'};
 
 const RUN = (self: IPegParser, ruleOrPatt: PegRuleOrPatt, pos: number, name: string) => {
     if (self._debug) {
