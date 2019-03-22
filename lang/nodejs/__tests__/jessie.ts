@@ -44,3 +44,10 @@ test('immunize', () => {
         ['exportDefault', ['call', ['use', 'immunize'], [['use', 'a']]]]
     ]]);
 });
+
+test('exports', () => {
+    const jessieTag = defaultJessieTag();
+    expect(jessieTag`export default 123;`).toEqual(['module', [
+        ['exportDefault', ['data', 123]]
+    ]]);
+});

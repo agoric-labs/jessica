@@ -26,11 +26,11 @@ const bootEnv = (
 
     const env = {
         ...endowments,
-        confine: (src: string, evalenv: object, options?: ConfineOptions) => {
+        confine: (src: string, evalenv: object, options: ConfineOptions = {}) => {
             const ast = tagString<any[]>(jessieTag, options.scriptName)`${src + '\n;'}`;
             return interpJessie(ast, evalenv, options || {});
         },
-        confineExpr: (src: string, evalenv: object, options?: ConfineOptions) => {
+        confineExpr: (src: string, evalenv: object, options: ConfineOptions = {}) => {
             // FIXME: Use the `expr` starting point for jessieTag.
             const ast = tagString<any[]>(jessieTag.expr, options.scriptName)`${'(' + src + '\n)'}`;
             return interpJessie(ast, evalenv, options || {});

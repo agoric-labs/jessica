@@ -179,7 +179,7 @@ const makeJustin = (peg: IPegTag<any>) => {
 
     propDef <-
       super.propDef
-    / useVar                                              ${id => ['prop', id, id]}
+    / useVar                                              ${u => ['prop', u[1], u]}
     / ELLIPSIS assignExpr                                 ${(_, e) => ['spreadObj', e]};
 
     # No computed property name

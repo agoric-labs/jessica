@@ -112,6 +112,9 @@ const evaluators: Record<string, Evaluator> = {
             self.envp = oldEnv;
         }
     },
+    prop(self: IEvalContext, name: string) {
+        return name;
+    },
     record(self: IEvalContext, propDefs: any[][]) {
         const obj: Record<string | number, any> = {};
         propDefs.forEach(b => {

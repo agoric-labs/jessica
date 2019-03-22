@@ -230,7 +230,7 @@ const makeJessie = (peg: IPegTag) => {
 
     # An immunized expression without side-effects.
     immunizedExpr <-
-      dataLiteral
+      dataLiteral                                     ${d => ['data', JSON.parse(d)]}
     / "immunize" _WS LEFT_PAREN pureExpr RIGHT_PAREN  ${(fname, _2, expr, _3) =>
                                                           ['call', ['use', fname], [expr]]};
 
