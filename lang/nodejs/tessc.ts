@@ -70,11 +70,14 @@ const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
       switch (node.kind) {
       case ts.SyntaxKind.VariableStatement: {
         const varStmt = node as ts.VariableStatement;
-        const exported = varStmt.modifiers ?
-          varStmt.modifiers.filter(mod => mod.kind === ts.SyntaxKind.ExportKeyword) :
-          [];
-        if (exported.length > 0) {
-          report(node, `Module cannot contain named exports`);
+        if (false) {
+          // Don't allow named exports.
+          const exported = varStmt.modifiers ?
+            varStmt.modifiers.filter(mod => mod.kind === ts.SyntaxKind.ExportKeyword) :
+            [];
+          if (exported.length > 0) {
+            report(node, `Module cannot contain named exports`);
+          }
         }
         const flags = ts.getCombinedNodeFlags(varStmt.declarationList);
         if (!(flags & ts.NodeFlags.Const)) {

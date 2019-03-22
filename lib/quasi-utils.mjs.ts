@@ -1,10 +1,8 @@
-/// <reference path="peg.d.ts"/>
-
-const qunpack = (h: string, ms: any[], t: string) => {
+export const qunpack = (h: string, ms: any[], t: string) => {
   return [h, ...ms, t];
 };
 
-const qrepack = (parts: any[]) => {
+export const qrepack = (parts: any[]) => {
   // TODO bug: We only provide the raw form at this time. I
   // apologize once again for allowing a cooked form into the
   // standard.
@@ -18,5 +16,3 @@ const qrepack = (parts: any[]) => {
   const template = {raw};
   return [['data', template], ...argExprs];
 };
-
-export default {qunpack, qrepack};

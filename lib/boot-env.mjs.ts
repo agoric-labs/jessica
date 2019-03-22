@@ -6,7 +6,8 @@ import makeJustin from './quasi-justin.mjs';
 import makePeg from './quasi-peg.mjs';
 
 import makeImporter from './importer.mjs';
-import makeInterpJessie from './interp-jessie.mjs';
+import jessieEvaluators from './interp-jessie.mjs';
+import makeInterp from './interp-utils.mjs';
 import tagString from './tag-string.mjs';
 
 const bootEnv = (
@@ -22,7 +23,7 @@ const bootEnv = (
     const jessieTag = makeJessie(pegTag.extends(justinTag));
 
     const importer = makeImporter(readInput, jessieTag);
-    const interpJessie = makeInterpJessie(importer, setComputedIndex);
+    const interpJessie = makeInterp(jessieEvaluators, importer, setComputedIndex);
 
     const env = {
         ...endowments,
