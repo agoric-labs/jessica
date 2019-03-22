@@ -10,7 +10,6 @@
 
 import * as fs from 'fs';
 import * as ts from 'typescript';
-import * as util from 'util';
 
 const TSCONFIG_JSON = './tsconfig.json';
 const tsConfigJSON = fs.readFileSync(TSCONFIG_JSON, {encoding: 'utf-8'});
@@ -46,14 +45,27 @@ function setPos<T extends IPositionable>(src: IPositionable, dst: T): T {
   return dst;
 }
 
+let linterErrors = 0;
+let trustedSymbols = new Set<ts.Symbol>();
+function resetState() {
+  linterErrors = 0;
+  trustedSymbols = new Set<ts.Symbol>();
+}
+
 const analyze: ts.TransformerFactory<ts.SourceFile> = (context) =>
-  (topNode) => {
-    return topNode;
+  (rootNode) => {
+    function buildTrust(node: ts.Node) {
+      switch (node.kind) {
+        // FIXME: Build trustedSymbols.
+      }
+      return node;
+    }
+    ts.visitEachChild(rootNode, buildTrust, context);
+    return rootNode;
   };
 
-let linterErrors = 0;
 const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
-  (topNode) => {
+  (rootNode) => {
     function moduleLevel(node: ts.Node) {
       switch (node.kind) {
       case ts.SyntaxKind.VariableStatement: {
@@ -69,12 +81,13 @@ const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
         if (!(flags & ts.NodeFlags.Const)) {
           report(node, `Module-level declarations must be const`);
         }
+        for (const decl of varStmt.declarationList.declarations) {
+          if (decl.initializer) {
+            ts.visitEachChild(decl.initializer, pureExpr, context);
+          }
+        }
         break;
       }
-
-      case ts.SyntaxKind.ExportDeclaration:
-        console.log('have', node);
-        break;
 
       case ts.SyntaxKind.ExportAssignment:
       case ts.SyntaxKind.NotEmittedStatement:
@@ -92,22 +105,48 @@ const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
 
     function pureExpr(node: ts.Node) {
       switch (node.kind) {
-        // FIXME: Restrict the allowed pure expressions.
-      default:
+      case ts.SyntaxKind.LiteralType:
+      case ts.SyntaxKind.ArrowFunction:
+      case ts.SyntaxKind.Identifier:
+      case ts.SyntaxKind.MethodDeclaration:
         return node;
-      }
-    }
 
-    function otherExpr(node: ts.Node) {
-      switch (node.kind) {
-        // FIXME: Build trust graph for bondify to use.
-      default:
+      case ts.SyntaxKind.CallExpression: {
+        const callExpr = node as ts.CallExpression;
+        const lhs = callExpr.expression;
+        if (lhs.kind === ts.SyntaxKind.Identifier) {
+          const id = lhs as ts.Identifier;
+          if (id.text === 'immunize') {
+            // An immunized pureExpr?
+            for (const arg of callExpr.arguments) {
+              pureExpr(arg);
+            }
+            return node;
+          }
+        }
+        break;
+      }
+
+      case ts.SyntaxKind.PropertyAssignment: {
+        const po = node as ts.PropertyAssignment;
+        if (po.initializer) {
+          pureExpr(po.initializer);
+        }
         return node;
       }
+
+      case ts.SyntaxKind.ObjectLiteralExpression: {
+        const objExpr = node as ts.ObjectLiteralExpression;
+        ts.visitEachChild(objExpr, pureExpr, context);
+        return node;
+      }
+      }
+      report(node, `${ts.SyntaxKind[node.kind]} is not pure`);
+      return node;
     }
 
     function report(node: ts.Node, message: string) {
-      // Don't actually emit.
+      // Add to our errors.
       linterErrors ++;
 
       let start: number;
@@ -117,13 +156,14 @@ const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
         // console.log(e, ts.SyntaxKind[node.kind], node);
         start = 0;
       }
-      const {line, character} = topNode.getLineAndCharacterOfPosition(start);
+      const {line, character} = rootNode.getLineAndCharacterOfPosition(start);
       console.log(
-        `${topNode.fileName}:${line + 1}:${character + 1}: Tessie: ${message}`
+        `${rootNode.fileName}:${line + 1}:${character + 1}: Tessie: ${message}`
       );
     }
 
-    return ts.visitEachChild(topNode, moduleLevel, context);
+    ts.visitEachChild(rootNode, moduleLevel, context);
+    return rootNode;
   };
 
 const immunize: ts.TransformerFactory<ts.SourceFile> = (context) =>
@@ -182,16 +222,14 @@ const immunize: ts.TransformerFactory<ts.SourceFile> = (context) =>
   };
 
 const bondify: ts.TransformerFactory<ts.SourceFile> = (context) =>
-  (topNode) => {
+  (rootNode) => {
     function bondifyNode(node: ts.Node) {
       switch (node.kind) {
       // FIXME: Insert calls to `bond`.
-      default:
-        return node;
       }
+      return node;
     }
-    ts.forEachChild(topNode, bondifyNode);
-    return topNode;
+    return ts.visitEachChild(rootNode, bondifyNode, context);
   };
 
 const tessie2jessie: ts.CustomTransformers = {
@@ -228,7 +266,7 @@ function compile(fileNames: string[], options: ts.CompilerOptions,
   // Emit *.mjs.ts directly to *.mjs.
   let exitCode = 0;
   for (const src of program.getSourceFiles()) {
-    linterErrors = 0;
+    resetState();
     const writeFile: ts.WriteFileCallback = (fileName, data, writeBOM, onError, sourceFiles) => {
       if (linterErrors) {
         return;

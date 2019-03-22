@@ -34,11 +34,23 @@ function setPos(src, dst) {
     // console.log(`got ${util.inspect(dst)}`);
     return dst;
 }
-const analyze = (context) => (topNode) => {
-    return topNode;
-};
 let linterErrors = 0;
-const lint = (context) => (topNode) => {
+let trustedSymbols = new Set();
+function resetState() {
+    linterErrors = 0;
+    trustedSymbols = new Set();
+}
+const analyze = (context) => (rootNode) => {
+    function buildTrust(node) {
+        switch (node.kind) {
+            // FIXME: Build trustedSymbols.
+        }
+        return node;
+    }
+    ts.visitEachChild(rootNode, buildTrust, context);
+    return rootNode;
+};
+const lint = (context) => (rootNode) => {
     function moduleLevel(node) {
         switch (node.kind) {
             case ts.SyntaxKind.VariableStatement: {
@@ -54,11 +66,13 @@ const lint = (context) => (topNode) => {
                 if (!(flags & ts.NodeFlags.Const)) {
                     report(node, `Module-level declarations must be const`);
                 }
+                for (const decl of varStmt.declarationList.declarations) {
+                    if (decl.initializer) {
+                        ts.visitEachChild(decl.initializer, pureExpr, context);
+                    }
+                }
                 break;
             }
-            case ts.SyntaxKind.ExportDeclaration:
-                console.log('have', node);
-                break;
             case ts.SyntaxKind.ExportAssignment:
             case ts.SyntaxKind.NotEmittedStatement:
             case ts.SyntaxKind.TypeAliasDeclaration:
@@ -73,20 +87,44 @@ const lint = (context) => (topNode) => {
     }
     function pureExpr(node) {
         switch (node.kind) {
-            // FIXME: Restrict the allowed pure expressions.
-            default:
+            case ts.SyntaxKind.LiteralType:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.Identifier:
+            case ts.SyntaxKind.MethodDeclaration:
                 return node;
-        }
-    }
-    function otherExpr(node) {
-        switch (node.kind) {
-            // FIXME: Build trust graph for bondify to use.
-            default:
+            case ts.SyntaxKind.CallExpression: {
+                const callExpr = node;
+                const lhs = callExpr.expression;
+                if (lhs.kind === ts.SyntaxKind.Identifier) {
+                    const id = lhs;
+                    if (id.text === 'immunize') {
+                        // An immunized pureExpr?
+                        for (const arg of callExpr.arguments) {
+                            pureExpr(arg);
+                        }
+                        return node;
+                    }
+                }
+                break;
+            }
+            case ts.SyntaxKind.PropertyAssignment: {
+                const po = node;
+                if (po.initializer) {
+                    pureExpr(po.initializer);
+                }
                 return node;
+            }
+            case ts.SyntaxKind.ObjectLiteralExpression: {
+                const objExpr = node;
+                ts.visitEachChild(objExpr, pureExpr, context);
+                return node;
+            }
         }
+        report(node, `${ts.SyntaxKind[node.kind]} is not pure`);
+        return node;
     }
     function report(node, message) {
-        // Don't actually emit.
+        // Add to our errors.
         linterErrors++;
         let start;
         try {
@@ -96,10 +134,11 @@ const lint = (context) => (topNode) => {
             // console.log(e, ts.SyntaxKind[node.kind], node);
             start = 0;
         }
-        const { line, character } = topNode.getLineAndCharacterOfPosition(start);
-        console.log(`${topNode.fileName}:${line + 1}:${character + 1}: Tessie: ${message}`);
+        const { line, character } = rootNode.getLineAndCharacterOfPosition(start);
+        console.log(`${rootNode.fileName}:${line + 1}:${character + 1}: Tessie: ${message}`);
     }
-    return ts.visitEachChild(topNode, moduleLevel, context);
+    ts.visitEachChild(rootNode, moduleLevel, context);
+    return rootNode;
 };
 const immunize = (context) => (rootNode) => {
     function moduleRoot(node) {
@@ -148,16 +187,14 @@ const immunize = (context) => (rootNode) => {
     }
     return ts.visitNode(rootNode, moduleRoot);
 };
-const bondify = (context) => (topNode) => {
+const bondify = (context) => (rootNode) => {
     function bondifyNode(node) {
         switch (node.kind) {
             // FIXME: Insert calls to `bond`.
-            default:
-                return node;
         }
+        return node;
     }
-    ts.forEachChild(topNode, bondifyNode);
-    return topNode;
+    return ts.visitEachChild(rootNode, bondifyNode, context);
 };
 const tessie2jessie = {
     before: [analyze, immunize, bondify, lint],
@@ -181,7 +218,7 @@ function compile(fileNames, options, transformers) {
     // Emit *.mjs.ts directly to *.mjs.
     let exitCode = 0;
     for (const src of program.getSourceFiles()) {
-        linterErrors = 0;
+        resetState();
         const writeFile = (fileName, data, writeBOM, onError, sourceFiles) => {
             if (linterErrors) {
                 return;
