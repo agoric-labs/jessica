@@ -25,6 +25,7 @@ interface IEvalContext {
     setComputedIndex: (obj: Record<string | number, any>, key: string | number, val: any) => void;
     dir: string;
     envp?: Immune<IBinding>;
+    evaluators: Record<string, Evaluator>;
     import: (path: string) => any;
 }
 
@@ -34,7 +35,141 @@ const makeBinding = (parent: IBinding, name: string, init?: any, mutable = true)
     return [parent, name, () => slot, setter];
 };
 
-const evaluators: Record<string, Evaluator> = {
+const jsonEvaluators: Record<string, Evaluator> = {
+    array(self: IEvalContext, elems: any[][]) {
+        const arr = elems.map(el => doEval(self, ...el));
+        return arr;
+    },
+    data(self: IEvalContext, val: any) {
+        return val;
+    },
+    prop(self: IEvalContext, name: string) {
+        return name;
+    },
+    record(self: IEvalContext, propDefs: any[][]) {
+        const obj: Record<string | number, any> = {};
+        propDefs.forEach(b => {
+            const [name, val] = doEval(self, ...b);
+            self.setComputedIndex(obj, name, val);
+        });
+        return obj;
+    },
+};
+
+const justinEvaluators: Record<string, Evaluator> = {
+    ...jsonEvaluators,
+    'pre:+'(self: IEvalContext, expr: any[]) {
+        return +doEval(self, ...expr);
+    },
+    'pre:-'(self: IEvalContext, expr: any[]) {
+        return -doEval(self, ...expr);
+    },
+    'pre:~'(self: IEvalContext, expr: any[]) {
+        return ~doEval(self, ...expr);
+    },
+    'pre:!'(self: IEvalContext, expr: any[]) {
+        return !doEval(self, ...expr);
+    },
+    '**'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval ** bval;
+    },
+    '*'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval * bval;
+    },
+    '/'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval / bval;
+    },
+    '%'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval % bval;
+    },
+    '+'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval + bval;
+    },
+    '-'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval - bval;
+    },
+    '<<'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval << bval;
+    },
+    '>>>'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval >>> bval;
+    },
+    '>>'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval >> bval;
+    },
+    '<='(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval <= bval;
+    },
+    '<'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval < bval;
+    },
+    '>='(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval >= bval;
+    },
+    '>'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval > bval;
+    },
+    '!=='(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval !== bval;
+    },
+    '==='(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval === bval;
+    },
+    '&'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval & bval;
+    },
+    '^'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval ^ bval;
+    },
+    '|'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval | bval;
+    },
+    '&&'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval && bval;
+    },
+    '||'(self: IEvalContext, a: any[], b: any[]) {
+        const aval = doEval(self, ...a);
+        const bval = doEval(self, ...b);
+        return aval || bval;
+    },
     array(self: IEvalContext, elems: any[][]) {
         const arr = elems.reduce((prior, el) => {
             const val = doEval(self, ...el);
@@ -49,8 +184,96 @@ const evaluators: Record<string, Evaluator> = {
         }, []);
         return arr;
     },
+    call(self: IEvalContext, func: any[], args: any[][]) {
+        const lambda = doEval(self, ...func);
+        const evaledArgs = args.map((a) => doEval(self, ...a));
+        return lambda(...evaledArgs);
+    },
+    cond(self: IEvalContext, c: any[], t: any[], e: any[]) {
+        const cval = doEval(self, ...c);
+        if (cval) {
+            return doEval(self, ...t);
+        }
+        return doEval(self, ...e);
+    },
+    def(self: IEvalContext, name: string) {
+        return name;
+    },
+    get(self: IEvalContext, objExpr: any[], id: string) {
+        const obj = doEval(self, ...objExpr);
+        return obj[id];
+    },
+    index(self: IEvalContext, expr: any[]) {
+        const val = doEval(self, ...expr);
+        if (typeof val !== 'number') {
+            slog.error(`Index value ${{val}} is not numeric`);
+        }
+        return val;
+    },
+    quasi(self: IEvalContext, parts: any[]) {
+        const argsExpr = qutils.qrepack(parts);
+        return argsExpr.map(arg => doEval(self, ...arg));
+    },
+    record(self: IEvalContext, propDefs: any[][]) {
+        const obj: Record<string | number, any> = {};
+        propDefs.forEach(b => {
+            if (b[0] === 'spreadObj') {
+                const spreader = doEval(self, ...b);
+                for (const [name, val] of Object.entries(spreader)) {
+                    self.setComputedIndex(obj, name, val);
+                }
+            } else {
+                const [name, val] = doEval(self, ...b);
+                self.setComputedIndex(obj, name, val);
+            }
+        });
+        return obj;
+    },
+    spread(self: IEvalContext, arrExpr: any[][]) {
+        const arr = doEval(self, ...arrExpr);
+        return arr;
+    },
+    spreadObj(self: IEvalContext, objExpr: any[]) {
+        const obj = doEval(self, ...objExpr);
+        return obj;
+    },
+    tag(self: IEvalContext, tagExpr: any[], quasiExpr: any[]) {
+        const tag = doEval(self, ...tagExpr);
+        const args = doEval(self, ...quasiExpr);
+        return tag(...args);
+    },
+    typeof(self: IEvalContext, expr: any[]) {
+        try {
+            const val = doEval(self, ...expr);
+            return typeof val;
+        } catch (e) {
+            // Special semantics not to fail a plain 'use' on ReferenceError.
+            if (expr[0] === 'use') {
+                return undefined;
+            }
+            throw e;
+        }
+    },
+    use(self: IEvalContext, name: string) {
+        let b = self.envp;
+        while (b !== undefined) {
+            if (b[BINDING_NAME] === name) {
+                return b[BINDING_GET]();
+            }
+            b = b[BINDING_PARENT];
+        }
+        slog.error`ReferenceError: ${name} is not defined`;
+    },
+    void(self: IEvalContext, expr: any[]) {
+        doEval(self, ...expr);
+        return undefined;
+    },
+};
+
+const jessieEvaluators: Record<string, Evaluator> = {
+    ...justinEvaluators,
     arrow(self: IEvalContext, argDefs: any[][], body: any[]) {
-        return evaluators.lambda(self, argDefs, body);
+        return self.evaluators.lambda(self, argDefs, body);
     },
     bind(self: IEvalContext, def, expr) {
         const name = doEval(self, ...def);
@@ -61,31 +284,16 @@ const evaluators: Record<string, Evaluator> = {
         // Produce the final value.
         return statements.reduce<any>((_, s) => doEval(self, ...s), undefined);
     },
-    call(self: IEvalContext, func: any[], args: any[][]) {
-        const lambda = doEval(self, ...func);
-        const evaledArgs = args.map((a) => doEval(self, ...a));
-        return lambda(...evaledArgs);
-    },
     const(self: IEvalContext, binds: any[][]) {
         binds.forEach(b => {
             const [name, val] = doEval(self, ...b);
             self.envp = makeBinding(self.envp, name, val);
         });
     },
-    data(self: IEvalContext, val: any) {
-        return val;
-    },
-    def(self: IEvalContext, name: string) {
-        return name;
-    },
     functionDecl(self: IEvalContext, def: any[], argDefs: any[][], body: any[]) {
-        const lambda = evaluators.lambda(self, argDefs, body);
+        const lambda = self.evaluators.lambda(self, argDefs, body);
         const name = doEval(self, ...def);
         self.envp = makeBinding(self.envp, name, lambda, true);
-    },
-    get(self: IEvalContext, objExpr: any[], index: any) {
-        const obj = doEval(self, ...objExpr);
-        return obj[index];
     },
     import(self: IEvalContext, def: any[], path: string) {
         const name = doEval(self, ...def);
@@ -97,6 +305,10 @@ const evaluators: Record<string, Evaluator> = {
         // Interpret with the same endowments.
         const val = self.import(path);
         self.envp = makeBinding(self.envp, name, val);
+    },
+    index(self: IEvalContext, expr: any[]) {
+        // Indices in Jessie can be anything.
+        return doEval(self, ...expr);
     },
     lambda(self: IEvalContext, argDefs: any[][], body: any[]) {
         // FIXME: Handle rest and default arguments.
@@ -128,56 +340,11 @@ const evaluators: Record<string, Evaluator> = {
             self.envp = oldEnv;
         }
     },
-    prop(self: IEvalContext, name: string) {
-        return name;
-    },
-    record(self: IEvalContext, propDefs: any[][]) {
-        const obj: Record<string | number, any> = {};
-        propDefs.forEach(b => {
-            if (b[0] === 'spreadObj') {
-                const spreader = doEval(self, ...b);
-                for (const [name, val] of Object.entries(spreader)) {
-                    self.setComputedIndex(obj, name, val);
-                }
-            } else {
-                const [name, val] = doEval(self, ...b);
-                self.setComputedIndex(obj, name, val);
-            }
-        });
-        return obj;
-    },
-    spread(self: IEvalContext, arrExpr: any[][]) {
-        const arr = doEval(self, ...arrExpr);
-        return arr;
-    },
-    spreadObj(self: IEvalContext, objExpr: any[]) {
-        const obj = doEval(self, ...objExpr);
-        return obj;
-    },
-    tag(self: IEvalContext, tagExpr: any[], quasiExpr: any[]) {
-        const tag = doEval(self, ...tagExpr);
-        const args = doEval(self, ...quasiExpr);
-        return tag(...args);
-    },
-    quasi(self: IEvalContext, parts: any[]) {
-        const argsExpr = qutils.qrepack(parts);
-        return argsExpr.map(arg => doEval(self, ...arg));
-    },
-    use(self: IEvalContext, name: string) {
-        let b = self.envp;
-        while (b !== undefined) {
-            if (b[BINDING_NAME] === name) {
-                return b[BINDING_GET]();
-            }
-            b = b[BINDING_PARENT];
-        }
-        slog.error`Cannot find binding for ${name} in current scope`;
-    },
 };
 
 const doEval = (self: IEvalContext, ...astArgs: any[]) => {
     const [name, ...args] = astArgs;
-    const ev = evaluators[name];
+    const ev = self.evaluators[name];
     if (!ev) {
         slog.error`No ${{name}} implementation`;
     }
@@ -202,6 +369,7 @@ const makeInterpJessie = (
 
         const self: IEvalContext = {
             dir: thisDir,
+            evaluators: jessieEvaluators,
             import: (path) =>
                 importer(path, (iast: any[]) => interpJessie(iast, endowments, {scriptName: path})),
             setComputedIndex,

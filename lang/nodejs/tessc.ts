@@ -77,7 +77,6 @@ const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
           report(node, `Module cannot contain named exports`);
         }
         const flags = ts.getCombinedNodeFlags(varStmt.declarationList);
-        // tslint:disable-next-line:no-bitwise
         if (!(flags & ts.NodeFlags.Const)) {
           report(node, `Module-level declarations must be const`);
         }
@@ -138,6 +137,12 @@ const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
       case ts.SyntaxKind.ObjectLiteralExpression: {
         const objExpr = node as ts.ObjectLiteralExpression;
         ts.visitEachChild(objExpr, pureExpr, context);
+        return node;
+      }
+
+      case ts.SyntaxKind.SpreadAssignment: {
+        const sa = node as ts.SpreadAssignment;
+        pureExpr(sa.expression);
         return node;
       }
       }
