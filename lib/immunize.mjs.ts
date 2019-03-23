@@ -13,6 +13,7 @@
 type AnyFunction = (...args: any[]) => any;
 const makeImmunize = (
     makeHarden: (naivePrepareObject: (obj: any) => void) => typeof harden,
+    makeWrapper: (newImmunize: typeof immunize, fn: (...args: any[]) => any) => (...args: any[]) => any,
     setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => any) => {
 
     // Create a hardener that attempts to immunize functions on the way.
@@ -50,19 +51,7 @@ const makeImmunize = (
     function wrap(fn: AnyFunction): ImmuneFunction<AnyFunction> {
         let wrapper = _wrapperMap.get(fn);
         if (!wrapper) {
-            wrapper = (...args: any[]) => {
-                let ret: any;
-                try {
-                    // Immunize arguments before calling.
-                    const iargs = args.map(immunize);
-                    ret = fn(...iargs);
-                } catch (e) {
-                    // Immunize exception, and rethrow.
-                    throw newImmunize(e);
-                }
-                // Immunize return value.
-                return newImmunize(ret);
-            };
+            wrapper = makeWrapper(newImmunize, fn);
 
             // Memoize our results.
             _wrapperMap.set(fn, wrapper);

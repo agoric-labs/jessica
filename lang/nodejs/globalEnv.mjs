@@ -117,6 +117,20 @@ export const setComputedIndex = Object.freeze((obj, index, val) => {
     }
     return obj[index] = val;
 });
+export const makeWrapper = Object.freeze((newImmunize, fn) => function wrapper(...args) {
+    let ret;
+    try {
+        // Immunize arguments before calling.
+        const iargs = args.map(immunize);
+        ret = applyMethod(this, fn, iargs);
+    }
+    catch (e) {
+        // Immunize exception, and rethrow.
+        throw newImmunize(e);
+    }
+    // Immunize return value.
+    return newImmunize(ret);
+});
 // TODO: Need to use @agoric/make-hardener.
 const makeHarden = (prepareObject) => {
     const hardMap = new WeakMap();
@@ -144,7 +158,7 @@ const makeHarden = (prepareObject) => {
     return newHarden;
 };
 import makeImmunize from '../../lib/immunize.mjs';
-globalEnv.immunize = makeImmunize(makeHarden, setComputedIndex);
+globalEnv.immunize = makeImmunize(makeHarden, makeWrapper, setComputedIndex);
 // Export the environment as global endowments.  This is only possible
 // because we are in control of the main program, and we are setting
 // this policy for all our modules.
