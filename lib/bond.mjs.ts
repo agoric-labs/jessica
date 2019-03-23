@@ -11,12 +11,12 @@ const makeBond = (applyMethod: ApplyMethod) => {
 
     /**
      * Given an object and an index, either
-     * return a fresh method bound to the object that immunizes its args,
+     * return a fresh method bound to the object,
      * a (cached) method we already bound,
      * or a plain value.
      *
      * Given an undefined index,
-     * return a fresh arrow function bound to undefined that immunizes its args,
+     * return a fresh arrow function bound to undefined,
      * a (cached) arrow we already bound,
      * or a plain value.
      */
@@ -60,11 +60,8 @@ const makeBond = (applyMethod: ApplyMethod) => {
         }
 
         // Wrap the method similar to `bind`.
-        // Immunize the arguments, since they may come from an internal
-        // object that has not been returned for the module-level
-        // immunize to act on.
         const bondedMethod = (...args: any[]) =>
-            applyMethod(actualThis, maybeMethod, args.map(immunize));
+            applyMethod(actualThis, maybeMethod, args);
 
         // Cache the immunized, bound method.
         bondedForThis.set(actualMethod, bondedMethod);

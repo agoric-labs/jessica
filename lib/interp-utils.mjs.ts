@@ -42,15 +42,6 @@ export const doEval = (self: IEvalContext, ...astArgs: any[]) => {
     return ev(self, ...args);
 };
 
-export const doApply = (self: IEvalContext, args: any[], formals: string[], body: any[]) => {
-    // Bind the formals.
-    // TODO: Rest arguments.
-    formals.forEach((f, i) => self.envp = makeBinding(self.envp, f, args[i]));
-
-    // Evaluate the body.
-    return doEval(self, ...body);
-};
-
 const makeInterp = (
     evaluators: Evaluators,
     applyMethod: (boundThis: any, method: (...args: any[]) => any, args: any[]) => any,

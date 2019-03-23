@@ -1,13 +1,37 @@
 // TODO: Hoisting of functionDecls.
 
 import justinEvaluators from './interp-justin.mjs';
-import {BINDING_GET, BINDING_NAME, BINDING_PARENT, BINDING_SET, doApply, doEval,
+import {BINDING_GET, BINDING_NAME, BINDING_PARENT, BINDING_SET, doEval,
     Evaluator, IEvalContext, IEvalOptions, makeBinding} from './interp-utils.mjs';
+
+const MAGIC_EXIT = {toString: () => 'MAGIC_EXIT'};
 
 const getRef = (self: IEvalContext, ...astNode: any[]) => {
     const [name, ...args] = astNode;
     const actual = name === 'use' ? 'ref' : name;
     return doEval(self, actual, ...args);
+};
+
+const doApply = (self: IEvalContext, args: any[], formals: string[], body: any[]) => {
+    // Bind the formals.
+    // TODO: Rest arguments.
+    formals.forEach((f, i) => self.envp = makeBinding(self.envp, f, args[i]));
+
+    // Evaluate the body.
+    try {
+        return doEval(self, ...body);
+    } catch (e) {
+        if (Array.isArray(e) && e[0] === MAGIC_EXIT) {
+            if (e[1] === 'return') {
+                // Some part of the body executed `return`;
+                return e[2];
+            } else {
+                slog.error`Invalid exit kind ${{e: e[1]}}`;
+            }
+        }
+        // Not a magic value, just throw normally.
+        throw e;
+    }
 };
 
 const jessieEvaluators: Record<string, Evaluator> = {

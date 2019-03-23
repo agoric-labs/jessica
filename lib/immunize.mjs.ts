@@ -3,7 +3,7 @@
 // Recursively freeze the root, a la harden.  If it is a function
 // or contains a reachable property that is an function, that
 // function will be replaced by a memoized hardened wrapper that
-// immunizes its return value.
+// immunizes its argumens, return value, and any thrown exception.
 //
 // A baroque Proxy or frozen object cannot be immunized, but will still be
 // hardened.  These are objects that cannot possibly contain mutable Jessie
@@ -35,9 +35,9 @@ const makeImmunize = (
                 // endowment or primitive from the parent environment
                 // which wasn't added to harden's initialFringe.
 
-                // Just abort wrapping this object's methods.
-                // FIXME: Maybe do something more clever.
-                break;
+                // We go on, as a best-effort attempt to try immunizing the
+                // properties we can.
+                continue;
             }
         }
     }
@@ -46,14 +46,17 @@ const makeImmunize = (
     function wrap(fn: AnyFunction): ImmuneFunction<AnyFunction> {
         let wrapper = _wrapperMap.get(fn);
         if (!wrapper) {
-            // Make sure the function's return/throw value is also immunized.
             wrapper = (...args: any[]) => {
                 let ret: any;
                 try {
-                    ret = fn(...args);
+                    // Immunize arguments before calling.
+                    const iargs = args.map(immunize);
+                    ret = fn(...iargs);
                 } catch (e) {
+                    // Immunize exception, and rethrow.
                     throw newImmunize(e);
                 }
+                // Immunize return value.
                 return newImmunize(ret);
             };
 
