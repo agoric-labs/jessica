@@ -1,8 +1,8 @@
 type SlogContext = Map<string, any>;
 type SlogHandler =
-    <T>(level: number, names: SlogName[],
-        levels: Map<SlogName, number>, context: SlogContext,
-        template: TemplateStringsArray, args: any[]) => any;
+    (level: number, names: SlogName[],
+     levels: Map<SlogName, number>, context: SlogContext,
+     template: TemplateStringsArray, args: any[]) => any;
 
 const makeSlog = (handler: SlogHandler): Slog => {
     const levels = makeMap<SlogName, number>();
@@ -27,7 +27,7 @@ const makeSlog = (handler: SlogHandler): Slog => {
                 // No specified context, this is the template tag.
                 context = makeMap<string, any>();
                 const template = contextOrTemplate as TemplateStringsArray;
-                return handler<T>(level, names, levels, context, template, args);
+                return handler(level, names, levels, context, template, args);
             }
             return tag;
         };

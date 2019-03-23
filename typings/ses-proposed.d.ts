@@ -30,12 +30,6 @@ type Immune<T> =
 
 declare function immunize<T>(arg: T): Immune<T>;
 
-interface Bond {
-    <T>(arg: T): T;
-    <T, K extends keyof T>(arg: T, index: K): T[K];
-}
-declare const bond: Hardened<Bond>;
-
 interface SlogTag<T> {
     (template: TemplateStringsArray, ...args: any[]): T;
     (context: {}): (template: TemplateStringsArray, ...args: any[]) => T;

@@ -6,13 +6,5 @@
 // we are a main program, and we're changing global state for the
 // entire process.
 import * as sesshim from './sesshim.js';
-const globalEnv = {};
-// Export parts of the SES shim.
-globalEnv.immunize = sesshim.def;
-globalEnv.confine = sesshim.confine;
-// Bootstrap one-argument bond.
-globalEnv.bond = (fn) => (...args) => fn.apply(undefined, args.map(immunize));
-global.immunize = globalEnv.immunize;
-global.confine = globalEnv.confine;
-global.bond = globalEnv.bond;
-export default globalEnv;
+global.confine = sesshim.confine;
+global.immunize = sesshim.def;

@@ -3,7 +3,6 @@ import repl from './repl.mjs';
 
 const jesspipe = (deps: IMainDependencies, argv: string[]) => {
     const endowments = {
-        bond,
         confine,
         confineExpr,
         eval,
