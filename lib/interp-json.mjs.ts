@@ -5,10 +5,10 @@ const jsonEvaluators: Evaluators = {
         const arr = elems.map(el => doEval(self, ...el));
         return arr;
     },
-    data(self: IEvalContext, val: any) {
+    data(_self: IEvalContext, val: any) {
         return val;
     },
-    prop(self: IEvalContext, name: string) {
+    prop(_self: IEvalContext, name: string) {
         return name;
     },
     record(self: IEvalContext, propDefs: any[][]) {

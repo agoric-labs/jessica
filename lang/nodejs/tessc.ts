@@ -16,14 +16,6 @@ const tsConfigJSON = fs.readFileSync(TSCONFIG_JSON, {encoding: 'utf-8'});
 const tsConfig = JSON.parse(tsConfigJSON);
 
 const co = tsConfig.compilerOptions;
-if (co.target !== 'jessie') {
-  console.log(`Tessie only knows how to compile target: "jessie", not ${co.target}`);
-  process.exit(1);
-}
-
-// Set the target to something Typescript understands.
-co.target = 'esnext';
-
 const {errors, options: opts} = ts.convertCompilerOptionsFromJson(co, ".", TSCONFIG_JSON);
 showDiagnostics(errors);
 if (errors.length) {
@@ -46,23 +38,9 @@ function setPos<T extends IPositionable>(src: IPositionable, dst: T): T {
 }
 
 let linterErrors = 0;
-let trustedSymbols = new Set<ts.Symbol>();
 function resetState() {
   linterErrors = 0;
-  trustedSymbols = new Set<ts.Symbol>();
 }
-
-const analyze: ts.TransformerFactory<ts.SourceFile> = (context) =>
-  (rootNode) => {
-    function buildTrust(node: ts.Node) {
-      switch (node.kind) {
-        // FIXME: Build trustedSymbols.
-      }
-      return node;
-    }
-    ts.visitEachChild(rootNode, buildTrust, context);
-    return rootNode;
-  };
 
 const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
   (rootNode) => {
@@ -229,19 +207,8 @@ const immunize: ts.TransformerFactory<ts.SourceFile> = (context) =>
     return ts.visitNode(rootNode, moduleRoot);
   };
 
-const bondify: ts.TransformerFactory<ts.SourceFile> = (context) =>
-  (rootNode) => {
-    function bondifyNode(node: ts.Node) {
-      switch (node.kind) {
-      // FIXME: Insert calls to `bond`.
-      }
-      return node;
-    }
-    return ts.visitEachChild(rootNode, bondifyNode, context);
-  };
-
 const tessie2jessie: ts.CustomTransformers = {
-  before: [analyze, immunize, bondify, lint],
+  before: [immunize, lint],
 };
 
 compile(process.argv.slice(2), opts, tessie2jessie);

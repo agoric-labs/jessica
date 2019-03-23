@@ -40,7 +40,7 @@ const RUN = (self: IPegParser, ruleOrPatt: PegRuleOrPatt, pos: number, name: str
 const lastFailures = (self: IPegParser): [number, string[]] => {
     let maxPos = 0;
     let fails: string[] = [];
-    for (const [pos, posm] of self._memo) {
+    for (const [, posm] of self._memo) {
         for (const [ruleOrPatt, result] of posm) {
             if (result !== LEFT_RECUR) {
                 const fail = typeof ruleOrPatt === 'function' ?
@@ -61,7 +61,7 @@ const lastFailures = (self: IPegParser): [number, string[]] => {
     return [maxPos, fails];
 };
 
-const ERROR = (self: IPegParser, pos: number) => {
+const ERROR = (self: IPegParser, _pos: number) => {
     const [last, fails] = lastFailures(self);
     const found = FIND(self.template, last);
     const tokStr = Array.isArray(found) ?
@@ -139,7 +139,7 @@ const FIND = (template: TemplateStringsArray, pos: number):
     }
 };
 
-const ACCEPT: PegPredicate = (self, pos) => {
+const ACCEPT: PegPredicate = (_self, pos) => {
     // Not really needed: useful for incremental compilation.
     return [pos, []];
 };
@@ -489,7 +489,6 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
             peek(patt: PegExpr) {
                 // for backtracking
                 const posSrc = nextVar('pos');
-                const vSrc = nextVar('v');
                 const pattSrc = peval(patt);
                 // if the pattern matches, restore, else FAIL
                 // always rewind.
@@ -534,8 +533,8 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
 
     type FlagTemplate = TemplateStringsArray | string;
 
-    function quasiMemo<V>(quasiCurry: (template: TemplateStringsArray, debug: boolean) => IPegTag<T>,
-                          parserCreator: IParserTag['parserCreator']) {
+    function quasiMemo(quasiCurry: (template: TemplateStringsArray, debug: boolean) => IPegTag<T>,
+                       parserCreator: IParserTag['parserCreator']) {
         const wm = makeWeakMap();
         let debug = false;
         const templateTag = (templateOrFlag: FlagTemplate, ...subs: any[]) => {
@@ -566,7 +565,7 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
         return templateTag;
     }
 
-    function quasifyParser<V>(parserCreator: PegParserCreator) {
+    function quasifyParser(parserCreator: PegParserCreator) {
         function baseCurry(template: TemplateStringsArray, debug: boolean) {
             const parser = parserCreator(template, debug);
             if (parser === undefined) {
@@ -580,7 +579,7 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
             }
             return pair;
         }
-        return quasiMemo<V>(baseCurry, parserCreator);
+        return quasiMemo(baseCurry, parserCreator);
     }
 
     const defaultBaseGrammar = quasifyParser(_template => undefined);
@@ -649,7 +648,7 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
             };
             _asExtending = <W, V = any>(baseQuasiParser: IParserTag<V>): IPegTag<W> => {
                 const parserCreator = parserTrait(baseQuasiParser.parserCreator);
-                const parser = quasifyParser<V>(parserCreator);
+                const parser = quasifyParser(parserCreator);
                 const pegTag: Partial<IPegTag<W>> & typeof parser = parser;
                 pegTag.ACCEPT = ACCEPT;
                 pegTag.EAT = EAT;

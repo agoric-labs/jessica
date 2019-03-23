@@ -1,10 +1,12 @@
 {
     "compilerOptions": {
-        "target": "jessie",
+        "target": "esnext",
         "module": "es6",
         "typeRoots": ["./typings"],
         "noImplicitAny": true,
         "noEmitOnError": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
         "alwaysStrict": true,
         "types": ["./typings/lib.jessie"]
     },

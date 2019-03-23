@@ -13,12 +13,6 @@ const TSCONFIG_JSON = './tsconfig.json';
 const tsConfigJSON = fs.readFileSync(TSCONFIG_JSON, { encoding: 'utf-8' });
 const tsConfig = JSON.parse(tsConfigJSON);
 const co = tsConfig.compilerOptions;
-if (co.target !== 'jessie') {
-    console.log(`Tessie only knows how to compile target: "jessie", not ${co.target}`);
-    process.exit(1);
-}
-// Set the target to something Typescript understands.
-co.target = 'esnext';
 const { errors, options: opts } = ts.convertCompilerOptionsFromJson(co, ".", TSCONFIG_JSON);
 showDiagnostics(errors);
 if (errors.length) {
@@ -35,21 +29,9 @@ function setPos(src, dst) {
     return dst;
 }
 let linterErrors = 0;
-let trustedSymbols = new Set();
 function resetState() {
     linterErrors = 0;
-    trustedSymbols = new Set();
 }
-const analyze = (context) => (rootNode) => {
-    function buildTrust(node) {
-        switch (node.kind) {
-            // FIXME: Build trustedSymbols.
-        }
-        return node;
-    }
-    ts.visitEachChild(rootNode, buildTrust, context);
-    return rootNode;
-};
 const lint = (context) => (rootNode) => {
     function moduleLevel(node) {
         switch (node.kind) {
@@ -194,17 +176,8 @@ const immunize = (context) => (rootNode) => {
     }
     return ts.visitNode(rootNode, moduleRoot);
 };
-const bondify = (context) => (rootNode) => {
-    function bondifyNode(node) {
-        switch (node.kind) {
-            // FIXME: Insert calls to `bond`.
-        }
-        return node;
-    }
-    return ts.visitEachChild(rootNode, bondifyNode, context);
-};
 const tessie2jessie = {
-    before: [analyze, immunize, bondify, lint],
+    before: [immunize, lint],
 };
 compile(process.argv.slice(2), opts, tessie2jessie);
 function showDiagnostics(errs) {

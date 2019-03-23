@@ -144,7 +144,7 @@ const justinEvaluators: Record<string, Evaluator> = {
         }
         return doEval(self, ...e);
     },
-    def(self: IEvalContext, name: string) {
+    def(_self: IEvalContext, name: string) {
         return name;
     },
     get(self: IEvalContext, objExpr: any[], id: string) {
