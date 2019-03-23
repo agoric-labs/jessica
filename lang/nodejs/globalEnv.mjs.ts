@@ -110,12 +110,24 @@ globalEnv.slog = mySlog;
 // We need a `bond` implementation for Jessie to be usable
 // within SES.
 import makeBond from '../../lib/bond.mjs';
-globalEnv.bond = makeBond(
-    (boundThis, method, args) => method.apply(boundThis, args));
+
+export const applyMethod = Object.freeze((boundThis: any, method: (...args: any) => any, args: any[]) =>
+    method.apply(boundThis, args));
+
+globalEnv.bond = makeBond(applyMethod);
+
+export const setComputedIndex = Object.freeze(<T>(obj: any, index: string | number, val: T) => {
+    if (index === '__proto__') {
+        slog.error`Cannot set ${{index}} object member`;
+    }
+    return obj[index] = val;
+});
 
 // TODO: Need to use @agoric/make-hardener.
 const makeHarden = (prepareObject: (obj: any) => void) => {
     const hardMap = new WeakMap<any, Hardened<any>>();
+    // FIXME: Needed for bootstrap.
+    hardMap.set(setComputedIndex, setComputedIndex);
     function newHarden<T>(root: T): Hardened<T> {
         if (root === null) {
             return root as Hardened<null>;
@@ -137,9 +149,6 @@ const makeHarden = (prepareObject: (obj: any) => void) => {
     }
     return newHarden;
 };
-
-const setComputedIndex = (obj: any, index: string | number, val: any) =>
-    obj[index] = val;
 
 import makeImmunize from '../../lib/immunize.mjs';
 globalEnv.immunize = makeImmunize(makeHarden, setComputedIndex);

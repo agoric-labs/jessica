@@ -1,5 +1,5 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
-import mutableEnv from '../globalEnv.mjs';
+import globalEnv, {applyMethod,  setComputedIndex} from '../globalEnv.mjs';
 
 import bootEnv from '../../../lib/boot-env.mjs';
 import repl from '../../../lib/repl.mjs';
@@ -19,18 +19,8 @@ function dontRead(file: string): never {
     throw Error(`Refusing to read ${file}`);
 }
 
-const applyMethod = (boundThis: any, method: (...args: any[]) => any, args: any[]) =>
-    method.apply(boundThis, args);
-
-const setComputedIndex = (obj: Record<string | number, any>, key: string | number, val: any) => {
-    if (key === '__proto__') {
-        slog.error`Cannot set ${{key}} object member`;
-    }
-    return obj[key] = val;
-};
-
 function defaultEnv(reader: (file: string) => string) {
-    const jessie = bootEnv(mutableEnv, applyMethod, reader, setComputedIndex);
+    const jessie = bootEnv(globalEnv, applyMethod, reader, setComputedIndex);
     return jessie;
 }
 
@@ -45,7 +35,7 @@ function defaultRunModule(reader: (file: string) => string, writer: (file: strin
 
 test('sanity', () => {
     const jessie = defaultEnv(dontRead);
-    expect(jessie.confine('export default 123;', mutableEnv)).toBe(123);
+    expect(jessie.confine('export default 123;', globalEnv)).toBe(123);
 });
 
 test('repl', () => {

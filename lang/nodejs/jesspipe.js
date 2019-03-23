@@ -1,5 +1,5 @@
 #! /usr/bin/env ts-node
-import mutableEnv from './globalEnv.mjs';
+import globalEnv, { applyMethod, setComputedIndex } from './globalEnv.mjs';
 // Read and evaluate the specified module,
 if (process.argv.length < 3) {
     throw Error(`You must specify a MODULE`);
@@ -25,14 +25,7 @@ const writeOutput = (fname, str) => {
 };
 // Create a Jessie bootstrap environment for the endowments.
 import bootEnv from '../../lib/boot-env.mjs';
-const setComputedIndex = (obj, key, val) => {
-    if (key === '__proto__') {
-        slog.error `Cannot set ${{ key }} object member`;
-    }
-    return obj[key] = val;
-};
-const applyMethod = (boundThis, method, args) => method.apply(boundThis, args);
-const jessie = bootEnv(mutableEnv, applyMethod, readInput, setComputedIndex);
+const jessie = bootEnv(globalEnv, applyMethod, readInput, setComputedIndex);
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
 const doEval = (src, uri) => jessie.confine(src, jessie, { scriptName: uri });

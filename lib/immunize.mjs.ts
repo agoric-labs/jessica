@@ -43,6 +43,10 @@ const makeImmunize = (
     }
 
     const _wrapperMap = makeWeakMap<AnyFunction, ImmuneFunction<AnyFunction>>();
+
+    // FIXME: Needed for bootstrap.
+    _wrapperMap.set(setComputedIndex, setComputedIndex);
+
     function wrap(fn: AnyFunction): ImmuneFunction<AnyFunction> {
         let wrapper = _wrapperMap.get(fn);
         if (!wrapper) {

@@ -7,7 +7,7 @@
 /// <reference path="../../typings/jessie-proposed.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 
-import mutableEnv from './globalEnv.mjs';
+import globalEnv, {applyMethod, setComputedIndex} from './globalEnv.mjs';
 
 // Read and evaluate the specified module,
 if (process.argv.length < 3) {
@@ -39,15 +39,7 @@ const writeOutput = (fname: string, str: string) => {
 
 // Create a Jessie bootstrap environment for the endowments.
 import bootEnv from '../../lib/boot-env.mjs';
-const setComputedIndex = (obj: Record<string | number, any>, key: string | number, val: any) => {
-    if (key === '__proto__') {
-        slog.error`Cannot set ${{key}} object member`;
-    }
-    return obj[key] = val;
-};
-const applyMethod = (boundThis: any, method: (...args: any) => any, args: any[]) =>
-    method.apply(boundThis, args);
-const jessie = bootEnv(mutableEnv, applyMethod, readInput, setComputedIndex);
+const jessie = bootEnv(globalEnv, applyMethod, readInput, setComputedIndex);
 
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
