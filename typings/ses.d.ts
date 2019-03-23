@@ -34,7 +34,7 @@ type HardenedObject<T> = {
   readonly [K in keyof T]: Hardened<T[K]>
 };
 
-declare function harden<T>(arg: T): Hardened<T>;
+declare function harden<T>(root: T): Hardened<T>;
 
 declare function makeMap(): Hardened<Map<any, any>>;
 declare function makeMap<K, V>(entries?: ReadonlyArray<[K, V]> | null): Hardened<Map<K, V>>;

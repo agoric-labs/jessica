@@ -110,6 +110,33 @@ globalEnv.slog = mySlog;
 // within SES.
 import makeBond from '../../lib/bond.mjs';
 globalEnv.bond = makeBond((boundThis, method, args) => method.apply(boundThis, args));
+// TODO: Need to use @agoric/make-hardener.
+const makeHarden = (prepareObject) => {
+    const hardMap = new WeakMap();
+    function newHarden(root) {
+        if (root === null) {
+            return root;
+        }
+        const type = typeof root;
+        if (type !== 'object' && type !== 'function') {
+            return root;
+        }
+        if (hardMap.has(root)) {
+            return hardMap.get(root);
+        }
+        prepareObject(root);
+        const frozen = Object.freeze(root);
+        hardMap.set(root, frozen);
+        for (const value of Object.values(root)) {
+            newHarden(value);
+        }
+        return frozen;
+    }
+    return newHarden;
+};
+const setComputedIndex = (obj, index, val) => obj[index] = val;
+import makeImmunize from '../../lib/immunize.mjs';
+globalEnv.immunize = makeImmunize(makeHarden, setComputedIndex);
 // Export the environment as global endowments.  This is only possible
 // because we are in control of the main program, and we are setting
 // this policy for all our modules.

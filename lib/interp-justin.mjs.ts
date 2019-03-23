@@ -179,7 +179,7 @@ const justinEvaluators: Record<string, Evaluator> = {
         return obj;
     },
     ref(self: IEvalContext, name: string) {
-        let b = self.envp;
+        let b = self.env();
         while (b !== undefined) {
             if (b[BINDING_NAME] === name) {
                 return {getter: b[BINDING_GET], thisObj: undefined};
@@ -208,7 +208,7 @@ const justinEvaluators: Record<string, Evaluator> = {
         return binding ? typeof binding[BINDING_GET]() : undefined;
     },
     use(self: IEvalContext, name: string) {
-        let b = self.envp;
+        let b = self.env();
         while (b !== undefined) {
             if (b[BINDING_NAME] === name) {
                 return b[BINDING_GET]();
@@ -218,7 +218,7 @@ const justinEvaluators: Record<string, Evaluator> = {
         slog.error`ReferenceError: ${{name}} is not defined`;
     },
     'use:binding'(self: IEvalContext, name: string) {
-        let b = self.envp;
+        let b = self.env();
         while (b !== undefined) {
             if (b[BINDING_NAME] === name) {
                 return b;

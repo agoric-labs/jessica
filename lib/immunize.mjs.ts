@@ -13,7 +13,7 @@
 type AnyFunction = (...args: any[]) => any;
 const makeImmunize = (
     makeHarden: (naivePrepareObject: (obj: any) => void) => typeof harden,
-    setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => void) => {
+    setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => any) => {
 
     // Create a hardener that attempts to immunize functions on the way.
     const immunizeHardener = makeHarden(tryWrapMethods);

@@ -1,8 +1,8 @@
 // TODO: Hoisting of functionDecls.
 
 import justinEvaluators from './interp-justin.mjs';
-import {BINDING_GET, BINDING_NAME, BINDING_PARENT, BINDING_SET, doEval,
-    Evaluator, IEvalContext, IEvalOptions, makeBinding} from './interp-utils.mjs';
+import {addBinding, BINDING_GET, BINDING_NAME, BINDING_PARENT, BINDING_SET, doEval,
+    Evaluator, IEvalContext} from './interp-utils.mjs';
 
 const MAGIC_EXIT = {toString: () => 'MAGIC_EXIT'};
 
@@ -15,7 +15,7 @@ const getRef = (self: IEvalContext, ...astNode: any[]) => {
 const doApply = (self: IEvalContext, args: any[], formals: string[], body: any[]) => {
     // Bind the formals.
     // TODO: Rest arguments.
-    formals.forEach((f, i) => self.envp = makeBinding(self.envp, f, args[i]));
+    formals.forEach((f, i) => addBinding(self, f, args[i]));
 
     // Evaluate the body.
     try {
@@ -116,13 +116,13 @@ const jessieEvaluators: Record<string, Evaluator> = {
     const(self: IEvalContext, binds: any[][]) {
         binds.forEach(b => {
             const [name, val] = doEval(self, ...b);
-            self.envp = makeBinding(self.envp, name, val);
+            addBinding(self, name, val);
         });
     },
     functionDecl(self: IEvalContext, def: any[], argDefs: any[][], body: any[]) {
         const lambda = self.evaluators.lambda(self, argDefs, body);
         const name = doEval(self, ...def);
-        self.envp = makeBinding(self.envp, name, lambda, true);
+        addBinding(self, name, lambda, true);
     },
     get(self: IEvalContext, pe: any[], index: string) {
         const obj = doEval(self, ...pe);
@@ -158,7 +158,7 @@ const jessieEvaluators: Record<string, Evaluator> = {
 
         // Interpret with the same endowments.
         const val = self.import(path);
-        self.envp = makeBinding(self.envp, name, val);
+        addBinding(self, name, val);
     },
     lambda(self: IEvalContext, argDefs: any[][], body: any[]) {
         // FIXME: Handle rest and default arguments.
@@ -170,7 +170,7 @@ const jessieEvaluators: Record<string, Evaluator> = {
         return lambda;
     },
     module(self: IEvalContext, body: any[]) {
-        const oldEnv = self.envp;
+        const oldEnv = self.env();
         try {
             let didExport = false, exported: any;
             for (const stmt of body) {
@@ -187,11 +187,11 @@ const jessieEvaluators: Record<string, Evaluator> = {
             }
             return exported;
         } finally {
-            self.envp = oldEnv;
+            self.env(oldEnv);
         }
     },
     ref(self: IEvalContext, name: string) {
-        let b = self.envp;
+        let b = self.env();
         while (b !== undefined) {
             if (b[BINDING_NAME] === name) {
                 return {getter: b[BINDING_GET], setter: b[BINDING_SET], thisObj: undefined};

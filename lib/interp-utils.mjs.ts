@@ -22,15 +22,16 @@ export interface IEvalContext {
     applyMethod: (obj: any, lambda: (...args: any[]) => any, args: any[]) => any;
     setComputedIndex: (obj: Record<string | number, any>, key: string | number, val: any) => void;
     dir: string;
-    envp?: Immune<IBinding>;
+    env: (binding?: IBinding) => IBinding;
     evaluators: Evaluators;
     import: (path: string) => any;
 }
 
-export const makeBinding = (parent: IBinding, name: string, init?: any, mutable = true): IBinding => {
+export const addBinding = (self: IEvalContext, name: string, init?: any, mutable = true): IBinding => {
     let slot = init;
     const setter = mutable && ((val: any) => slot = val);
-    return [parent, name, () => slot, setter];
+    const b: IBinding = [self.env(), name, () => slot, setter];
+    return self.env(b);
 };
 
 export const doEval = (self: IEvalContext, ...astArgs: any[]) => {
@@ -50,20 +51,28 @@ const makeInterp = (
     function interp(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
         const lastSlash = options.scriptName === undefined ? -1 : options.scriptName.lastIndexOf('/');
         const thisDir = lastSlash < 0 ? '.' : options.scriptName.slice(0, lastSlash);
+        let envp: IBinding;
 
         const self: IEvalContext = {
             applyMethod,
             dir: thisDir,
             evaluators,
-            import: (path) =>
-                importer(path, (iast: any[]) => interp(iast, endowments, {scriptName: path})),
+            import(path) {
+                return importer(path, (iast: any[]) => interp(iast, endowments, {scriptName: path}));
+            },
             setComputedIndex,
+            env(newEnv?: IBinding) {
+                if (newEnv) {
+                    envp = newEnv;
+                }
+                return envp;
+            },
         };
 
         // slog.info`AST: ${{ast}}`;
         for (const [name, value] of Object.entries(endowments)) {
             // slog.info`Adding ${name}, ${value} to bindings`;
-            self.envp = makeBinding(self.envp, name, value);
+            addBinding(self, name, value);
         }
         return doEval(self, ...ast);
     }
