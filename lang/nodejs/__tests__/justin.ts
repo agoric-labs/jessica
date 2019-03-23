@@ -1,4 +1,4 @@
-/// <reference types="jest"/>
+/// <reference path="../node_modules/@types/jest/index.d.ts"/>
 /// <reference path="../../../lib/peg.d.ts"/>
 import '../globalEnv.mjs';
 

@@ -1,3 +1,4 @@
+/// <reference path="../node_modules/@types/jest/index.d.ts"/>
 import mutableEnv from '../globalEnv.mjs';
 
 import bootEnv from '../../../lib/boot-env.mjs';
