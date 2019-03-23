@@ -5,6 +5,8 @@
 :; for lang in $langs; do
 :;  echo "==== Checking for $lang support"
 :;  "$thisdir/lang/$lang/supported.bat" || continue
+:;  build="$thisdir/lang/$lang/build.bat"
+:;  test ! -f "$build" || "$build" || { status=$?; break; }
 :;  check="$thisdir/lang/$lang/check.bat"
 :;  test ! -f "$check" || "$check" || { status=$?; break; }
 :;  for emitter in "$thisdir"/lib/emit-*.mjs; do

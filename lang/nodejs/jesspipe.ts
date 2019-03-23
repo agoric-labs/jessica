@@ -4,7 +4,7 @@
 // $ ts-node jesspipe.ts \
 //    MODULE [OPTIONS...] [-- [INFILE...]]
 
-/// <reference path="../../typings/ses.d.ts"/>
+/// <reference path="../../typings/jessie-proposed.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 
 import mutableEnv from './globalEnv.mjs';
@@ -45,14 +45,18 @@ const setComputedIndex = (obj: Record<string | number, any>, key: string | numbe
     }
     return obj[key] = val;
 };
-const jessie = bootEnv(mutableEnv, readInput, setComputedIndex);
+const applyMethod = (boundThis: any, method: (...args: any) => any, args: any[]) =>
+    method.apply(boundThis, args);
+const jessie = bootEnv(mutableEnv, applyMethod, readInput, setComputedIndex);
 
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
 const doEval = (src: string, uri?: string) =>
     jessie.confine(src, jessie, {scriptName: uri});
-repl(MODULE, setComputedIndex, (file: string) => Promise.resolve(readInput(file)), doEval, writeOutput, ARGV)
-    .catch(e => {
-        writeOutput('-', '/* FIXME: Stub */\n');
-        slog.notice`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
-    });
+const deps = {applyMethod, readInput, setComputedIndex, writeOutput};
+try {
+    repl(deps, doEval, MODULE, ARGV);
+} catch (e) {
+    writeOutput('-', '/* FIXME: Stub */\n');
+    slog.notice`Cannot evaluate ${{MODULE}}: ${e}`;
+}

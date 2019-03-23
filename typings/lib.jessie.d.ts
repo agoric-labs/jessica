@@ -30,7 +30,6 @@ and limitations under the License.
 ***************************************************************************** */
 
 /// <reference no-default-lib="true"/>
-/// <reference path="./ses.d.ts"/>
 /// <reference path="./jessie-proposed.d.ts"/>
   
       // In order according to

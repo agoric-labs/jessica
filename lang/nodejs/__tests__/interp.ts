@@ -18,6 +18,9 @@ function dontRead(file: string): never {
     throw Error(`Refusing to read ${file}`);
 }
 
+const applyMethod = (boundThis: any, method: (...args: any[]) => any, args: any[]) =>
+    method.apply(boundThis, args);
+
 const setComputedIndex = (obj: Record<string | number, any>, key: string | number, val: any) => {
     if (key === '__proto__') {
         slog.error`Cannot set ${{key}} object member`;
@@ -26,7 +29,7 @@ const setComputedIndex = (obj: Record<string | number, any>, key: string | numbe
 };
 
 function defaultEnv(reader: (file: string) => string) {
-    const jessie = bootEnv(mutableEnv, reader, setComputedIndex);
+    const jessie = bootEnv(mutableEnv, applyMethod, reader, setComputedIndex);
     return jessie;
 }
 
@@ -34,10 +37,9 @@ function defaultRunModule(reader: (file: string) => string, writer: (file: strin
     const jessie = defaultEnv(doRead);
     const doEval = (src: string, uri?: string) =>
         jessie.confine(src, jessie, {scriptName: uri});
+    const deps = {applyMethod, readInput: reader, setComputedIndex, writeOutput: writer};
     return (module: string, argv: string[]) =>
-        repl(module, setComputedIndex,
-            (file: string) => new Promise(resolve => resolve(reader(file))),
-            doEval, writer, argv);
+        repl(deps, doEval, module, argv);
 }
 
 test('sanity', () => {
@@ -45,14 +47,15 @@ test('sanity', () => {
     expect(jessie.confine('export default 123;', mutableEnv)).toBe(123);
 });
 
-test('repl', async () => {
+test('repl', () => {
     const runModule = defaultRunModule(doRead, captureWrite);
     capturedData = '';
-    expect(await runModule('../../lib/emit-c.mjs', [])).toBe(undefined);
+    expect(runModule('../../lib/emit-c.mjs', [])).toBe(undefined);
     expect(capturedData).toBe('/* FIXME: Stub */\n');
 
-    capturedData = '';
-    // expect(await runModule('../../lib/main-jesspipe.mjs', ['--', '../../lib/emit-c.mjs'])).toBe(undefined);
-    capturedData = '/* FIXME: Stub */\n';
-    expect(capturedData).toBe('/* FIXME: Stub */\n');
+    if (false) {
+        capturedData = '';
+        expect(runModule('../../lib/main-jesspipe.mjs', ['--', '../../lib/emit-c.mjs'])).toBe(undefined);
+        expect(capturedData).toBe('/* FIXME: Stub */\n');
+    }
 });

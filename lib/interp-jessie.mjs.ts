@@ -4,106 +4,77 @@ import justinEvaluators from './interp-justin.mjs';
 import {BINDING_GET, BINDING_NAME, BINDING_PARENT, BINDING_SET, doApply, doEval,
     Evaluator, IEvalContext, IEvalOptions, makeBinding} from './interp-utils.mjs';
 
-const getBinding = (self: IEvalContext, ...astNode: any[]) => {
+const getRef = (self: IEvalContext, ...astNode: any[]) => {
     const [name, ...args] = astNode;
-    switch (name) {
-    case 'use': {
-        const vname = args[0];
-        let b = self.envp;
-        while (b) {
-            if (b[BINDING_NAME] === vname) {
-                return {setter: b[BINDING_SET], getter: b[BINDING_GET]};
-            }
-            b = b[BINDING_PARENT];
-        }
-        break;
-    }
-
-    case 'get': {
-        const [pe, id] = args;
-        const obj = doEval(self, ...pe);
-        return {setter: (val: any) => self.setComputedIndex(obj, id, val), getter: () => obj[id]};
-    }
-
-    case 'index': {
-        const [pe, e] = args;
-        const obj = doEval(self, ...pe);
-        const index = doEval(self, ...e);
-        return {setter: (val: any) => self.setComputedIndex(obj, index, val), getter: () => obj[index]};
-    }
-
-    case 'indexLater':
-    case 'getLater':
-        // TODO: Implement when described properly.
-    }
-    slog.error`Cannot find binding for node ${{name}}`;
+    const actual = name === 'use' ? 'ref' : name;
+    return doEval(self, actual, ...args);
 };
 
 const jessieEvaluators: Record<string, Evaluator> = {
     ...justinEvaluators,
     '='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {setter} = getBinding(self, ...lValue);
         return setter(val);
     },
     '*='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {getter, setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {getter, setter} = getBinding(self, ...lValue);
         return setter(getter() * val);
     },
     '/='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {getter, setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {getter, setter} = getBinding(self, ...lValue);
         return setter(getter() / val);
     },
     '%='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {getter, setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {getter, setter} = getBinding(self, ...lValue);
         return setter(getter() % val);
     },
     '+='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {getter, setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {getter, setter} = getBinding(self, ...lValue);
         return setter(getter() + val);
     },
     '-='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {getter, setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {getter, setter} = getBinding(self, ...lValue);
         return setter(getter() - val);
     },
     '<<='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {getter, setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {getter, setter} = getBinding(self, ...lValue);
         return setter(getter() << val);
     },
     '>>='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {getter, setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {getter, setter} = getBinding(self, ...lValue);
         return setter(getter() >> val);
     },
     '>>>='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {getter, setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {getter, setter} = getBinding(self, ...lValue);
         return setter(getter() >>> val);
     },
     '&='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {getter, setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {getter, setter} = getBinding(self, ...lValue);
         return setter(getter() & val);
     },
     '^='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {getter, setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {getter, setter} = getBinding(self, ...lValue);
         return setter(getter() ^ val);
     },
     '|='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {getter, setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {getter, setter} = getBinding(self, ...lValue);
         return setter(getter() | val);
     },
     '**='(self: IEvalContext, lValue: any[], rValue: any[]) {
+        const {getter, setter} = getRef(self, ...lValue);
         const val = doEval(self, ...rValue);
-        const {getter, setter} = getBinding(self, ...lValue);
         return setter(getter() ** val);
     },
     arrow(self: IEvalContext, argDefs: any[][], body: any[]) {
@@ -129,6 +100,23 @@ const jessieEvaluators: Record<string, Evaluator> = {
         const name = doEval(self, ...def);
         self.envp = makeBinding(self.envp, name, lambda, true);
     },
+    get(self: IEvalContext, pe: any[], index: string) {
+        const obj = doEval(self, ...pe);
+        return {
+            getter: () => obj[index],
+            setter: (val: any) => self.setComputedIndex(obj, index, val),
+            thisObj: obj
+        };
+    },
+    index(self: IEvalContext, pe: any[], e: any[]) {
+        const obj = doEval(self, ...pe);
+        const index = doEval(self, ...e);
+        return {
+            getter: () => obj[index],
+            setter: (val: any) => self.setComputedIndex(obj, index, val),
+            thisObj: obj,
+        };
+    },
     if(self: IEvalContext, c: any[], t: any[], e: any[]) {
         const cval = doEval(self, ...c);
         if (cval) {
@@ -147,10 +135,6 @@ const jessieEvaluators: Record<string, Evaluator> = {
         // Interpret with the same endowments.
         const val = self.import(path);
         self.envp = makeBinding(self.envp, name, val);
-    },
-    index(self: IEvalContext, expr: any[]) {
-        // Indices in Jessie can be anything.
-        return doEval(self, ...expr);
     },
     lambda(self: IEvalContext, argDefs: any[][], body: any[]) {
         // FIXME: Handle rest and default arguments.
@@ -181,6 +165,16 @@ const jessieEvaluators: Record<string, Evaluator> = {
         } finally {
             self.envp = oldEnv;
         }
+    },
+    ref(self: IEvalContext, name: string) {
+        let b = self.envp;
+        while (b !== undefined) {
+            if (b[BINDING_NAME] === name) {
+                return {getter: b[BINDING_GET], setter: b[BINDING_SET], thisObj: undefined};
+            }
+            b = b[BINDING_PARENT];
+        }
+        slog.error`ReferenceError: ${{name}} is not defined`;
     },
 };
 

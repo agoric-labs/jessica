@@ -29,14 +29,18 @@ const setComputedIndex = (obj, key, val) => {
     if (key === '__proto__') {
         slog.error `Cannot set ${{ key }} object member`;
     }
-    obj[key] = val;
+    return obj[key] = val;
 };
-const jessie = bootEnv(mutableEnv, readInput, setComputedIndex);
+const applyMethod = (boundThis, method, args) => method.apply(boundThis, args);
+const jessie = bootEnv(mutableEnv, applyMethod, readInput, setComputedIndex);
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
 const doEval = (src, uri) => jessie.confine(src, jessie, { scriptName: uri });
-repl(MODULE, setComputedIndex, (file) => Promise.resolve(readInput(file)), doEval, writeOutput, ARGV)
-    .catch(e => {
+const deps = { applyMethod, readInput, setComputedIndex, writeOutput };
+try {
+    repl(deps, doEval, MODULE, ARGV);
+}
+catch (e) {
     writeOutput('-', '/* FIXME: Stub */\n');
-    slog.notice `Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
-});
+    slog.notice `Cannot evaluate ${{ MODULE }}: ${e}`;
+}

@@ -34,12 +34,18 @@ const jesspipe = (deps: IMainDependencies, argv: string[]) => {
 
     const doEval = (src: string, file: string) =>
         Promise.resolve(confine(src, endowments, {scriptName: file}));
-    return repl(MODULE, deps.setComputedIndex, (file) => Promise.resolve(readInput(file)), doEval,
-        deps.writeOutput, ARGV)
-    .catch(e => {
-      deps.writeOutput('-', '/* FIXME: Stub */\n');
-      slog.notice`Cannot evaluate ${JSON.stringify(MODULE)}: ${e}`;
-    });
+    const newDeps = {
+        applyMethod: deps.applyMethod,
+        readInput,
+        setComputedIndex: deps.setComputedIndex,
+        writeOutput: deps.writeOutput
+    };
+    try {
+        repl(newDeps, doEval, MODULE, ARGV);
+    } catch (e) {
+        deps.writeOutput('-', '/* FIXME: Stub */\n');
+        slog.notice`Cannot evaluate ${{MODULE}}: ${e}`;
+    }
 };
 
 export default jesspipe;

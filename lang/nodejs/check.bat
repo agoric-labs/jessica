@@ -1,1 +1,1 @@
-:; cd `dirname "$0"` && npm install && npm run test
+:; cd `dirname "$0"` && npm run test

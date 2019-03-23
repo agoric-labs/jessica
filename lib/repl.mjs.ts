@@ -1,22 +1,19 @@
+// FIXME: Not really a read-eval-print-loop, yet.
 const repl = (
+        deps: IMainDependencies,
+        doEval: (data: string, uri: string) => any,
         file: string,
-        setComputedIndex: (obj: Record<string | number, any>, index: string | number, val: any) => void,
-        readInput: (file: string) => Promise<string>,
-        doEval: (data: string, uri: string) => Promise<any>,
-        writeOutput: (file: string, data: string) => void,
-        argv: string[]) =>
+        argv: string[]) => {
     // Read...
-    readInput(file)
+    const data = deps.readInput(file);
     // Eval ...
-    .then(data => doEval(data, file))
+    const main = doEval(data, file);
     // Execute as main, if a function.
-    .then(main => (typeof main === 'function') ?
-        main({setComputedIndex, readInput, writeOutput}, argv) : main)
+    const val = typeof main === 'function' ? main(deps, argv) : main;
     // ... maybe Print.
-    .then(val => {
-        if (val !== undefined) {
-            writeOutput('-', JSON.stringify(val, undefined, '  ') + '\n');
-        }
-    });
+    if (val !== undefined) {
+        deps.writeOutput('-', JSON.stringify(val, undefined, '  ') + '\n');
+    }
+};
 
 export default repl;

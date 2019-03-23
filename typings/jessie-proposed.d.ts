@@ -7,9 +7,10 @@
 // then they will be moved to lib.jessie.d.ts.
 //
 // Michael FIG <michael+jessica@fig.org>, 2019-02-23
-
+/// <reference path="./ses.d.ts"/>
 interface IMainDependencies {
-    setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => void,
+    applyMethod: (boundThis: any, method: (...args: any[]) => any, args: any[]) => any,
+    setComputedIndex: <T>(obj: Record<string | number, any>, index: string | number, value: T) => T,
     readInput: (file: string) => string;
     writeOutput: (file: string, data: string) => void;
 }

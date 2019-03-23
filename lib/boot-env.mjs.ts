@@ -12,8 +12,9 @@ import tagString from './tag-string.mjs';
 
 const bootEnv = (
     endowments: Record<string, any>,
-    readInput: (file: string) => string,
-    setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => void) => {
+    applyMethod: IMainDependencies['applyMethod'],
+    readInput: IMainDependencies['readInput'],
+    setComputedIndex: IMainDependencies['setComputedIndex']) => {
     // Bootstrap a peg tag.
     const pegTag = bootPeg<IPegTag<any>>(makePeg, bootPegAst);
 
@@ -23,7 +24,7 @@ const bootEnv = (
     const jessieTag = makeJessie(pegTag.extends(justinTag));
 
     const importer = makeImporter(readInput, jessieTag);
-    const interpJessie = makeInterp(jessieEvaluators, importer, setComputedIndex);
+    const interpJessie = makeInterp(jessieEvaluators, applyMethod, importer, setComputedIndex);
 
     const env = {
         ...endowments,

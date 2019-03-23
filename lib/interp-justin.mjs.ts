@@ -131,9 +131,11 @@ const justinEvaluators: Record<string, Evaluator> = {
         return arr;
     },
     call(self: IEvalContext, func: any[], args: any[][]) {
-        const lambda = doEval(self, ...func);
+        const [fname, ...fargs] = func;
+        const factual = fname === 'use' ? 'ref' : fname;
+        const {getter, thisObj} = doEval(self, factual, ...fargs);
         const evaledArgs = args.map((a) => doEval(self, ...a));
-        return lambda(...evaledArgs);
+        return self.applyMethod(thisObj, getter(), evaledArgs);
     },
     cond(self: IEvalContext, c: any[], t: any[], e: any[]) {
         const cval = doEval(self, ...c);
@@ -147,14 +149,15 @@ const justinEvaluators: Record<string, Evaluator> = {
     },
     get(self: IEvalContext, objExpr: any[], id: string) {
         const obj = doEval(self, ...objExpr);
-        return obj[id];
+        return {getter: () => obj[id], thisObj: obj};
     },
-    index(self: IEvalContext, expr: any[]) {
-        const val = doEval(self, ...expr);
-        if (typeof val !== 'number') {
-            slog.error(`Index value ${{val}} is not numeric`);
+    index(self: IEvalContext, objExpr: any[], expr: any[]) {
+        const obj = doEval(self, ...objExpr);
+        const index = doEval(self, ...expr);
+        if (typeof index !== 'number') {
+            slog.error(`Index value ${{index}} is not numeric`);
         }
-        return val;
+        return {getter: () => obj[index], thisObj: obj};
     },
     quasi(self: IEvalContext, parts: any[]) {
         const argsExpr = qrepack(parts);
@@ -175,6 +178,16 @@ const justinEvaluators: Record<string, Evaluator> = {
         });
         return obj;
     },
+    ref(self: IEvalContext, name: string) {
+        let b = self.envp;
+        while (b !== undefined) {
+            if (b[BINDING_NAME] === name) {
+                return {getter: b[BINDING_GET], thisObj: undefined};
+            }
+            b = b[BINDING_PARENT];
+        }
+        slog.error`ReferenceError: ${{name}} is not defined`;
+    },
     spread(self: IEvalContext, arrExpr: any[][]) {
         const arr = doEval(self, ...arrExpr);
         return arr;
@@ -189,16 +202,10 @@ const justinEvaluators: Record<string, Evaluator> = {
         return tag(...args);
     },
     typeof(self: IEvalContext, expr: any[]) {
-        try {
-            const val = doEval(self, ...expr);
-            return typeof val;
-        } catch (e) {
-            // Special semantics not to fail a plain 'use' on ReferenceError.
-            if (expr[0] === 'use') {
-                return undefined;
-            }
-            throw e;
-        }
+        const [name, ...args] = expr;
+        const actual = name === 'use' ? 'use:binding' : name;
+        const binding = doEval(self, actual, ...args);
+        return binding ? typeof binding[BINDING_GET]() : undefined;
     },
     use(self: IEvalContext, name: string) {
         let b = self.envp;
@@ -208,7 +215,17 @@ const justinEvaluators: Record<string, Evaluator> = {
             }
             b = b[BINDING_PARENT];
         }
-        slog.error`ReferenceError: ${name} is not defined`;
+        slog.error`ReferenceError: ${{name}} is not defined`;
+    },
+    'use:binding'(self: IEvalContext, name: string) {
+        let b = self.envp;
+        while (b !== undefined) {
+            if (b[BINDING_NAME] === name) {
+                return b;
+            }
+            b = b[BINDING_PARENT];
+        }
+        return b;
     },
     void(self: IEvalContext, expr: any[]) {
         doEval(self, ...expr);

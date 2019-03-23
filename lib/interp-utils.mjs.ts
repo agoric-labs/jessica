@@ -19,6 +19,7 @@ export interface IBinding {
 }
 
 export interface IEvalContext {
+    applyMethod: (obj: any, lambda: (...args: any[]) => any, args: any[]) => any;
     setComputedIndex: (obj: Record<string | number, any>, key: string | number, val: any) => void;
     dir: string;
     envp?: Immune<IBinding>;
@@ -52,6 +53,7 @@ export const doApply = (self: IEvalContext, args: any[], formals: string[], body
 
 const makeInterp = (
     evaluators: Evaluators,
+    applyMethod: (boundThis: any, method: (...args: any[]) => any, args: any[]) => any,
     importer: (path: string, evaluator: (ast: any[]) => any) => any,
     setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => void) => {
     function interp(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
@@ -59,6 +61,7 @@ const makeInterp = (
         const thisDir = lastSlash < 0 ? '.' : options.scriptName.slice(0, lastSlash);
 
         const self: IEvalContext = {
+            applyMethod,
             dir: thisDir,
             evaluators,
             import: (path) =>
