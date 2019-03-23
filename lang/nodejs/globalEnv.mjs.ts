@@ -128,7 +128,8 @@ export const makeWrapper = Object.freeze((newImmunize: typeof immunize, fn: (...
         let ret: any;
         try {
             // Immunize arguments before calling.
-            const iargs = args.map(immunize);
+            const iargs = args.map(newImmunize);
+            const ithis = newImmunize(this);
             ret = applyMethod(this, fn, iargs);
         } catch (e) {
             // Immunize exception, and rethrow.

@@ -121,7 +121,8 @@ export const makeWrapper = Object.freeze((newImmunize, fn) => function wrapper(.
     let ret;
     try {
         // Immunize arguments before calling.
-        const iargs = args.map(immunize);
+        const iargs = args.map(newImmunize);
+        const ithis = newImmunize(this);
         ret = applyMethod(this, fn, iargs);
     }
     catch (e) {
