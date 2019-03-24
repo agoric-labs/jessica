@@ -37,7 +37,7 @@ interface SlogTag<T> {
 }
 
 type SlogName = 'panic' | 'alert' | 'crit' | 'error' | 'warn' | 'notice' |
-    'info' | 'debug' | 'trace' | 'DEFAULT' | 'reject';
+    'info' | 'debug' | 'trace' | 'stringify' | 'reject';
 
 
 interface Slog extends SlogTag<string> {

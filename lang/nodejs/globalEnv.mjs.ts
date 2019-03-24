@@ -145,6 +145,10 @@ const mySlog = makeSlog(
             return prior;
         }, [names[level] + ': ' + template[0]]);
 
+        if (level === levels.get('stringify')) {
+            // Just stringify.
+            return reduced.join(' ');
+        }
         if (level >= levels.get('warn')) {
             // Use console.error to provide an inspectable result.
             console.error(...reduced);
