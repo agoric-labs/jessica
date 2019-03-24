@@ -8,34 +8,34 @@ import makePeg from '../../../lib/quasi-peg.mjs';
 
 import makeJSON from '../../../lib/quasi-json.mjs';
 import makeJustin from '../../../lib/quasi-justin.mjs';
-import tagString from '../../../lib/tag-string.mjs';
+import {ast, makeParser} from './parser-utils';
 
-function defaultJustinTag() {
+function defaultJustinParser() {
   const pegTag = bootPeg(makePeg, bootPegAst);
   const jsonTag = makeJSON(pegTag);
   const justinTag = makeJustin(pegTag.extends(jsonTag));
-  return tagString(justinTag);
+  return makeParser(justinTag);
 }
 
 test('data', () => {
-  const justinTag = defaultJustinTag();
-  expect(justinTag`12345`).toEqual(['data', 12345]);
-  expect(justinTag`{}`).toEqual(['record', []]);
-  expect(justinTag`[]`).toEqual(['array', []]);
-  expect(justinTag`{"abc": 123}`).toEqual(['record',
-    [['prop', ['data', 'abc'], ['data', 123]]]]);
-  expect(justinTag`["abc", 123]`).toEqual(['array', [['data', 'abc'], ['data', 123]]]);
-  expect(justinTag`  /* nothing */ 123`).toEqual(['data', 123]);
-  expect(justinTag`// foo
+  const parse = defaultJustinParser();
+  expect(parse(`12345`)).toEqual(ast(0, 'data', 12345));
+  expect(parse(`{}`)).toEqual(ast(0, 'record', []));
+  expect(parse(`[]`)).toEqual(ast(0, 'array', []));
+  expect(parse(`{"abc": 123}`)).toEqual(ast(0, 'record',
+    [ast(1, 'prop', ast(1, 'data', 'abc'), ast(8, 'data', 123))]));
+  expect(parse('["abc", 123]')).toEqual(ast(0, 'array', [ast(1, 'data', 'abc'), ast(8, 'data', 123)]));
+  expect(parse(`  /* nothing */ 123`)).toEqual(ast(16, 'data', 123));
+  expect(parse(`// foo
   // bar
   // baz
-  123`).toEqual(['data', 123]);
-  // expect(jsonTag`"\f\r\n\t\b"`).toBe(['data', '\f\r\n\t\b']);
+  123`)).toEqual(ast(27, 'data', 123));
+  expect(parse('"\\f\\r\\n\\t\\b"')).toEqual(ast(0, 'data', '\f\r\n\t\b'));
 });
 
 test('binops', () => {
-  const justinTag = defaultJustinTag();
-  expect(justinTag`2 === 2`).toEqual(['===', ['data', 2], ['data', 2]]);
-  expect(justinTag`2 < argv`).toEqual(['<', ['data', 2], ['use', 'argv']]);
-  expect(justinTag`argv < 2`).toEqual(['<', ['use', 'argv'], ['data', 2]]);
+  const parse = defaultJustinParser();
+  expect(parse(`2 === 2`)).toEqual(ast(0, '===', ast(0, 'data', 2), ast(6, 'data', 2)));
+  expect(parse(`2 < argv`)).toEqual(ast(0, '<', ast(0, 'data', 2), ast(4, 'use', 'argv')));
+  expect(parse(`argv < 2`)).toEqual(ast(0, '<', ast(0, 'use', 'argv'), ast(7, 'data', 2)));
 });

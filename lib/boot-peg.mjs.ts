@@ -360,11 +360,19 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
     if (value !== FAIL && value.length === 1) value = value[0];`;
             },
             act(hole: number, ...terms: PegExpr[]) {
+                const posSrc = nextVar('pos');
                 numSubs = Math.max(numSubs, hole + 1);
                 const termsSrc = vtable.seq(...terms);
                 return indent`
+    ${posSrc} = pos;
     ${termsSrc}
-    if (value !== FAIL) value = act_${hole}(...value);`;
+    if (value !== FAIL) {
+        value = act_${hole}(...value);
+        if (Array.isArray(value)) {
+            value = [...value];
+            value._pegPosition = makeTokStr(self, FIND(self.template, ${posSrc}));
+        }
+    }`;
             },
             '**'(patt: PegExpr, sep: PegExpr) {
                 // for backtracking
@@ -594,8 +602,10 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
             EAT,
             ERROR,
             FAIL,
+            FIND,
             RUN,
             SKIP,
+            makeTokStr,
         });
 
         return function parserTag(...baseActions: any[]): IPegTag<T> {

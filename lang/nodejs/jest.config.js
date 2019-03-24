@@ -6,7 +6,8 @@ module.exports = {
   },
   testPathIgnorePatterns: [
     "/node_modules/",
-    "/skip-"
+    "/skip-",
+    "parser-utils.ts$",
   ],
   globals: {
       'ts-jest': {

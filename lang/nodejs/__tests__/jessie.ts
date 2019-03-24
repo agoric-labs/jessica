@@ -9,45 +9,45 @@ import makePeg from '../../../lib/quasi-peg.mjs';
 import makeJessie from '../../../lib/quasi-jessie.mjs';
 import makeJSON from '../../../lib/quasi-json.mjs';
 import makeJustin from '../../../lib/quasi-justin.mjs';
-import tagString from '../../../lib/tag-string.mjs';
+import {ast, makeParser} from './parser-utils';
 
-function defaultJessieTag() {
-    const pegTag = bootPeg(makePeg, bootPegAst);
-    const jsonTag = makeJSON(pegTag);
-    const justinTag = makeJustin(pegTag.extends(jsonTag));
-    const jessieTag = makeJessie(pegTag.extends(justinTag));
-    return tagString(jessieTag);
+function defaultJessieParser() {
+  const pegTag = bootPeg(makePeg, bootPegAst);
+  const jsonTag = makeJSON(pegTag);
+  const justinTag = makeJustin(pegTag.extends(jsonTag));
+  const jessieTag = makeJessie(pegTag.extends(justinTag));
+  return makeParser(jessieTag);
 }
 
 test('get/set', () => {
-    const jessieTag = defaultJessieTag();
-    expect(jessieTag`function doit() { return bar.abcd; }`).toEqual(['module', [
-        ['functionDecl', ['def', 'doit'], [], ['block', [
-            ['return', ['get', ['use', 'bar'], 'abcd']]
-        ]]]
+    const parse = defaultJessieParser();
+    expect(parse(`function doit() { return bar.abcd; }`)).toEqual(['module', [
+        ast(0, 'functionDecl', ast(9, 'def', 'doit'), [], ast(16, 'block', [
+            ast(18, 'return', ast(25, 'get', ast(25, 'use', 'bar'), 'abcd'))
+        ]))
     ]]);
-    expect(jessieTag`function doit() { a ? b : c; }`).toEqual(['module', [
-        ['functionDecl', ['def', 'doit'], [], ['block', [
-            ['cond', ['use', 'a'], ['use', 'b'], ['use', 'c']]
-        ]]]
+    expect(parse(`function doit() { a ? b : c; }`)).toEqual(['module', [
+        ast(0, 'functionDecl', ast(9, 'def', 'doit'), [], ast(16, 'block', [
+            ast(18, 'cond', ast(18, 'use', 'a'), ast(22, 'use', 'b'), ast(26, 'use', 'c'))
+        ]))
     ]]);
-    expect(jessieTag`function doit() { foo[1] = c; }`).toEqual(['module', [
-        ['functionDecl', ['def', 'doit'], [], ['block', [
-            ['=', ['index', ['use', 'foo'], ['data', 1]], ['use', 'c']]
-        ]]]
+    expect(parse(`function doit() { foo[1] = c; }`)).toEqual(['module', [
+        ast(0, 'functionDecl', ast(9, 'def', 'doit'), [], ast(16, 'block', [
+            ast(18, '=', ast(18, 'index', ast(18, 'use', 'foo'), ast(22, 'data', 1)), ast(27, 'use', 'c'))
+        ]))
     ]]);
 });
 
 test('immunize', () => {
-    const jessieTag = defaultJessieTag();
-    expect(jessieTag`export default immunize(a);`).toEqual(['module', [
-        ['exportDefault', ['call', ['use', 'immunize'], [['use', 'a']]]]
+    const parse = defaultJessieParser();
+    expect(parse(`export default immunize(a);`)).toEqual(['module', [
+        ast(0, 'exportDefault', ast(15, 'call', ['use', 'immunize'], [ast(24, 'use', 'a')]))
     ]]);
 });
 
 test('exports', () => {
-    const jessieTag = defaultJessieTag();
-    expect(jessieTag`export default 123;`).toEqual(['module', [
-        ['exportDefault', ['data', 123]]
+    const parse = defaultJessieParser();
+    expect(parse(`export default 123;`)).toEqual(['module', [
+        ast(0, 'exportDefault', ast(15, 'data', 123))
     ]]);
 });

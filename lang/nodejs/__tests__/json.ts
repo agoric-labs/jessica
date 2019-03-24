@@ -7,21 +7,21 @@ import bootPegAst from '../../../lib/boot-pegast.mjs';
 import makePeg from '../../../lib/quasi-peg.mjs';
 
 import makeJSON from '../../../lib/quasi-json.mjs';
-import tagString from '../../../lib/tag-string.mjs';
+import {ast, makeParser} from './parser-utils';
 
-function defaultJsonTag() {
+function defaultJsonParser() {
   const pegTag = bootPeg(makePeg, bootPegAst);
   const jsonTag = makeJSON(pegTag);
-  return tagString(jsonTag);
+  return makeParser(jsonTag);
 }
 
 test('data', () => {
-  const jsonTag = defaultJsonTag();
-  expect(jsonTag`{}`).toEqual(['record', []]);
-  expect(jsonTag`[]`).toEqual(['array', []]);
-  expect(jsonTag`{"abc": 123}`).toEqual(['record',
-    [['prop', ['data', 'abc'], ['data', 123]]]]);
-  expect(jsonTag`["abc", 123]`).toEqual(['array', [['data', 'abc'], ['data', 123]]]);
-  expect(jsonTag`123`).toEqual(['data', 123]);
-  // expect(jsonTag`"\f\r\n\t\b"`).toBe(['data', '\f\r\n\t\b']);
+  const parse = defaultJsonParser();
+  expect(parse('{}')).toEqual(ast(0, 'record', []));
+  expect(parse('[]')).toEqual(ast(0, 'array', []));
+  expect(parse('123')).toEqual(ast(0, 'data', 123));
+  expect(parse('{"abc": 123}')).toEqual(ast(0, 'record',
+    [ast(1, 'prop', ast(1, 'data', 'abc'), ast(8, 'data', 123))]));
+  expect(parse('["abc", 123]')).toEqual(ast(0, 'array', [ast(1, 'data', 'abc'), ast(8, 'data', 123)]));
+  expect(parse('"\\f\\r\\n\\t\\b"')).toEqual(ast(0, 'data', '\f\r\n\t\b'));
 });
