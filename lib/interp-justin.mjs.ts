@@ -1,124 +1,125 @@
 import jsonEvaluators from './interp-json.mjs';
-import {BINDING_GET, BINDING_NAME, BINDING_PARENT, doEval, Evaluator, IEvalContext} from './interp-utils.mjs';
+import {BINDING_GET, BINDING_NAME, BINDING_PARENT,
+    doEval, err, Evaluator, IEvalContext} from './interp-utils.mjs';
 import {qrepack} from './quasi-utils.mjs';
 
 const justinEvaluators: Record<string, Evaluator> = {
     ...jsonEvaluators,
     'pre:+'(self: IEvalContext, expr: any[]) {
-        return +doEval(self, ...expr);
+        return +doEval(self, expr);
     },
     'pre:-'(self: IEvalContext, expr: any[]) {
-        return -doEval(self, ...expr);
+        return -doEval(self, expr);
     },
     'pre:~'(self: IEvalContext, expr: any[]) {
-        return ~doEval(self, ...expr);
+        return ~doEval(self, expr);
     },
     'pre:!'(self: IEvalContext, expr: any[]) {
-        return !doEval(self, ...expr);
+        return !doEval(self, expr);
     },
     '**'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval ** bval;
     },
     '*'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval * bval;
     },
     '/'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval / bval;
     },
     '%'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval % bval;
     },
     '+'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval + bval;
     },
     '-'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval - bval;
     },
     '<<'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval << bval;
     },
     '>>>'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval >>> bval;
     },
     '>>'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval >> bval;
     },
     '<='(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval <= bval;
     },
     '<'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval < bval;
     },
     '>='(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval >= bval;
     },
     '>'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval > bval;
     },
     '!=='(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval !== bval;
     },
     '==='(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval === bval;
     },
     '&'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval & bval;
     },
     '^'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval ^ bval;
     },
     '|'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval | bval;
     },
     '&&'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval && bval;
     },
     '||'(self: IEvalContext, a: any[], b: any[]) {
-        const aval = doEval(self, ...a);
-        const bval = doEval(self, ...b);
+        const aval = doEval(self, a);
+        const bval = doEval(self, b);
         return aval || bval;
     },
     array(self: IEvalContext, elems: any[][]) {
         const arr = elems.reduce((prior, el) => {
-            const val = doEval(self, ...el);
+            const val = doEval(self, el);
             if (el[0] === 'spread') {
                 for (const v of val) {
                     prior.push(v);
@@ -131,48 +132,48 @@ const justinEvaluators: Record<string, Evaluator> = {
         return arr;
     },
     call(self: IEvalContext, func: any[], args: any[][]) {
-        const [fname, ...fargs] = func;
+        const [fname] = func;
         const factual = fname === 'use' ? 'ref' : fname;
-        const {getter, thisObj} = doEval(self, factual, ...fargs);
-        const evaledArgs = args.map((a) => doEval(self, ...a));
+        const {getter, thisObj} = doEval(self, func, factual);
+        const evaledArgs = args.map((a) => doEval(self, a));
         return self.applyMethod(thisObj, getter(), evaledArgs);
     },
     cond(self: IEvalContext, c: any[], t: any[], e: any[]) {
-        const cval = doEval(self, ...c);
+        const cval = doEval(self, c);
         if (cval) {
-            return doEval(self, ...t);
+            return doEval(self, t);
         }
-        return doEval(self, ...e);
+        return doEval(self, e);
     },
     def(_self: IEvalContext, name: string) {
         return name;
     },
     get(self: IEvalContext, objExpr: any[], id: string) {
-        const obj = doEval(self, ...objExpr);
+        const obj = doEval(self, objExpr);
         return {getter: () => obj[id], thisObj: obj};
     },
     index(self: IEvalContext, objExpr: any[], expr: any[]) {
-        const obj = doEval(self, ...objExpr);
-        const index = doEval(self, ...expr);
+        const obj = doEval(self, objExpr);
+        const index = doEval(self, expr);
         if (typeof index !== 'number') {
-            slog.error(`Index value ${{index}} is not numeric`);
+            err(self)`Index value ${{index}} is not numeric`;
         }
         return {getter: () => obj[index], thisObj: obj};
     },
     quasi(self: IEvalContext, parts: any[]) {
         const argsExpr = qrepack(parts);
-        return argsExpr.map(arg => doEval(self, ...arg));
+        return argsExpr.map(arg => doEval(self, arg));
     },
     record(self: IEvalContext, propDefs: any[][]) {
         const obj: Record<string | number, any> = {};
         propDefs.forEach(b => {
             if (b[0] === 'spreadObj') {
-                const spreader = doEval(self, ...b);
+                const spreader = doEval(self, b);
                 for (const [name, val] of Object.entries(spreader)) {
                     self.setComputedIndex(obj, name, val);
                 }
             } else {
-                const [name, val] = doEval(self, ...b);
+                const [name, val] = doEval(self, b);
                 self.setComputedIndex(obj, name, val);
             }
         });
@@ -186,19 +187,19 @@ const justinEvaluators: Record<string, Evaluator> = {
             }
             b = b[BINDING_PARENT];
         }
-        slog.error`ReferenceError: ${{name}} is not defined`;
+        err(self)`ReferenceError: ${{name}} is not defined`;
     },
     spread(self: IEvalContext, arrExpr: any[][]) {
-        const arr = doEval(self, ...arrExpr);
+        const arr = doEval(self, arrExpr);
         return arr;
     },
     spreadObj(self: IEvalContext, objExpr: any[]) {
-        const obj = doEval(self, ...objExpr);
+        const obj = doEval(self, objExpr);
         return obj;
     },
     tag(self: IEvalContext, tagExpr: any[], quasiExpr: any[]) {
-        const tag = doEval(self, ...tagExpr);
-        const args = doEval(self, ...quasiExpr);
+        const tag = doEval(self, tagExpr);
+        const args = doEval(self, quasiExpr);
         return tag(...args);
     },
     typeof(self: IEvalContext, expr: any[]) {
@@ -215,7 +216,7 @@ const justinEvaluators: Record<string, Evaluator> = {
             }
             b = b[BINDING_PARENT];
         }
-        slog.error`ReferenceError: ${{name}} is not defined`;
+        err(self)`ReferenceError: ${{name}} is not defined`;
     },
     'use:binding'(self: IEvalContext, name: string) {
         let b = self.env();
@@ -228,7 +229,7 @@ const justinEvaluators: Record<string, Evaluator> = {
         return b;
     },
     void(self: IEvalContext, expr: any[]) {
-        doEval(self, ...expr);
+        doEval(self, expr);
         return undefined;
     },
 };

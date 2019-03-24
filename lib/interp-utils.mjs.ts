@@ -25,22 +25,55 @@ export interface IEvalContext {
     env: (binding?: IBinding) => IBinding;
     evaluators: Evaluators;
     import: (path: string) => any;
+    pos: (pos?: string) => string;
+    uri: string;
 }
 
-export const addBinding = (self: IEvalContext, name: string, init?: any, mutable = true): IBinding => {
-    let slot = init;
-    const setter = mutable && ((val: any) => slot = val);
+const UNINITIALIZED = {toString() { return 'UNINITIALIZED'; }};
+export const addBinding = (
+    self: IEvalContext, name: string,
+    mutable: boolean, init: any = UNINITIALIZED): IBinding => {
+    let slot: any, setter: (<T>(val: T) => T);
+    if (mutable) {
+        setter = <T>(val: T) => slot = val;
+    }
+    if (init === UNINITIALIZED) {
+        if (!mutable) {
+            let allow = true;
+            setter = <T>(val: T) => {
+                if (!allow) {
+                    slog.error`${name} already initialized`;
+                }
+                allow = false;
+                return slot = val;
+            };
+        }
+    } else {
+        slot = init;
+    }
     const b: IBinding = [self.env(), name, () => slot, setter];
     return self.env(b);
 };
 
-export const doEval = (self: IEvalContext, ...astArgs: any[]) => {
-    const [name, ...args] = astArgs;
+export const err = (self: IEvalContext) => {
+    slog.info`${self.uri} at ${self.pos()}`;
+    return slog.error;
+};
+
+export const doEval = (self: IEvalContext, ast: any[], overrideName?: string) => {
+    const [astName, ...args] = ast;
+    const name = overrideName || astName;
     const ev = self.evaluators[name];
-    if (!ev) {
-        slog.error`No ${{name}} implementation`;
+    const pos = (ast as any)._pegPosition;
+    const oldPos = self.pos(pos);
+    try {
+        if (!ev) {
+            slog.error`No ${{name}} implementation`;
+        }
+        return ev(self, ...args);
+    } finally {
+        self.pos(oldPos);
     }
-    return ev(self, ...args);
 };
 
 const makeInterp = (
@@ -51,7 +84,7 @@ const makeInterp = (
     function interp(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
         const lastSlash = options.scriptName === undefined ? -1 : options.scriptName.lastIndexOf('/');
         const thisDir = lastSlash < 0 ? '.' : options.scriptName.slice(0, lastSlash);
-        let envp: IBinding;
+        let envp: IBinding, pos = '';
 
         const self: IEvalContext = {
             applyMethod,
@@ -67,14 +100,22 @@ const makeInterp = (
                 }
                 return envp;
             },
+            pos(newPos?: string) {
+                const oldPos = pos;
+                if (newPos) {
+                    pos = newPos;
+                }
+                return oldPos;
+            },
+            uri: options.scriptName,
         };
 
         // slog.info`AST: ${{ast}}`;
         for (const [name, value] of Object.entries(endowments)) {
             // slog.info`Adding ${name}, ${value} to bindings`;
-            addBinding(self, name, value);
+            addBinding(self, name, false, value);
         }
-        return doEval(self, ...ast);
+        return doEval(self, ast);
     }
 
     return interp;
