@@ -5,7 +5,7 @@ import tagString from '../../../lib/tag-string.mjs';
 
 let curSrc = '';
 
-export function makeParser(tag: any) {
+export function makeParser(tag: IParserTag<any>) {
   const stringTag = tagString<{_pegPosition: string}>(tag);
   return (src: string, doDump = false) => {
     curSrc = src;

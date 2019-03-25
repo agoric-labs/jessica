@@ -5,10 +5,9 @@
 // for documentation of the Jessie grammar defined here.
 
 /// <reference path="peg.d.ts"/>
-
-const makeJessie = (peg: IPegTag) => {
-    const {SKIP} = peg;
-    return peg`
+const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag<any>>) => {
+    const {SKIP} = justinPeg;
+    const jessieTag = justinPeg`
     # Override rather than inherit start production.
     # Only module syntax is permitted.
     start <- _WS moduleBody _EOF               ${b => (..._a: any[]) => ['module', b]};
@@ -50,6 +49,7 @@ const makeJessie = (peg: IPegTag) => {
     # to be extended
     assignExpr <-
       arrowFunc
+    / functionExpr
     / lValue (EQUALS / assignOp) assignExpr                ${(lv, op, rv) => [op, lv, rv]}
     / super.assignExpr;
 
@@ -193,7 +193,7 @@ const makeJessie = (peg: IPegTag) => {
 
     functionExpr <-
       FUNCTION defVar? LEFT_PAREN param ** _COMMA RIGHT_PAREN block
-                                                      ${(_, n, _2, p, _3, b) => ['functionExpr', n, p, b]};
+                                                      ${(_, n, _2, p, _3, b) => ['functionExpr', n[0], p, b]};
 
     # The assignExpr form must come after the block form, to make proper use
     # of PEG prioritized choice.
@@ -224,14 +224,16 @@ const makeJessie = (peg: IPegTag) => {
     / exportDecl
     / moduleDeclaration;
 
+    useImport <- IMPORT_PFX IDENT                 ${(pfx, id) => ['use', pfx + id]};
+    defImport <- IMPORT_PFX IDENT                 ${(pfx, id) => ['def', pfx + id]};
+
     moduleDeclaration <-
-      declOp moduleBinding ** _COMMA SEMI                 ${(op, decls) => [op, decls]}
-    / functionDecl;
+      declOp moduleBinding ** _COMMA SEMI                 ${(op, decls) => [op, decls]};
 
     # An immunized expression without side-effects.
     immunizedExpr <-
       dataLiteral                                     ${d => ['data', JSON.parse(d)]}
-    / "immunize" _WS LEFT_PAREN pureExpr RIGHT_PAREN  ${(fname, _2, expr, _3) =>
+    / "immunize" _WS LEFT_PAREN (pureExpr / useImport) RIGHT_PAREN  ${(fname, _2, expr, _3) =>
                                                           ['call', ['use', fname], [expr]]};
 
     # Jessie modules only allow immunized module-level bindings.
@@ -240,8 +242,11 @@ const makeJessie = (peg: IPegTag) => {
     / defVar EQUALS immunizedExpr               ${(p, _, e) => ['bind', p, e]}
     / defVar;
 
-    importDecl <- IMPORT defVar FROM STRING SEMI  ${(i, v, _, s, _2) => [i, v, JSON.parse(s)]};
-    exportDecl <- EXPORT DEFAULT exportableExpr SEMI ${(_, _2, e, _3) => ['exportDefault', e]};
+    importDecl <- IMPORT defImport FROM STRING SEMI  ${(_, v, _2, s, _3) => ['import', v, JSON.parse(s)]};
+    exportDecl <-
+      EXPORT DEFAULT exportableExpr SEMI        ${(_, _2, e, _3) => ['exportDefault', e]}
+    / EXPORT moduleDeclaration                  ${(_, d) => ['export', d]}
+    / EXPORT exportableExpr SEMI                ${(_, v) => ['export', v]};
 
     # to be extended
     exportableExpr <- immunizedExpr;
@@ -269,7 +274,14 @@ const makeJessie = (peg: IPegTag) => {
     DEFAULT <- "default" _WSN;
     EQUALS <- "=" _WS;
     SEMI <- ";" _WS;
-  `;
+    `;
+
+    const jessieExprTag = peg.extends(jessieTag)`
+    # Jump to the expr production.
+    start <- _WS expr _EOF              ${e => (..._a: any[]) => e};
+    `;
+
+    return [jessieTag, jessieExprTag];
 };
 
 export default makeJessie;

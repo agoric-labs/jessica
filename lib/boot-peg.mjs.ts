@@ -51,7 +51,7 @@ const lastFailures = (self: IPegParser): [number, string[]] => {
                     if (newPos > maxPos) {
                         maxPos = newPos;
                         fails = [fail];
-                    } else if (newPos === maxPos) {
+                    } else if (newPos === maxPos && fails.indexOf(fail) < 0) {
                         fails.push(fail);
                     }
                 }

@@ -55,7 +55,7 @@ const transformSingleQuote = (s: string) => {
   return `"${qs}"`;
 };
 
-const makeJustin = (peg: IPegTag<any>) => {
+const makeJustin = (peg: IPegTag<IParserTag<any>>) => {
     const {SKIP} = peg;
     return peg`
     # to be overridden or inherited
@@ -71,9 +71,7 @@ const makeJustin = (peg: IPegTag<any>) => {
     STARSTAR <- "**" _WS;
 
     # Define Javascript-style comments.
-    # _WSN is whitespace or a non-ident character.
-    _WSN <- super._WSN _WS                              ${_ => SKIP};
-    _WS <- super._WS (EOL_COMMENT / MULTILINE_COMMENT / super._WS) ${_ => SKIP};
+    _WS <- super._WS (EOL_COMMENT / MULTILINE_COMMENT)?   ${_ => SKIP};
     EOL_COMMENT <- "//" (~[\n\r] .)* _WS;
     MULTILINE_COMMENT <- "/*" (~"*/" .)* "*/" _WS;
 
@@ -87,7 +85,8 @@ const makeJustin = (peg: IPegTag<any>) => {
 
     IDENT_NAME <- ~"__proto__" (IDENT / RESERVED_WORD);
 
-    IDENT <- < [$A-Za-z_] [$A-Za-z0-9_]* > _WS;
+    IDENT <- < ~IMPORT_PFX [$A-Za-z_] [$A-Za-z0-9_]* > _WS;
+    IMPORT_PFX <- "$i_";
 
     # Omit "async", "arguments", "eval", "get", and "set" from IDENT
     # in Justin even though ES2017 considers them in IDENT.
@@ -275,9 +274,8 @@ const makeJustin = (peg: IPegTag<any>) => {
     # override, to be extended
     assignExpr <- condExpr;
 
-    # The comma expression is not in Justin and Jessie because we
-    # have base, 'name')(args) in order to avoid passing
-    # base as the this-binding to the function found at base.name.
+    # The comma expression is not in Jessie because we
+    # opt to pass only immunized expressions as the this-binding.
     expr <- assignExpr;
   `;
 };

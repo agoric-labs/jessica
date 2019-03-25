@@ -21,7 +21,7 @@ const bootEnv = (
     // Stack up the parser.
     const jsonTag = makeJSON(pegTag);
     const justinTag = makeJustin(pegTag.extends(jsonTag));
-    const jessieTag = makeJessie(pegTag.extends(justinTag));
+    const [jessieTag, jessieExprTag] = makeJessie(pegTag, pegTag.extends(justinTag));
 
     const importer = makeImporter(readInput, jessieTag);
     const interpJessie = makeInterp(jessieEvaluators, applyMethod, importer, setComputedIndex);
@@ -29,16 +29,15 @@ const bootEnv = (
     const env = {
         ...endowments,
         confine: (src: string, evalenv: object, options: ConfineOptions = {}) => {
-            const ast = tagString<any[]>(jessieTag, options.scriptName)`${src + '\n;'}`;
+            const ast = tagString<any[]>(jessieTag, options.scriptName)`${src}`;
             return interpJessie(ast, evalenv, options || {});
         },
         confineExpr: (src: string, evalenv: object, options: ConfineOptions = {}) => {
-            // FIXME: Use the `expr` starting point for jessieTag.
-            const ast = tagString<any[]>(jessieTag.expr, options.scriptName)`${'(' + src + '\n)'}`;
+            const ast = tagString<any[]>(jessieExprTag, options.scriptName)`${src}`;
             return interpJessie(ast, evalenv, options || {});
         },
         eval: (src: string): any => {
-            const ast = tagString<any[]>(jessieTag)`${src}`;
+            const ast = tagString<any[]>(jessieExprTag)`${src}`;
             return interpJessie(ast, env);
         },
     };

@@ -137,24 +137,31 @@ const immunize = (context) => (rootNode) => {
         switch (node.kind) {
             case ts.SyntaxKind.ExportAssignment: {
                 // Handle `export` statements.
-                const exportAssign = node;
-                const immunized = immunizeExpr(exportAssign.expression);
-                return setPos(node, ts.createExportDefault(immunized));
+                const exp = ts.getMutableClone(node);
+                exp.expression = immunizeExpr(exp.expression);
+                return exp;
             }
             // Immunize declarations.
             case ts.SyntaxKind.VariableStatement: {
-                const varStmt = node;
+                const varStmt = ts.getMutableClone(node);
+                let modified = false;
                 const decls = varStmt.declarationList.declarations.map(decl => {
-                    if (decl.initializer && ts.isLiteralExpression(decl.initializer)) {
-                        // Don't need to immunize literals.
-                        return decl;
+                    // Don't need to immunize literals.
+                    if (decl.initializer && !ts.isLiteralExpression(decl.initializer)) {
+                        const decl2 = ts.getMutableClone(decl);
+                        decl2.initializer = immunizeExpr(decl.initializer);
+                        modified = true;
+                        return decl2;
                     }
-                    const immunized = decl.initializer ? immunizeExpr(decl.initializer) : undefined;
-                    return setPos(decl, ts.createVariableDeclaration(decl.name, undefined, immunized));
+                    return decl;
                 });
+                if (!modified) {
+                    return node;
+                }
                 const varList = setPos(varStmt.declarationList, ts.createVariableDeclarationList(decls, varStmt.declarationList.flags));
                 setPos(varStmt.declarationList.declarations, varList.declarations);
-                return setPos(node, ts.createVariableStatement(varStmt.modifiers, varList));
+                varStmt.declarationList = varList;
+                return varStmt;
             }
         }
         return node;

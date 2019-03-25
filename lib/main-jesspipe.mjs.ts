@@ -1,5 +1,11 @@
+import $i_makeReadInput from './readInput.mjs';
+const makeReadInput = immunize($i_makeReadInput);
+import $i_repl from './repl.mjs';
+const repl = immunize($i_repl);
+/* TODO
 import makeReadInput from './readInput.mjs';
 import repl from './repl.mjs';
+*/
 
 const jesspipe = (deps: IMainDependencies, argv: string[]) => {
     const endowments = {

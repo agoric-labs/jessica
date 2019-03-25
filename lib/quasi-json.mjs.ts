@@ -9,7 +9,7 @@
 
 /// <reference path="peg.d.ts"/>
 
-const makeJSON = (peg: IPegTag) => {
+const makeJSON = (peg: IPegTag<IParserTag<any>>) => {
     const {FAIL, HOLE, SKIP} = peg;
     return peg`
 # to be overridden or inherited

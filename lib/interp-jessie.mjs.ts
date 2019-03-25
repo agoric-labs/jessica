@@ -160,7 +160,6 @@ const jessieEvaluators: Record<string, Evaluator> = {
 
         // Interpret with the same endowments.
         const val = self.import(path);
-        slog.info`imported ${{name}} ${{path}} ${{val}}`;
         addBinding(self, name, false, val);
     },
     lambda(self: IEvalContext, argDefs: any[][], body: any[]) {
