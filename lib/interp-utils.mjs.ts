@@ -20,7 +20,7 @@ export interface IBinding {
 
 export interface IEvalContext {
     applyMethod: (obj: any, lambda: (...args: any[]) => any, args: any[]) => any;
-    setComputedIndex: (obj: Record<string | number, any>, key: string | number, val: any) => void;
+    setComputedIndex: <T>(obj: Record<string | number, any>, key: string | number, val: T) => T;
     dir: string;
     env: (binding?: IBinding) => IBinding;
     evaluators: Evaluators;
@@ -80,7 +80,7 @@ const makeInterp = (
     evaluators: Evaluators,
     applyMethod: (boundThis: any, method: (...args: any[]) => any, args: any[]) => any,
     importer: (path: string, evaluator: (ast: any[]) => any) => any,
-    setComputedIndex: (obj: Record<string | number, any>, index: string | number, value: any) => void) => {
+    setComputedIndex: <T>(obj: Record<string | number, any>, index: string | number, value: T) => T) => {
     function interp(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
         const lastSlash = options.scriptName === undefined ? -1 : options.scriptName.lastIndexOf('/');
         const thisDir = lastSlash < 0 ? '.' : options.scriptName.slice(0, lastSlash);
@@ -119,6 +119,55 @@ const makeInterp = (
     }
 
     return interp;
+};
+
+interface IRef {
+    getter: () => any;
+    setter: <T>(val: T) => T;
+    thisObj?: any;
+}
+
+export const getRef = (self: IEvalContext, astNode: any[], mutable = true): IRef => {
+    const oldPos = self.pos();
+    try {
+        const pos = (astNode as any)._pegPosition;
+        self.pos(pos);
+        switch (astNode[0]) {
+        case 'use': {
+            let b = self.env();
+            const [, name] = astNode;
+            while (b !== undefined) {
+                if (b[BINDING_NAME] === name) {
+                    return {getter: b[BINDING_GET], setter: b[BINDING_SET]};
+                }
+                b = b[BINDING_PARENT];
+            }
+            err(self)`ReferenceError: ${{name}} is not defined`;
+        }
+
+        case 'get': {
+            const [, objExpr, id] = astNode;
+            const obj = doEval(self, objExpr);
+            return {
+                getter: () => obj[id],
+                setter: <T>(val: T): T => self.setComputedIndex(obj, id, val),
+                thisObj: obj,
+            };
+        }
+
+        case 'def': {
+            const [, name] = astNode;
+            const b = addBinding(self, name, mutable);
+            return {getter: b[BINDING_GET], setter: b[BINDING_SET]};
+        }
+
+        default: {
+            err(self)`Reference type ${{type: astNode[0]}} not implemented`;
+        }
+        }
+    } finally {
+        self.pos(oldPos);
+    }
 };
 
 export default makeInterp;

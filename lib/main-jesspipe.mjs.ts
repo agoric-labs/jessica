@@ -22,11 +22,11 @@ const jesspipe = (deps: IMainDependencies, argv: string[]) => {
     };
 
     // Read and evaluate the specified module,
-    if (argv.length < 2) {
+    if (argv.length < 3) {
         slog.panic`You must specify a MODULE`;
     }
-    const MODULE = argv[1] || '-';
-    const ARGV = argv.slice(1);
+    const MODULE = argv[2] || '-';
+    const ARGV = argv.slice(2);
 
     // Make a confined file loader specified by the arguments.
     const dashdash = ARGV.indexOf('--');
@@ -45,7 +45,12 @@ const jesspipe = (deps: IMainDependencies, argv: string[]) => {
         setComputedIndex: deps.setComputedIndex,
         writeOutput: deps.writeOutput
     };
-    repl(newDeps, doEval, MODULE, ARGV);
+    try {
+        repl(newDeps, doEval, MODULE, ARGV);
+    } catch (e) {
+        deps.writeOutput('-', '/* FIXME: Stub */\n');
+        slog.notice`Cannot evaluate ${{MODULE}}: ${e}`;
+    }
 };
 
 export default jesspipe;

@@ -34,6 +34,5 @@ try {
     repl(deps, doEval, MODULE, ARGV);
 }
 catch (e) {
-    writeOutput('-', '/* FIXME: Stub */\n');
     slog.notice `Cannot evaluate ${{ MODULE }}: ${e}`;
 }

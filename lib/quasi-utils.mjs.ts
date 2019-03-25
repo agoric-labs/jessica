@@ -13,6 +13,7 @@ export const qrepack = (parts: any[]) => {
     argExprs.push(parts[i]);
     raw.push(parts[i + 1]);
   }
-  const template = {raw};
+  const template: string[] & { raw?: string[] } = [...raw];
+  template.raw = raw;
   return [['data', template], ...argExprs];
 };

@@ -14,7 +14,7 @@ import './globalEnv0.mjs';
 const globalEnv: Record<string, any> = {};
 globalEnv.confine = confine;
 
-export const applyMethod = Object.freeze((thisObj: any, method: (...args: any) => any, args: any[]) =>
+export const applyMethod = Object.freeze(<T>(thisObj: any, method: (...args: any) => T, args: any[]): T =>
     method.apply(thisObj, args));
 
 export const setComputedIndex = Object.freeze(<T>(obj: any, index: string | number, val: T) => {

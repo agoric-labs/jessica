@@ -34,3 +34,18 @@ test('get/set', () => {
             ast(18, '=', ast(18, 'index', ast(18, 'use', 'foo'), ast(22, 'data', 1)), ast(27, 'use', 'c'))
         ])));
 });
+
+test('quasi', () => {
+    const parse = defaultJessieExprParser();
+    expect(parse('myTag`hello ${{MODULE}}: ${e}`')).toEqual(
+        ast(0, 'tag', ast(0, 'use', 'myTag'),
+            ast(5, 'quasi', [
+                'hello ',
+                ast(14, 'record', [
+                    ast(15, 'prop', 'MODULE', ast(15, 'use', 'MODULE'))
+                ]),
+                ': ',
+                ast(27, 'use', 'e'),
+                ''
+            ])));
+});

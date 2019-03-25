@@ -1,18 +1,9 @@
 // TODO: Hoisting of functionDecls.
 
 import justinEvaluators from './interp-justin.mjs';
-import {addBinding, BINDING_GET, BINDING_NAME, BINDING_PARENT, BINDING_SET, doEval,
-    err, Evaluator, IEvalContext} from './interp-utils.mjs';
+import {addBinding, doEval, err, Evaluator, getRef, IEvalContext} from './interp-utils.mjs';
 
 const MAGIC_EXIT = {toString: () => 'MAGIC_EXIT'};
-
-const getRef = (self: IEvalContext, ...astNode: any[]) => {
-    const [name] = astNode;
-    if (name === 'use') {
-        return doEval(self, astNode, 'ref');
-    }
-    return doEval(self, astNode);
-};
 
 const matchPattern = (self: IEvalContext, pattern: any[], value: any): Array<[string, any]> => {
     const pos = (pattern as any)._pegPosition;
@@ -258,22 +249,11 @@ const jessieEvaluators: Record<string, Evaluator> = {
         }
         return lambda;
     },
-    get(self: IEvalContext, pe: any[], index: string) {
-        const obj = doEval(self, pe);
-        return {
-            getter: () => obj[index],
-            setter: (val: any) => self.setComputedIndex(obj, index, val),
-            thisObj: obj
-        };
-    },
     index(self: IEvalContext, pe: any[], e: any[]) {
+        // No restriction on index expressions, unlike Justin.
         const obj = doEval(self, pe);
         const index = doEval(self, e);
-        return {
-            getter: () => obj[index],
-            setter: (val: any) => self.setComputedIndex(obj, index, val),
-            thisObj: obj,
-        };
+        return obj[index];
     },
     if(self: IEvalContext, c: any[], t: any[], e: any[]) {
         const cval = doEval(self, c);
@@ -284,7 +264,7 @@ const jessieEvaluators: Record<string, Evaluator> = {
         }
     },
     import(self: IEvalContext, def: any[], path: string) {
-        const name = doEval(self, def);
+        const {setter} = getRef(self, def, false);
         if (path[0] === '.' && path[1] === '/') {
             // Take the input relative to our current directory.
             path = `${self.dir}${path.slice(1)}`;
@@ -292,7 +272,7 @@ const jessieEvaluators: Record<string, Evaluator> = {
 
         // Interpret with the same endowments.
         const val = self.import(path);
-        addBinding(self, name, false, val);
+        setter(val);
     },
     lambda(self: IEvalContext, bindings: any[][], body: any[]) {
         const parentEnv = self.env();
@@ -333,16 +313,6 @@ const jessieEvaluators: Record<string, Evaluator> = {
         } finally {
             self.env(oldEnv);
         }
-    },
-    ref(self: IEvalContext, name: string) {
-        let b = self.env();
-        while (b !== undefined) {
-            if (b[BINDING_NAME] === name) {
-                return {getter: b[BINDING_GET], setter: b[BINDING_SET], thisObj: undefined};
-            }
-            b = b[BINDING_PARENT];
-        }
-        err(self)`ReferenceError: ${{name}} is not defined`;
     },
     return(self: IEvalContext, expr: any[]) {
         const val = doEval(self, expr);

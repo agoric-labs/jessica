@@ -8,8 +8,9 @@ const jsonEvaluators: Evaluators = {
     data(_self: IEvalContext, val: any) {
         return val;
     },
-    prop(_self: IEvalContext, name: string) {
-        return name;
+    prop(self: IEvalContext, name: string, expr: any[]) {
+        const val = doEval(self, expr);
+        return [name, val];
     },
     record(self: IEvalContext, propDefs: any[][]) {
         const obj: Record<string | number, any> = {};
