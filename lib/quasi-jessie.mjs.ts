@@ -105,7 +105,8 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
 
     breakableStatement <-
       FOR LEFT_PAREN declaration expr? SEMI expr? RIGHT_PAREN arm ${(_, _2, d, c, _3, i, _4, b) => ['for', d, c, i, b]}
-    / FOR LEFT_PAREN declOp binding OF expr RIGHT_PAREN arm       ${(_, _2, d, _3, e, _4, b) => ['forOf', d, e, b]}
+    / FOR LEFT_PAREN declOp binding OF expr RIGHT_PAREN arm
+            ${(_, _2, o, d, _3, e, _4, b) => ['forOf', o, d, e, b]}
     / WHILE LEFT_PAREN expr RIGHT_PAREN arm                       ${(_, _2, c, _3, b) => ['while', c, b]}
     / SWITCH LEFT_PAREN expr RIGHT_PAREN LEFT_BRACE clause* RIGHT_BRACE
             ${(_, _2, e, _3, _4, bs, _5) => ['switch', e, bs]};

@@ -45,12 +45,7 @@ const jesspipe = (deps: IMainDependencies, argv: string[]) => {
         setComputedIndex: deps.setComputedIndex,
         writeOutput: deps.writeOutput
     };
-    try {
-        repl(newDeps, doEval, MODULE, ARGV);
-    } catch (e) {
-        deps.writeOutput('-', '/* FIXME: Stub */\n');
-        slog.notice`Cannot evaluate ${{MODULE}}: ${e}`;
-    }
+    repl(newDeps, doEval, MODULE, ARGV);
 };
 
 export default jesspipe;

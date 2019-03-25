@@ -200,12 +200,12 @@ const justinEvaluators: Record<string, Evaluator> = {
     tag(self: IEvalContext, tagExpr: any[], quasiExpr: any[]) {
         const tag = doEval(self, tagExpr);
         const args = doEval(self, quasiExpr);
-        return tag(...args);
+        return self.applyMethod(tag.thisObj, tag.getter(), args);
     },
     typeof(self: IEvalContext, expr: any[]) {
-        const [name, ...args] = expr;
+        const [name] = expr;
         const actual = name === 'use' ? 'use:binding' : name;
-        const binding = doEval(self, actual, ...args);
+        const binding = doEval(self, expr, actual);
         return binding ? typeof binding[BINDING_GET]() : undefined;
     },
     use(self: IEvalContext, name: string) {

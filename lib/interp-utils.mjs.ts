@@ -42,7 +42,7 @@ export const addBinding = (
             let allow = true;
             setter = <T>(val: T) => {
                 if (!allow) {
-                    slog.error`${name} already initialized`;
+                    err(self)`${{name}} already initialized`;
                 }
                 allow = false;
                 return slot = val;
@@ -68,7 +68,7 @@ export const doEval = (self: IEvalContext, ast: any[], overrideName?: string) =>
     const oldPos = self.pos(pos);
     try {
         if (!ev) {
-            slog.error`No ${{name}} implementation`;
+            err(self)`No ${{name}} implementation`;
         }
         return ev(self, ...args);
     } finally {

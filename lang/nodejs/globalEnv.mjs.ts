@@ -86,8 +86,6 @@ Object.keys(globalEnv).forEach(vname => {
 
 // slog writes to console
 import makeSlog from '../../lib/slog.mjs';
-const startWs = /^\s+/;
-const endWs = /\s+$/;
 const contextArg = (context: Map<string, any>, a: any) => {
     if (typeof a !== 'object' || a === null) {
         // Just stringify the argument.
@@ -136,9 +134,9 @@ const mySlog = makeSlog(
         const reduced = args.reduce((prior, a, i) => {
             ca = contextArg(context, a);
             const last = prior[prior.length - 1];
-            if (typeof ca === 'object') {
-                prior[prior.length - 1] = last.replace(endWs, '');
-                prior.push(ca, template[i + 1].replace(startWs, ''));
+            if (typeof ca === 'object' && ca !== undefined) {
+                prior[prior.length - 1] = last.trimRight();
+                prior.push(ca, template[i + 1].trimLeft());
             } else {
                 prior[prior.length - 1] = last + String(ca) + template[i + 1];
             }

@@ -14,25 +14,78 @@ const getRef = (self: IEvalContext, ...astNode: any[]) => {
     return doEval(self, astNode);
 };
 
-const doApply = (self: IEvalContext, args: any[], formals: string[], body: any[]) => {
-    // Bind the formals.
-    // TODO: Rest arguments.
-    formals.forEach((f, i) => addBinding(self, f, true, args[i]));
-
-    // Evaluate the body.
+const matchPattern = (self: IEvalContext, pattern: any[], value: any): Array<[string, any]> => {
+    const pos = (pattern as any)._pegPosition;
+    const oldPos = self.pos(pos);
     try {
-        return doEval(self, body);
-    } catch (e) {
-        if (Array.isArray(e) && e[0] === MAGIC_EXIT) {
-            if (e[1] === 'return') {
-                // Some part of the body executed `return`;
-                return e[2];
-            } else {
-                err(self)`Invalid exit kind ${{e: e[1]}}`;
-            }
+        switch (pattern[0]) {
+        case 'def': {
+            return [[pattern[1], value]];
         }
-        // Not a magic value, just throw normally.
-        throw e;
+
+        case 'matchData': {
+            if (value === pattern[1]) {
+                return [];
+            }
+            err(self)`Failed matchData not implemented`;
+        }
+
+        case 'matchArray': {
+            return pattern.slice(1).reduce((prior, pat, i) => {
+                matchPattern(self, pat, value[i])
+                    .forEach(binding => prior.push(binding));
+                return prior;
+            }, []);
+        }
+
+        case 'matchRecord': {
+            return pattern.slice(1).reduce((prior, [name, pat]) => {
+                matchPattern(self, pat, value[name])
+                    .forEach(binding => prior.push(binding));
+                return prior;
+            }, []);
+        }
+
+        default: {
+            err(self)`Cannot match ${{pattern}}: not implemented`;
+        }
+        }
+    } finally {
+        self.pos(oldPos);
+    }
+};
+
+const bindPattern = (self: IEvalContext, pattern: any[], mutable: boolean, value: any) => {
+    matchPattern(self, pattern, value).forEach((binding) => {
+        const [name, val] = binding;
+        addBinding(self, name, mutable, val);
+    });
+};
+
+const doApply = (self: IEvalContext, args: any[], bindings: any[][], body: any[]) => {
+    const oldEnv = self.env();
+    try {
+        // Bind the arguments.
+        const pattern = ['matchArray', ...bindings];
+        bindPattern(self, pattern, true, args);
+
+        // Evaluate the body.
+        try {
+            return doEval(self, body);
+        } catch (e) {
+            if (Array.isArray(e) && e[0] === MAGIC_EXIT) {
+                if (e[1] === 'return') {
+                    // Some part of the body executed `return`;
+                    return e[2];
+                } else {
+                    err(self)`Invalid function exit kind ${{e: e[1]}}`;
+                }
+            }
+            // Not a magic value, just throw normally.
+            throw e;
+        }
+    } finally {
+        self.env(oldEnv);
     }
 };
 
@@ -103,28 +156,107 @@ const jessieEvaluators: Record<string, Evaluator> = {
         const val = doEval(self, rValue);
         return setter(getter() ** val);
     },
-    arrow(self: IEvalContext, argDefs: any[][], body: any[]) {
-        return self.evaluators.lambda(self, argDefs, body);
+    arrow(self: IEvalContext, params: any[][], body: any[]) {
+        return self.evaluators.lambda(self, params, body);
     },
-    bind(self: IEvalContext, def, expr) {
-        const name = doEval(self, def);
+    bind(self: IEvalContext, patt, expr) {
         const val = doEval(self, expr);
-        return [name, val];
+        return [patt, val];
     },
     block(self: IEvalContext, statements: any[][]) {
         // Produce the final value.
         return statements.reduce<any>((_, s) => doEval(self, s), undefined);
     },
+    break(self: IEvalContext, label?: string) {
+        if (label !== undefined) {
+            err(self)`Nonempty break label ${{label}} not implemented`;
+        }
+        throw [MAGIC_EXIT, 'break', label];
+    },
+    catch(_self: IEvalContext, pattern: any[], body: any[]) {
+        return {bindings: [pattern], body};
+    },
     const(self: IEvalContext, binds: any[][]) {
         binds.forEach(b => {
-            const [name, val] = doEval(self, b);
-            addBinding(self, name, false, val);
+            const [pattern, val] = doEval(self, b);
+            bindPattern(self, pattern, false, val);
         });
     },
-    functionDecl(self: IEvalContext, def: any[], argDefs: any[][], body: any[]) {
-        const lambda = self.evaluators.lambda(self, argDefs, body);
+    continue(self: IEvalContext, label?: string) {
+        if (label !== undefined) {
+            err(self)`Nonempty continue label ${{label}} not implemented`;
+        }
+        throw [MAGIC_EXIT, 'continue', label];
+    },
+    finally(_self: IEvalContext, body: any[]) {
+        return {body};
+    },
+    for(self: IEvalContext, decl: any[], cond: any[], incr: any[], body: any[]) {
+        const oldEnv = self.env();
+        try {
+            doEval(self, decl);
+            while (doEval(self, cond)) {
+                try {
+                    doEval(self, body);
+                } catch (e) {
+                    if (e[0] === MAGIC_EXIT) {
+                        switch (e[1]) {
+                            case 'continue':
+                                // Evaluate the incrementer, then continue the loop.
+                                doEval(self, incr);
+                                continue;
+                            case 'break':
+                                // Exit the loop.
+                                return;
+                        }
+                    }
+                    throw e;
+                }
+                doEval(self, incr);
+            }
+        } finally {
+            self.env(oldEnv);
+        }
+    },
+    forOf(self: IEvalContext, declOp: string, binding: any[], expr: any[], body: any[]) {
+        const mutable = declOp !== 'const';
+        const it = doEval(self, expr);
+        const oldEnv = self.env();
+        for (const val of it) {
+            try {
+                bindPattern(self, binding, mutable, val);
+                try {
+                    doEval(self, body);
+                } catch (e) {
+                    if (e[0] === MAGIC_EXIT) {
+                        switch (e[1]) {
+                            case 'continue':
+                                // Continue the loop.
+                                continue;
+                            case 'break':
+                                // Exit the loop.
+                                return;
+                        }
+                    }
+                    throw e;
+                }
+            } finally {
+                self.env(oldEnv);
+            }
+        }
+    },
+    functionDecl(self: IEvalContext, def: any[], params: any[][], body: any[]) {
+        const lambda = self.evaluators.lambda(self, params, body);
         const name = doEval(self, def);
         addBinding(self, name, true, lambda);
+    },
+    functionExpr(self: IEvalContext, def: any[] | undefined, params: any[][], body: any[]) {
+        const lambda = self.evaluators.lambda(self, params, body);
+        if (def) {
+            const name = doEval(self, def);
+            addBinding(self, name, true, lambda);
+        }
+        return lambda;
     },
     get(self: IEvalContext, pe: any[], index: string) {
         const obj = doEval(self, pe);
@@ -162,19 +294,24 @@ const jessieEvaluators: Record<string, Evaluator> = {
         const val = self.import(path);
         addBinding(self, name, false, val);
     },
-    lambda(self: IEvalContext, argDefs: any[][], body: any[]) {
-        const formals = argDefs.map(adef => doEval(self, adef));
+    lambda(self: IEvalContext, bindings: any[][], body: any[]) {
         const parentEnv = self.env();
         const lambda = (...args: any[]) => {
             const oldEnv = self.env();
             try {
                 self.env(parentEnv);
-                return doApply(self, args, formals, body);
+                return doApply(self, args, bindings, body);
             } finally {
                 self.env(oldEnv);
             }
         };
         return lambda;
+    },
+    let(self: IEvalContext, binds: any[][]) {
+        binds.forEach(b => {
+            const [pattern, val] = doEval(self, b);
+            bindPattern(self, pattern, true, val);
+        });
     },
     module(self: IEvalContext, body: any[]) {
         const oldEnv = self.env();
@@ -206,6 +343,54 @@ const jessieEvaluators: Record<string, Evaluator> = {
             b = b[BINDING_PARENT];
         }
         err(self)`ReferenceError: ${{name}} is not defined`;
+    },
+    return(self: IEvalContext, expr: any[]) {
+        const val = doEval(self, expr);
+        throw [MAGIC_EXIT, 'return', val];
+    },
+    throw(self: IEvalContext, expr: any[]) {
+        const val = doEval(self, expr);
+        throw val;
+    },
+    try(self: IEvalContext, b: any[], c?: any[], f?: any[]) {
+        try {
+            doEval(self, b);
+        } catch (e) {
+            if (e[0] === MAGIC_EXIT) {
+                // Bypass the catchable exceptions.
+                throw e;
+            }
+            if (c) {
+                // Evaluate the `catch` block.
+                const {bindings, body} = doEval(self, c);
+                doApply(self, [e], bindings, body);
+            }
+        } finally {
+            if (f) {
+                // Evaluate the `finally` block.
+                const {body} = doEval(self, f);
+                doEval(self, body);
+            }
+        }
+    },
+    while(self: IEvalContext, cond: any[], body: any[]) {
+        while (doEval(self, cond)) {
+            try {
+                doEval(self, body);
+            } catch (e) {
+                if (e[0] === MAGIC_EXIT) {
+                    switch (e[1]) {
+                        case 'continue':
+                            // Continue the loop.
+                            continue;
+                        case 'break':
+                            // Exit the loop.
+                            return;
+                    }
+                }
+                throw e;
+            }
+        }
     },
 };
 
