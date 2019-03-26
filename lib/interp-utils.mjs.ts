@@ -25,6 +25,8 @@ export interface IEvalContext {
     env: (binding?: IBinding) => IBinding;
     evaluators: Evaluators;
     import: (path: string) => any;
+    setLabel: (label: string | undefined) => string | undefined;
+    setArg: (newArg: any) => any;
     pos: (pos?: string) => string;
     uri: string;
 }
@@ -60,12 +62,14 @@ export const err = (self: IEvalContext) => {
     return slog.error;
 };
 
-export const doEval = (self: IEvalContext, ast: any[], overrideName?: string) => {
+export const doEval = <T = any>(self: IEvalContext, ast: any[], overrideName?: string, label?: string): T => {
     const [astName, ...args] = ast;
     const name = overrideName || astName;
     const ev = self.evaluators[name];
     const pos = (ast as any)._pegPosition;
     const oldPos = self.pos(pos);
+    // Always reset the label to either undefined or the one the caller passed.
+    self.setLabel(label);
     try {
         if (!ev) {
             err(self)`No ${{name}} implementation`;
@@ -84,7 +88,7 @@ const makeInterp = (
     function interp(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
         const lastSlash = options.scriptName === undefined ? -1 : options.scriptName.lastIndexOf('/');
         const thisDir = lastSlash < 0 ? '.' : options.scriptName.slice(0, lastSlash);
-        let envp: IBinding, pos = '';
+        let envp: IBinding, pos = '', label: string, arg: any;
 
         const self: IEvalContext = {
             applyMethod,
@@ -106,6 +110,17 @@ const makeInterp = (
                     pos = newPos;
                 }
                 return oldPos;
+            },
+            setLabel(newLabel: string | undefined) {
+                // This always removes the old label.
+                const oldLabel = label;
+                label = newLabel;
+                return oldLabel;
+            },
+            setArg(newArg: any) {
+                const oldArg = arg;
+                arg = newArg;
+                return oldArg;
             },
             uri: options.scriptName,
         };

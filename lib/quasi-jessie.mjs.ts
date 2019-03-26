@@ -92,7 +92,6 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     / breakableStatement
     / terminator
     / IDENT COLON statement                                ${(label, _, stat) => ['label', label, stat]}
-    / IDENT COLON functionDecl                             ${(label, _, func) => ['label', label, func]}
     / TRY block catcher finalizer                          ${(_, b, c, f) => ['try', b, c, f]}
     / TRY block catcher                                    ${(_, b, c) => ['try', b, c]}
     / TRY block finalizer                                  ${(_, b, f) => ['try', b, undefined, f]}
@@ -164,8 +163,8 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     propParam <-
       ELLIPSIS pattern                                ${(_, p) => ['restObj', p]}
     / propName COLON pattern                          ${(k, _, p) => ['matchProp', k, p]}
-    / defVar EQUALS assignExpr                        ${(id, _, e) => ['optionalProp', id, id, e]}
-    / defVar                                          ${id => ['matchProp', id, id]};
+    / defVar EQUALS assignExpr                        ${(id, _, e) => ['optionalProp', id[1], id, e]}
+    / defVar                                          ${id => ['matchProp', id[1], id]};
 
     # Use PEG prioritized choice.
     # TODO emit diagnostic for failure cases.
