@@ -26,7 +26,6 @@ export interface IEvalContext {
     evaluators: Evaluators;
     import: (path: string) => any;
     setLabel: (label: string | undefined) => string | undefined;
-    setArg: (newArg: any) => any;
     pos: (pos?: string) => string;
     uri: string;
 }
@@ -88,7 +87,7 @@ const makeInterp = (
     function interp(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
         const lastSlash = options.scriptName === undefined ? -1 : options.scriptName.lastIndexOf('/');
         const thisDir = lastSlash < 0 ? '.' : options.scriptName.slice(0, lastSlash);
-        let envp: IBinding, pos = '', label: string, arg: any;
+        let envp: IBinding, pos = '', label: string;
 
         const self: IEvalContext = {
             applyMethod,
@@ -116,11 +115,6 @@ const makeInterp = (
                 const oldLabel = label;
                 label = newLabel;
                 return oldLabel;
-            },
-            setArg(newArg: any) {
-                const oldArg = arg;
-                arg = newArg;
-                return oldArg;
             },
             uri: options.scriptName,
         };

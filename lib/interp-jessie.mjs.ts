@@ -101,6 +101,33 @@ const bindPattern = (self: IEvalContext, pattern: any[], mutable: boolean, value
     });
 };
 
+const evalSwitchClause = (self: IEvalContext, clause: any[], val: any) => {
+    switch (clause[0]) {
+    case 'clause': {
+        const [, guards, body] = clause;
+        for (const guard of guards) {
+            if (guard[0] === 'case') {
+                const [, expr2] = guard;
+                const val2 = doEval(self, expr2);
+                if (val !== val2) {
+                    // Try the next case.
+                    continue;
+                }
+            } else if (guard[0] !== 'default') {
+                err(self)`Unrecognized case expression ${{guard}}`;
+            }
+            // Evaluate the body, which in Jessie will do a nonlocal exit.
+            return doEval(self, body);
+        }
+        break;
+    }
+
+    default: {
+        err(self)`Unrecognized switch clause ${{clause}}`;
+    }
+    }
+};
+
 const doApply = (self: IEvalContext, args: any[], bindings: any[][], body: any[]) => {
     const oldEnv = self.env();
     try {
@@ -393,32 +420,7 @@ const jessieEvaluators: Record<string, Evaluator> = {
     switch(self: IEvalContext, expr: any[], clauses: any[][]) {
         const val = doEval(self, expr);
         for (const clause of clauses) {
-            switch (clause[0]) {
-            case 'clause': {
-                const [, cases, body] = clause;
-                for (const c of cases) {
-                    if (c[0] === 'case') {
-                        const [, expr2] = c;
-                        const val2 = doEval(self, expr2);
-                        if (val !== val2) {
-                            // Try the next case.
-                            continue;
-                        }
-                    } else if (c[0] !== 'default') {
-                        err(self)`Unrecognized case expression ${{c}}`;
-                    }
-                    // Evaluate the body, which in Jessie will do a nonlocal exit.
-                    doEval(self, body);
-
-                    // Fallthrough to the next clause if the body allowed it.
-                    break;
-                }
-                break;
-            }
-            default: {
-                err(self)`Unrecognized switch clause ${{clause}}`;
-            }
-            }
+            evalSwitchClause(self, clause, val);
         }
     },
     throw(self: IEvalContext, expr: any[]) {
