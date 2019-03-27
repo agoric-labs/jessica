@@ -11,6 +11,8 @@
 import * as fs from 'fs';
 import * as ts from 'typescript';
 
+const IMPORT_PFX = '$i_';
+
 const TSCONFIG_JSON = './tsconfig.json';
 const tsConfigJSON = fs.readFileSync(TSCONFIG_JSON, {encoding: 'utf-8'});
 const tsConfig = JSON.parse(tsConfigJSON);
@@ -48,15 +50,6 @@ const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
       switch (node.kind) {
       case ts.SyntaxKind.VariableStatement: {
         const varStmt = node as ts.VariableStatement;
-        if (false) {
-          // Don't allow named exports.
-          const exported = varStmt.modifiers ?
-            varStmt.modifiers.filter(mod => mod.kind === ts.SyntaxKind.ExportKeyword) :
-            [];
-          if (exported.length > 0) {
-            report(node, `Module cannot contain named exports`);
-          }
-        }
         const flags = ts.getCombinedNodeFlags(varStmt.declarationList);
         if (!(flags & ts.NodeFlags.Const)) {
           report(node, `Module-level declarations must be const`);
@@ -154,8 +147,16 @@ const lint: ts.TransformerFactory<ts.SourceFile> = (context) =>
 
 const immunize: ts.TransformerFactory<ts.SourceFile> = (context) =>
   (rootNode) => {
+    const stmts: any[] = [];
     function moduleRoot(node: ts.Node) {
-      return ts.visitEachChild(node, moduleStatement, context);
+      const newNode = ts.visitEachChild(node, moduleStatementPush, context);
+      const update = ts.updateSourceFileNode(rootNode, stmts);
+      return update;
+    }
+    function moduleStatementPush(node: ts.Node) {
+      const node2 = moduleStatement(node);
+      stmts.push(node2);
+      return node2;
     }
     function moduleStatement(node: ts.Node) {
       switch (node.kind) {
@@ -164,6 +165,37 @@ const immunize: ts.TransformerFactory<ts.SourceFile> = (context) =>
         const exp = ts.getMutableClone(node as ts.ExportAssignment);
         exp.expression = immunizeExpr(exp.expression);
         return exp;
+      }
+
+      case ts.SyntaxKind.ImportDeclaration: {
+        const decl = ts.getMutableClone(node as ts.ImportDeclaration);
+        const clause = ts.getMutableClone(decl.importClause as ts.ImportClause);
+        decl.importClause = clause;
+        if (clause.name && !clause.name.text.startsWith(IMPORT_PFX)) {
+          const safeName = clause.name;
+          const tmpName = setPos(safeName, ts.createIdentifier(IMPORT_PFX + safeName.text));
+          console.log(clause.name.text, '->', tmpName.text);
+          clause.name = tmpName;
+        }
+
+        // FIXME: Iterate through named imports.
+        if (clause.namedBindings) {
+          clause.namedBindings = ts.visitEachChild(clause.namedBindings, (binding) => {
+            if (ts.isImportSpecifier(binding)) {
+              const imp = ts.getMutableClone(binding as ts.ImportSpecifier);
+              console.log(imp.name.text);
+              if (!imp.name.text.startsWith(IMPORT_PFX)) {
+                const safeName = imp.name;
+                const tmpName = setPos(safeName, ts.createIdentifier(IMPORT_PFX + safeName.text));
+                console.log(imp.name.text, '->', tmpName.text);
+                imp.name = tmpName;
+              }
+              return imp;
+            }
+            return binding;
+          }, context);
+        }
+        return decl;
       }
 
       // Immunize declarations.
@@ -216,7 +248,9 @@ const immunize: ts.TransformerFactory<ts.SourceFile> = (context) =>
   };
 
 const tessie2jessie: ts.CustomTransformers = {
-  before: [immunize, lint],
+  after: [immunize, lint],
+  afterDeclarations: [immunize],
+  before: [immunize],
 };
 
 compile(process.argv.slice(2), opts, tessie2jessie);
