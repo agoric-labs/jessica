@@ -551,13 +551,15 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
         const templateTag = (templateOrFlag: FlagTemplate, ...subs: any[]) => {
             if (typeof templateOrFlag === 'string') {
                 switch (templateOrFlag) {
-                case 'DEBUG':
+                case 'DEBUG': {
                     // Called as tag('DEBUG')`template string`
                     // Turn on debug mode.
                     debug = true;
                     break;
-                default:
-                    slog.error`Unrecognized tag flag ${{templateOrFlag}}`;
+                }
+                default: {
+                    throw slog.error`Unrecognized tag flag ${{templateOrFlag}}`;
+                }
                 }
                 return templateTag;
             }

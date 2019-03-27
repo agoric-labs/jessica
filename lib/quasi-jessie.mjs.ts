@@ -204,7 +204,7 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
 
     cantStartExprStatement <-
       ("{" / "function" / "async" _NO_NEWLINE "function"
-    / "class" / "let" / "[");
+    / "class" / "let" / "[") _WSN;
 
     # to be overridden
     terminatedBody <- ((~terminator statementItem)* terminator)+   ${(tb) => terminatedBlock(tb)};

@@ -281,6 +281,9 @@ const jessieEvaluators: Record<string, Evaluator> = {
     continue(_self: IEvalContext, label?: string) {
         throw [MAGIC_EXIT, 'continue', label];
     },
+    def(_self: IEvalContext, name: string) {
+        return name;
+    },
     finally(_self: IEvalContext, body: any[]) {
         return {body};
     },

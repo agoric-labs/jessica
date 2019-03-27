@@ -17,10 +17,12 @@ import makeReadInput from '../../lib/readInput.mjs';
 const rawReadInput = (path) => fs.readFileSync(path, { encoding: 'latin1' });
 const readInput = makeReadInput(CAN_LOAD_ASSETS, rawReadInput);
 // Make a confined file writer.
+let written = false;
 const writeOutput = (fname, str) => {
     if (fname !== '-') {
         slog.error `Cannot write to ${{ fname }}: must be -`;
     }
+    written = true;
     process.stdout.write(str);
 };
 // Create a Jessie bootstrap environment for the endowments.
@@ -34,5 +36,8 @@ try {
     repl(deps, doEval, MODULE, ARGV);
 }
 catch (e) {
+    if (!written) {
+        writeOutput('-', `/* FIXME: Stub */\n`);
+    }
     slog.notice `Cannot evaluate ${{ MODULE }}: ${e}`;
 }
