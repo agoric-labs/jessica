@@ -5,6 +5,7 @@
   "main": "lang/nodejs/jesspipe.mjs",
   "scripts": {
     "build": "build.bat",
+    "check-types": "tsc",
     "test": "build.bat&&check.bat"
   },
   "author": "Michael FIG <michael@fig.org>",
