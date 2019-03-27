@@ -1,8 +1,9 @@
+import bootEnv from './boot-env.mjs';
 import makeReadInput from './readInput.mjs';
 import repl from './repl.mjs';
 
 const jesspipe = (deps: IMainDependencies, argv: string[]) => {
-    const endowments = {
+    const globalEnv = {
         confine,
         confineExpr,
         eval,
@@ -31,13 +32,24 @@ const jesspipe = (deps: IMainDependencies, argv: string[]) => {
 
     const readInput = makeReadInput(CAN_LOAD_FILES, deps.readInput);
 
-    const doEval = (src: string, file: string) =>
-        Promise.resolve(confine(src, endowments, {scriptName: file}));
+    // Make a confined file writer.
+    const writeOutput = (fname: string, str: string) => {
+        if (fname !== '-') {
+            slog.error`Cannot write to ${{fname}}: must be -`;
+        }
+        return deps.writeOutput('-', str);
+    };
+
+    // Create a Jessie bootstrap environment for the endowments.
+    const jessie = bootEnv(globalEnv, deps.applyMethod, readInput, deps.setComputedIndex);
+
+    const doEval = (src: string, uri?: string) =>
+        jessie.confine(src, jessie, {scriptName: uri});
     const newDeps = {
         applyMethod: deps.applyMethod,
         readInput,
         setComputedIndex: deps.setComputedIndex,
-        writeOutput: deps.writeOutput
+        writeOutput
     };
     try {
         repl(newDeps, doEval, MODULE, ARGV);

@@ -17,3 +17,17 @@ export const qrepack = (parts: any[]) => {
   template.raw = raw;
   return [['data', template], ...argExprs];
 };
+
+export const reduceElisions = (es: any[]) => {
+  const reduced: any[] = [];
+  for (const e of es) {
+    if (e[0] === undefined) {
+      // Push the elisions.
+      (e as undefined[]).forEach(_ => reduced.push(undefined));
+    } else {
+      // Push the individual expression.
+      reduced.push(e);
+    }
+  }
+  return reduced;
+};

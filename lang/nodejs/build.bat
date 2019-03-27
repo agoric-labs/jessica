@@ -1,5 +1,5 @@
 :; cd `dirname "$0"` || exit $?
-:; npm install || exit $?
+:; test -d ./node_modules/typescript || npm install || exit $?
 :; status=0
 :; rm -rf tsout
 :; ./node_modules/.bin/tsc -p ./tsconfig.app.json --outDir tsout || status=$?

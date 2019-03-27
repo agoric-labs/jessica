@@ -162,6 +162,26 @@ const jessieEvaluators: Record<string, Evaluator> = {
         const val = doEval(self, rValue);
         return setter(val);
     },
+    'pre:++'(self: IEvalContext, lValue: any[]) {
+        const {getter, setter} = getRef(self, lValue);
+        return setter(getter() + 1);
+    },
+    'pre:--'(self: IEvalContext, lValue: any[]) {
+        const {getter, setter} = getRef(self, lValue);
+        return setter(getter() - 1);
+    },
+    '++'(self: IEvalContext, lValue: any[]) {
+        const {getter, setter} = getRef(self, lValue);
+        const val = getter();
+        setter(val + 1);
+        return val;
+    },
+    '--'(self: IEvalContext, lValue: any[]) {
+        const {getter, setter} = getRef(self, lValue);
+        const val = getter();
+        setter(val - 1);
+        return val;
+    },
     '*='(self: IEvalContext, lValue: any[], rValue: any[]) {
         const {getter, setter} = getRef(self, lValue);
         const val = doEval(self, rValue);

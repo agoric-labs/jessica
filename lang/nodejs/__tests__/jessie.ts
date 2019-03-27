@@ -19,10 +19,61 @@ function defaultJessieParser() {
   return makeParser(jessieTag);
 }
 
+test('conciseMethod', () => {
+    const parse = defaultJessieParser();
+    expect(parse(`export default immunize({def(abc) { return abc; }, ghi() { }});`)).toEqual(['module', [
+        ast(0, 'exportDefault', ast(15, 'call', ['use', 'immunize'], [
+            ast(24, 'record', [
+                ast(25, 'method', 'def', [ast(29, 'def', 'abc')],
+                    ast(34, 'block', [ast(36, 'return', ast(43, 'use', 'abc'))])),
+                ast(51, 'method', 'ghi', [], ast(57, 'block', []))
+            ])
+        ]))
+    ]]);
+});
+
+test('switch', () => {
+    const parse = defaultJessieParser();
+    expect(parse(`export default immunize(() => {
+        switch (e) {
+            case 'b':{
+                q = '\\b';
+                break;
+              }
+        }
+    });`)).toEqual(['module', [
+        ast(0, 'exportDefault', ast(15, 'call', ['use', 'immunize'], [
+            ast(24, 'arrow', ast(24), ast(30, 'block', [
+                ast(40, 'switch', ast(48, 'use', 'e'), [
+                    ast(65, 'clause', [ast(65, 'case', ast(70, 'data', 'b'))],
+                        ast(92, 'block', [
+                            ast(92, '=', ast(92, 'use', 'q'), ast(96, 'data', '\b')),
+                            ast(118, 'break')
+                        ]))
+                    ])
+                ]))
+            ]))
+        ]]);
+});
+
+test('quasi', () => {
+    const parse = defaultJessieParser();
+    expect(parse(`export default immunize(() => { bar.foo\`baz \${1} \${2}\`; });`)).toEqual(['module', [
+        ast(0, 'exportDefault', ast(15, 'call', ['use', 'immunize'], [
+            ast(24, 'arrow', ast(24), ast(30, 'block', [
+                ast(32, 'tag', ['get', ast(32, 'use', 'bar'), "foo"],
+                    ast(39, 'quasi', ['baz ', ast(46, 'data', 1), ' ', ast(51, 'data', 2), ''])
+            )]))
+        ]))
+    ]]);
+});
+
 test('immunize', () => {
     const parse = defaultJessieParser();
     expect(parse(`export default immunize(a);`)).toEqual(['module', [
-        ast(0, 'exportDefault', ast(15, 'call', ['use', 'immunize'], [ast(24, 'use', 'a')]))
+        ast(0, 'exportDefault', ast(15, 'call', ['use', 'immunize'], [
+            ast(24, 'use', 'a')
+        ]))
     ]]);
 });
 

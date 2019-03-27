@@ -54,6 +54,7 @@ declare function makePromise<T>(executor: (resolve: (value?: T | PromiseLike<T>)
 interface ConfineOptions {
   // TODO fill out
   scriptName?: string;
+  debug?: boolean;
 }
 declare function confine<T>(src: string, evalenv: Record<string, any>, options?: ConfineOptions): T;
 declare function confineExpr<T>(src: string, evalenv: Record<string, any>, options?: ConfineOptions): T;

@@ -5,6 +5,18 @@
 // for documentation of the Jessie grammar defined here.
 
 /// <reference path="peg.d.ts"/>
+
+type TerminatedBody = [any[][], any[]];
+const terminatedBlock = (manyBodies: TerminatedBody[]) => {
+  const stmts = manyBodies.reduce<any[][]>((prior, body) => {
+    const [bs, t] = body;
+    bs.forEach(b => prior.push(b));
+    prior.push(t);
+    return prior;
+  }, []);
+  return ['block', stmts];
+};
+
 const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag<any>>) => {
     const {SKIP} = justinPeg;
     const jessieTag = justinPeg`
@@ -27,18 +39,25 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     / functionExpr;
 
     propDef <-
-      super.propDef
-    / methodDef;
+      methodDef
+    / super.propDef;
 
     purePropDef <-
-      super.purePropDef
-    / methodDef;
+      methodDef
+    / super.purePropDef;
 
-    # Extend to recognize proposed eventual get syntax.
+    # Recognize pre-increment/decrement.
+    prePre <-
+      (PLUSPLUS / MINUSMINUS)                          ${op => `pre:${op}`}
+    / super.prePre;
+
+    # Extend to recognize proposed eventual get syntax,
+    # as well as computed indices and postfix increment/decrement.
     memberPostOp <-
       super.memberPostOp
-    / LATER LEFT_BRACKET indexExpr RIGHT_BRACKET           ${(_, _2, e, _3) => ['indexLater', e]}
-    / LATER IDENT_NAME                                     ${(_, id) => ['getLater', id]};
+    / LEFT_BRACKET assignExpr RIGHT_BRACKET        ${(_, e, _2) => ['index', e]}
+    / LATER LEFT_BRACKET assignExpr RIGHT_BRACKET  ${(_, _2, e, _3) => ['indexLater', e]}
+    / LATER IDENT_NAME                             ${(_, id) => ['getLater', id]};
 
     # Extend to recognize proposed eventual send syntax.
     # We distinguish b!foo(x) from calling b!foo by a post-parsing pass
@@ -46,12 +65,16 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
       super.callPostOp
     / LATER args                                           ${(_, args) => ['callLater', args]};
 
+    postOp <- (PLUSPLUS / MINUSMINUS) _WS;
+
     # to be extended
     assignExpr <-
       arrowFunc
     / functionExpr
+    / lValue postOp                                        ${(lv, op) => [op, lv]}
     / lValue (EQUALS / assignOp) assignExpr                ${(lv, op, rv) => [op, lv, rv]}
-    / super.assignExpr;
+    / super.assignExpr
+    / primaryExpr;
 
     # An expression without side-effects.
     pureExpr <-
@@ -87,7 +110,7 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     # choice will interpret {} as a block rather than an expression.
     statement <-
       block
-    / IF LEFT_PAREN expr RIGHT_PAREN arm ELSE arm          ${(_, _2, c, _3, t, _4, e) => ['if', c, t, e]}
+    / IF LEFT_PAREN expr RIGHT_PAREN arm ELSE elseArm      ${(_, _2, c, _3, t, _4, e) => ['if', c, t, e]}
     / IF LEFT_PAREN expr RIGHT_PAREN arm                   ${(_, _2, c, _3, t) => ['if', c, t]}
     / breakableStatement
     / terminator
@@ -102,10 +125,17 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     # of flow-of-control statements.
     arm <- block;
 
+    # Allows for
+    # if (...) {} else if (...) {} else if (...) {};
+    elseArm <-
+      arm
+    / IF LEFT_PAREN expr RIGHT_PAREN arm ELSE elseArm      ${(_, _2, c, _3, t, _4, e) => ['if', c, t, e]}
+    / IF LEFT_PAREN expr RIGHT_PAREN arm                   ${(_, _2, c, _3, t) => ['if', c, t]};
+
     breakableStatement <-
-      FOR LEFT_PAREN declaration expr? SEMI expr? RIGHT_PAREN arm ${(_, _2, d, c, _3, i, _4, b) => ['for', d, c, i, b]}
-    / FOR LEFT_PAREN declOp binding OF expr RIGHT_PAREN arm
+      FOR LEFT_PAREN declOp forOfBinding OF expr RIGHT_PAREN arm
             ${(_, _2, o, d, _3, e, _4, b) => ['forOf', o, d, e, b]}
+    / FOR LEFT_PAREN declaration expr? SEMI expr? RIGHT_PAREN arm ${(_, _2, d, c, _3, i, _4, b) => ['for', d, c, i, b]}
     / WHILE LEFT_PAREN expr RIGHT_PAREN arm                       ${(_, _2, c, _3, b) => ['while', c, b]}
     / SWITCH LEFT_PAREN expr RIGHT_PAREN LEFT_BRACE clause* RIGHT_BRACE
             ${(_, _2, e, _3, _4, bs, _5) => ['switch', e, bs]};
@@ -137,6 +167,7 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
 
     declOp <- ("const" / "let") _WSN;
 
+    forOfBinding <- bindingPattern / defVar;
     binding <-
       bindingPattern EQUALS assignExpr                ${(p, _, e) => ['bind', p, e]}
     / defVar EQUALS assignExpr                        ${(p, _, e) => ['bind', p, e]}
@@ -176,7 +207,9 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     / "class" / "let" / "[");
 
     # to be overridden
-    clause <- caseLabel+ LEFT_BRACE body terminator RIGHT_BRACE ${(cs, _, b, t, _2) => ['clause', cs, [...b, t]]};
+    terminatedBody <- ((~terminator statementItem)* terminator)+   ${(tb) => terminatedBlock(tb)};
+    clause <-
+      caseLabel+ LEFT_BRACE terminatedBody RIGHT_BRACE ${(cs, _, b, _2) => ['clause', cs, b]};
     caseLabel <-
       CASE expr COLON                                 ${(_, e) => ['case', e]}
     / DEFAULT _WS COLON                                ${(_, _2) => ['default']};
@@ -255,9 +288,13 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     # Lexical syntax
     ARROW <- "=>" _WS;
     DEBUGGER <- "debugger" _WSN;
+    PLUSPLUS <- "++" _WSN;
+    MINUSMINUS <- "--" _WSN;
+    CASE <- "case" _WSN;
     IF <- "if" _WSN;
     ELSE <- "else" _WSN;
     FOR <- "for" _WSN;
+    OF <- "of" _WSN;
     WHILE <- "while" _WSN;
     BREAK <- "break" _WSN;
     CONTINUE <- "continue" _WSN;

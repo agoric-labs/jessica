@@ -7,11 +7,13 @@ let curSrc = '';
 
 export function makeParser(tag: IParserTag<any>) {
   const stringTag = tagString<{_pegPosition: string}>(tag);
-  return (src: string, doDump = false) => {
+  return (src: string, doDump = false, doDebug = false) => {
     curSrc = src;
-    const parsed = stringTag`${src}`;
+    const dtag = doDebug ? stringTag('DEBUG') : stringTag;
+    const parsed = dtag`${src}`;
     if (doDump) {
-      slog.info`Dump: ${util.inspect(parsed, {depth: Infinity})}`;
+      // tslint:disable-next-line:no-console
+      console.log('Dump:', util.inspect(parsed, {depth: Infinity}));
       doDump = false;
     }
     return parsed;

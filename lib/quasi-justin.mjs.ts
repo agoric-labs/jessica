@@ -66,6 +66,7 @@ const makeJustin = (peg: IPegTag<IParserTag<any>>) => {
     DOT <- "." _WS;
     ELLIPSIS <- "..." _WS;
     LEFT_PAREN <- "(" _WS;
+    PLUS <- "+" _WS;
     QUESTION <- "?" _WS;
     RIGHT_PAREN <- ")" _WS;
     STARSTAR <- "**" _WS;
@@ -130,8 +131,8 @@ const makeJustin = (peg: IPegTag<IParserTag<any>>) => {
     # Quasiliterals aka template literals
     QUASI_CHAR <- "\\" . / ~"\`" .;
     QUASI_ALL <- "\`" < (~"\${" QUASI_CHAR)* > "\`" _WS;
-    QUASI_HEAD <- "\`" < (~"\${" QUASI_CHAR)* > "\${";
-    QUASI_MID <- "}" < (~"\${" QUASI_CHAR)* > "\${";
+    QUASI_HEAD <- "\`" < (~"\${" QUASI_CHAR)* > "\${" _WS;
+    QUASI_MID <- "}" < (~"\${" QUASI_CHAR)* > "\${" _WS;
     QUASI_TAIL <- "}" < (~"\${" QUASI_CHAR)* > "\`" _WS;
 
 
@@ -191,7 +192,7 @@ const makeJustin = (peg: IPegTag<IParserTag<any>>) => {
 
     # to be extended
     memberPostOp <-
-      _WS LEFT_BRACKET indexExpr RIGHT_BRACKET              ${(_, e, _3) => ['index', e]}
+      LEFT_BRACKET indexExpr RIGHT_BRACKET                 ${(_, e, _3) => ['index', e]}
     / DOT IDENT_NAME                                       ${(_, id) => ['get', id]}
     / quasiExpr                                            ${q => ['tag', q]};
 

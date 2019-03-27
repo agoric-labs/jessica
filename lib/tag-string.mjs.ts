@@ -1,10 +1,11 @@
+/// <reference path="./peg.d.ts"/>
 const tagString = <T>(tag: IParserTag<T>, uri?: string) => {
     function tagged(flag: string): IParserTag<T>;
     function tagged(template: TemplateStringsArray, ...args: any[]): T;
     function tagged(templateOrFlag: string | TemplateStringsArray, ...args: any[]):
         T | IParserTag<T> {
         if (typeof templateOrFlag === 'string') {
-            return tag(templateOrFlag);
+            return tagString(tag(templateOrFlag), uri);
         }
         const template = templateOrFlag;
         const cooked = template.reduce<string[]>((prior, t, i) => {
@@ -28,6 +29,8 @@ const tagString = <T>(tag: IParserTag<T>, uri?: string) => {
         tmpl.sources = [sources0];
         return tag(tmpl as TemplateStringsArray);
     }
+    tagged.parserCreator = tag.parserCreator;
+    tagged._asExtending = tag._asExtending;
     return tagged;
 };
 

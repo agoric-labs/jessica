@@ -2,7 +2,7 @@
 import globalEnv, { applyMethod, setComputedIndex } from './globalEnv.mjs';
 // Read and evaluate the specified module,
 if (process.argv.length < 3) {
-    throw Error(`You must specify a MODULE`);
+    slog.panic `You must specify a MODULE`;
 }
 const MODULE = process.argv[2] || '-';
 const ARGV = process.argv.slice(2);

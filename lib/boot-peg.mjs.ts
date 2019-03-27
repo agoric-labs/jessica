@@ -40,7 +40,7 @@ const RUN = (self: IPegParser, ruleOrPatt: PegRuleOrPatt, pos: number, name: str
 const lastFailures = (self: IPegParser): [number, string[]] => {
     let maxPos = 0;
     let fails: string[] = [];
-    for (const [, posm] of self._memo) {
+    for (const [_pos, posm] of self._memo) {
         for (const [ruleOrPatt, result] of posm) {
             if (result !== LEFT_RECUR) {
                 const fail = typeof ruleOrPatt === 'function' ?
@@ -196,28 +196,31 @@ const unescape = (cs: string): [string, number] => {
     // It's an escape.
     let q = cs[1];
     switch (q) {
-    case 'a':
-        q = '\a';
-        break;
-    case 'b':
+    case 'b': {
         q = '\b';
         break;
-    case 'f':
+    }
+    case 'f': {
         q = '\f';
         break;
-    case 'n':
+    }
+    case 'n': {
         q = '\n';
         break;
-    case 'r':
+    }
+    case 'r': {
         q = '\r';
         break;
-    case 't':
+    }
+    case 't': {
         q = '\t';
         break;
-    case 'x':
+    }
+    case 'x': {
         const ord = hexDigit(cs[2]) * 16 + hexDigit(cs[3]);
         q = String.fromCharCode(ord);
         return [q, 4];
+    }
     }
 
     return [q, 2];

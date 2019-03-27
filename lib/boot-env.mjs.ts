@@ -29,16 +29,23 @@ const bootEnv = (
     const env = {
         ...endowments,
         confine: (src: string, evalenv: object, options: ConfineOptions = {}) => {
-            const ast = tagString<any[]>(jessieTag, options.scriptName)`${src}`;
+            let tag = tagString<any[]>(jessieTag, options.scriptName);
+            if (options.debug) {
+                tag = tag('DEBUG');
+            }
+            const ast = tag`${src}`;
             return interpJessie(ast, evalenv, options || {});
         },
         confineExpr: (src: string, evalenv: object, options: ConfineOptions = {}) => {
-            const ast = tagString<any[]>(jessieExprTag, options.scriptName)`${src}`;
+            let tag = tagString<any[]>(jessieExprTag, options.scriptName);
+            if (options.debug) {
+                tag = tag('DEBUG');
+            }
+            const ast = tag`${src}`;
             return interpJessie(ast, evalenv, options || {});
         },
         eval: (src: string): any => {
-            const ast = tagString<any[]>(jessieExprTag)`${src}`;
-            return interpJessie(ast, env);
+            return confineExpr(src, env);
         },
     };
     return env;
