@@ -429,6 +429,10 @@ const jessieEvaluators: Record<string, Evaluator> = {
             bindPattern(self, pattern, true, val);
         });
     },
+    method(self: IEvalContext, name: string, params: any[][], body: any[]) {
+        const lambda = self.evaluators.lambda(self, params, body);
+        return [name, lambda];
+    },
     module(self: IEvalContext, body: any[]) {
         const oldEnv = self.env();
         const result: Record<string, any> = {};
@@ -449,7 +453,7 @@ const jessieEvaluators: Record<string, Evaluator> = {
                     let b = self.env();
                     while (b && b !== marker) {
                         const [name, val] = [b[BINDING_NAME], b[BINDING_GET]()];
-                        result[name] = val;
+                        self.setComputedIndex(result, name, val);
                         b = b[BINDING_PARENT];
                     }
                 } else {

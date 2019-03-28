@@ -43,7 +43,7 @@ export const addBinding = (
             let allow = true;
             setter = <T>(val: T) => {
                 if (!allow) {
-                    err(self)`${{name}} already initialized`;
+                    throw err(self)`${{name}} already initialized`;
                 }
                 allow = false;
                 return slot = val;
@@ -71,7 +71,7 @@ export const doEval = <T = any>(self: IEvalContext, ast: any[], overrideName?: s
     self.setLabel(label);
     try {
         if (!ev) {
-            err(self)`No ${{name}} implementation`;
+            throw err(self)`No ${{name}} implementation`;
         }
         return ev(self, ...args);
     } finally {
@@ -146,18 +146,18 @@ export const getRef = (self: IEvalContext, astNode: any[], mutable = true): IRef
         switch (astNode[0]) {
         case 'use': {
             let b = self.env();
-            const [, name] = astNode;
+            const name = astNode[1];
             while (b !== undefined) {
                 if (b[BINDING_NAME] === name) {
                     return {getter: b[BINDING_GET], setter: b[BINDING_SET]};
                 }
                 b = b[BINDING_PARENT];
             }
-            err(self)`ReferenceError: ${{name}} is not defined`;
+            throw err(self)`ReferenceError: ${{name}} is not defined`;
         }
 
         case 'get': {
-            const [, objExpr, id] = astNode;
+            const [objExpr, id] = astNode.slice(1);
             const obj = doEval(self, objExpr);
             return {
                 getter: () => obj[id],
@@ -167,13 +167,13 @@ export const getRef = (self: IEvalContext, astNode: any[], mutable = true): IRef
         }
 
         case 'def': {
-            const [, name] = astNode;
+            const name = astNode[1];
             const b = addBinding(self, name, mutable);
             return {getter: b[BINDING_GET], setter: b[BINDING_SET]};
         }
 
         default: {
-            err(self)`Reference type ${{type: astNode[0]}} not implemented`;
+            throw err(self)`Reference type ${{type: astNode[0]}} not implemented`;
         }
         }
     } finally {

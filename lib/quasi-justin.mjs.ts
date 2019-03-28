@@ -180,6 +180,11 @@ const makeJustin = (peg: IPegTag<IParserTag<any>>) => {
     / useVar                                              ${u => ['prop', u[1], u]}
     / ELLIPSIS assignExpr                                 ${(_, e) => ['spreadObj', e]};
 
+    purePropDef <-
+      super.purePropDef
+    / useVar                                              ${u => ['prop', u[1], u]}
+    / ELLIPSIS assignExpr                                 ${(_, e) => ['spreadObj', e]};
+
     # No computed property name
     propName <-
       super.propName
@@ -239,8 +244,8 @@ const makeJustin = (peg: IPegTag<IParserTag<any>>) => {
     # Different communities will think -x**y parses in different ways,
     # so the EcmaScript grammar forces parens to disambiguate.
     powExpr <-
-      unaryExpr
-    / updateExpr STARSTAR powExpr                          ${(x, op, y) => [op, x, y]};
+      updateExpr STARSTAR powExpr                          ${(x, op, y) => [op, x, y]}
+    / unaryExpr;
 
     multExpr <- powExpr (multOp powExpr)*                  ${binary};
     addExpr <- multExpr (addOp multExpr)*                  ${binary};
