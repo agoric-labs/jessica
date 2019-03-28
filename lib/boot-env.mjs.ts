@@ -34,7 +34,7 @@ const bootEnv = (
                 tag = tag('DEBUG');
             }
             const ast = tag`${src}`;
-            return interpJessie(ast, evalenv, options || {});
+            return interpJessie(ast, evalenv, options || {}).default;
         },
         confineExpr: (src: string, evalenv: object, options: ConfineOptions = {}) => {
             let tag = tagString<any[]>(jessieExprTag, options.scriptName);
