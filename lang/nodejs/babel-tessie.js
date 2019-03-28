@@ -49,7 +49,8 @@ module.exports = () => {
                 path.parentPath.insertAfter(makeSafeImport(path.node.local));
             },
             VariableDeclaration(path) {
-                if (path.parent.type !== 'Program') {
+                if (path.parent.type !== 'Program' &&
+                    path.parent.type !== 'ExportNamedDeclaration') {
                     return;
                 }
                 if (path.node.kind !== 'const') {

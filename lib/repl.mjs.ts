@@ -7,8 +7,9 @@ const repl = (
     // Read...
     const data = deps.readInput(file);
     // Eval ...
-    const main = doEval(data, file);
+    const ns = doEval(data, file);
     // Execute as main, if a function.
+    const main = ns.default;
     const val = typeof main === 'function' ? main(deps, argv) : main;
     // ... maybe Print.
     if (val !== undefined) {

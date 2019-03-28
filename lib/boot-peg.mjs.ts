@@ -77,7 +77,7 @@ const ERROR = (self: IPegParser, _pos: number) => {
             const s = sources[i];
             prior += `    ${s.uri}:${s.line}: `;
         }
-        prior += JSON.stringify(r) + '\n';
+        prior += JSON.stringify(r).slice(0, 50) + '\n';
         return prior;
     }, '')}
     -------

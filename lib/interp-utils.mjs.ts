@@ -24,7 +24,7 @@ export interface IEvalContext {
     dir: string;
     env: (binding?: IBinding) => IBinding;
     evaluators: Evaluators;
-    import: (path: string) => any;
+    import: (path: string) => Record<string, any>;
     setLabel: (label: string | undefined) => string | undefined;
     pos: (pos?: string) => string;
     uri: string;
@@ -82,7 +82,7 @@ export const doEval = <T = any>(self: IEvalContext, ast: any[], overrideName?: s
 const makeInterp = (
     evaluators: Evaluators,
     applyMethod: (boundThis: any, method: (...args: any[]) => any, args: any[]) => any,
-    importer: (path: string, evaluator: (ast: any[]) => any) => any,
+    importer: (path: string, evaluator: (ast: any[]) => any) => Record<string, any>,
     setComputedIndex: <T>(obj: Record<string | number, any>, index: string | number, value: T) => T) => {
     function interp(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
         const lastSlash = options.scriptName === undefined ? -1 : options.scriptName.lastIndexOf('/');
@@ -94,7 +94,9 @@ const makeInterp = (
             dir: thisDir,
             evaluators,
             import(path) {
-                return importer(path, (iast: any[]) => interp(iast, endowments, {scriptName: path}));
+                const val = importer(path, (iast: any[]) => interp(iast, endowments, {scriptName: path}));
+                slog.info(`imported ${path} as ${{val}}`);
+                return val;
             },
             setComputedIndex,
             env(newEnv?: IBinding) {

@@ -190,7 +190,7 @@ const justinEvaluators: Record<string, Evaluator> = {
     },
     typeof(self: IEvalContext, expr: any[]) {
         if (expr[0] === 'use') {
-            const [, name] = expr;
+            const name = expr[1];
             let b = self.env();
             while (b !== undefined) {
                 if (b[BINDING_NAME] === name) {

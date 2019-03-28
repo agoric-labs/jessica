@@ -1,8 +1,8 @@
 // TODO: Hoisting of functionDecls.
 
 import justinEvaluators from './interp-justin.mjs';
-import {addBinding, doEval, err, Evaluator, getRef, IEvalContext} from './interp-utils.mjs';
-
+import {addBinding, BINDING_GET, BINDING_NAME, BINDING_PARENT, doEval, err,
+    Evaluator, getRef, IEvalContext} from './interp-utils.mjs';
 const MAGIC_EXIT = {toString: () => 'MAGIC_EXIT'};
 
 const matchPropPattern = (self: IEvalContext, pattern: any[], remaining: Map<any, any>): Array<[string, any]> => {
@@ -12,7 +12,7 @@ const matchPropPattern = (self: IEvalContext, pattern: any[], remaining: Map<any
         switch (pattern[0]) {
         case 'restObj': {
             // Convert remaining back to an object.
-            const [, pat] = pattern;
+            const pat = pattern[1];
             const obj = {};
             remaining.forEach((value, key) =>
                 self.setComputedIndex(obj, key, value));
@@ -20,21 +20,21 @@ const matchPropPattern = (self: IEvalContext, pattern: any[], remaining: Map<any
         }
         case 'matchProp': {
             // Match a named key against a pattern.
-            const [, key, pat] = pattern;
+            const [key, pat] = pattern.slice(1);
             const val = remaining.get(key);
             remaining.delete(key);
             return matchPattern(self, pat, val);
         }
         case 'optionalProp': {
             // Match a named key against a pattern, defaulting.
-            const [, key, pat, dflt] = pattern;
+            const [key, pat, dflt] = pattern.slice(1);
             const val = remaining.has(key) ? remaining.get(key) : doEval(self, dflt);
             remaining.delete(key);
             return matchPattern(self, pat, val);
         }
 
         default: {
-            err(self)`Cannot match property pattern ${{pattern}}: not implemented`;
+            throw err(self)`Cannot match property pattern ${{pattern}}: not implemented`;
         }
         }
     } finally {
@@ -76,7 +76,7 @@ const matchPattern = (self: IEvalContext, pattern: any[], value: any): Array<[st
         }
 
         default: {
-            err(self)`Cannot match ${{pattern}}: not implemented`;
+            throw err(self)`Cannot match ${{pattern}}: not implemented`;
         }
         }
     } finally {
@@ -104,17 +104,17 @@ const bindPattern = (self: IEvalContext, pattern: any[], mutable: boolean, value
 const evalSwitchClause = (self: IEvalContext, clause: any[], val: any) => {
     switch (clause[0]) {
     case 'clause': {
-        const [, guards, body] = clause;
+        const [guards, body] = clause.slice(1);
         for (const guard of guards) {
             if (guard[0] === 'case') {
-                const [, expr2] = guard;
+                const expr2 = guard[1];
                 const val2 = doEval(self, expr2);
                 if (val !== val2) {
                     // Try the next case.
                     continue;
                 }
             } else if (guard[0] !== 'default') {
-                err(self)`Unrecognized case expression ${{guard}}`;
+                throw err(self)`Unrecognized case expression ${{guard}}`;
             }
             // Evaluate the body, which in Jessie will do a nonlocal exit.
             return doEval(self, body);
@@ -123,7 +123,7 @@ const evalSwitchClause = (self: IEvalContext, clause: any[], val: any) => {
     }
 
     default: {
-        err(self)`Unrecognized switch clause ${{clause}}`;
+        throw err(self)`Unrecognized switch clause ${{clause}}`;
     }
     }
 };
@@ -144,7 +144,7 @@ const doApply = (self: IEvalContext, args: any[], bindings: any[][], body: any[]
                     // Some part of the body executed `return`;
                     return e[2];
                 } else {
-                    err(self)`Invalid function exit kind ${{e: e[1]}}`;
+                    throw err(self)`Invalid function exit kind ${{e: e[1]}}`;
                 }
             }
             // Not a magic value, just throw normally.
@@ -256,10 +256,12 @@ const jessieEvaluators: Record<string, Evaluator> = {
         } catch (e) {
             if (label !== undefined && e[0] === MAGIC_EXIT && e[2] === label) {
                 switch (e[1]) {
-                    case 'break':
+                    case 'break': {
                         return;
-                    case 'continue':
-                        err(self)`Cannot continue from block labelled ${{label}}`;
+                    }
+                    case 'continue': {
+                        throw err(self)`Cannot continue from block labelled ${{label}}`;
+                    }
                 }
             }
             // We weren't the target of this exit.
@@ -298,13 +300,15 @@ const jessieEvaluators: Record<string, Evaluator> = {
                 } catch (e) {
                     if (e[0] === MAGIC_EXIT && (e[2] === label || e[2] === undefined)) {
                         switch (e[1]) {
-                            case 'continue':
+                            case 'continue': {
                                 // Evaluate the incrementer, then continue the loop.
                                 doEval(self, incr);
                                 continue;
-                            case 'break':
+                            }
+                            case 'break': {
                                 // Exit the loop.
                                 return;
+                            }
                         }
                     }
                     throw e;
@@ -328,12 +332,14 @@ const jessieEvaluators: Record<string, Evaluator> = {
                 } catch (e) {
                     if (e[0] === MAGIC_EXIT && (e[2] === label || e[2] === undefined)) {
                         switch (e[1]) {
-                            case 'continue':
+                            case 'continue': {
                                 // Continue the loop.
                                 continue;
-                            case 'break':
+                            }
+                            case 'break': {
                                 // Exit the loop.
                                 return;
+                            }
                         }
                     }
                     throw e;
@@ -370,27 +376,35 @@ const jessieEvaluators: Record<string, Evaluator> = {
             doEval(self, e);
         }
     },
-    import(self: IEvalContext, def: any[], path: string) {
-        const {setter} = getRef(self, def, false);
+    import(self: IEvalContext, bind: any[], path: string) {
         if (path[0] === '.' && path[1] === '/') {
             // Take the input relative to our current directory.
             path = `${self.dir}${path.slice(1)}`;
         }
 
         // Interpret with the same endowments.
-        const val = self.import(path);
-        setter(val);
+        const ns = self.import(path);
+        if (bind[0] === 'importBind') {
+            bind[1].forEach((as: any) => {
+                if (as[0] !== 'as') {
+                    throw err(self)`Unrecognized import binding clause ${{as}}`;
+                }
+                const val = as[1] === '*' ? ns : ns[as[1]];
+                addBinding(self, as[2], false, val);
+            });
+        } else {
+            throw err(self)`Unrecognized import binding ${{bind}}`;
+        }
     },
     label(self: IEvalContext, label: string, stmt: any[]) {
         try {
             doEval(self, stmt, undefined, label);
         } catch (e) {
             if (e[0] === MAGIC_EXIT && e[2] === label) {
-                switch (e[1]) {
-                    case 'break':
-                        return;
+                if (e[1] === 'break') {
+                    return;
                 }
-                err(self)`Unrecognized exit type ${e[1]} for label ${{label}}`;
+                throw err(self)`Unrecognized exit type ${e[1]} for label ${{label}}`;
             }
             // Some other magic exit, or a normal exception.
             throw e;
@@ -417,21 +431,32 @@ const jessieEvaluators: Record<string, Evaluator> = {
     },
     module(self: IEvalContext, body: any[]) {
         const oldEnv = self.env();
+        const result: Record<string, any> = {};
         try {
-            let didExport = false, exported: any;
             for (const stmt of body) {
                 if (stmt[0] === 'exportDefault') {
                     // Handle this production explicitly.
-                    if (didExport) {
-                        err(self)`Cannot use more than one "export default" statement`;
+                    result.default = doEval(self, stmt[1]);
+                } else if (stmt[0] === 'export') {
+                    const marker = self.env();
+                    const [declOp, binds] = stmt.slice(1);
+                    const mutable = declOp !== 'const';
+                    binds.forEach((bind: any[]) => {
+                        const [pattern, val] = doEval(self, bind);
+                        bindPattern(self, pattern, mutable, val);
+                    });
+                    // Find all the bindings we introduced.
+                    let b = self.env();
+                    while (b && b !== marker) {
+                        const [name, val] = [b[BINDING_NAME], b[BINDING_GET]()];
+                        result[name] = val;
+                        b = b[BINDING_PARENT];
                     }
-                    exported = doEval(self, stmt[1]);
-                    didExport = true;
                 } else {
                     doEval(self, stmt);
                 }
             }
-            return exported;
+            return result;
         } finally {
             self.env(oldEnv);
         }
@@ -479,12 +504,14 @@ const jessieEvaluators: Record<string, Evaluator> = {
             } catch (e) {
                 if (e[0] === MAGIC_EXIT && (e[2] === label || e[2] === undefined)) {
                     switch (e[1]) {
-                        case 'continue':
+                        case 'continue': {
                             // Continue the loop.
                             continue;
-                        case 'break':
+                        }
+                        case 'break': {
                             // Exit the loop.
                             return;
+                        }
                     }
                 }
                 throw e;
