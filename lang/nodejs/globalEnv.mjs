@@ -7,7 +7,7 @@
 // entire process.
 /// <reference path="../../typings/ses.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
-import './globalEnv0.mjs';
+import './sesshim.mjs';
 const globalEnv = {};
 globalEnv.confine = confine;
 export const applyMethod = Object.freeze((thisObj, method, args) => method.apply(thisObj, args));
@@ -37,6 +37,9 @@ const makeHarden = (prepareObject) => {
     const hardMap = new WeakMap();
     // FIXME: Needed for bootstrap.
     hardMap.set(setComputedIndex, setComputedIndex);
+    if (typeof window !== 'undefined') {
+        hardMap.set(window, window);
+    }
     function newHarden(root) {
         if (root === null) {
             return root;

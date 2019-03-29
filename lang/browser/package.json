@@ -1,0 +1,23 @@
+{
+  "name": "jessica-lang-browser",
+  "version": "0.0.1",
+  "description": "Jessica implementation for the browser",
+  "main": "dist/jessica.js",
+  "devDependencies": {
+    "parcel-bundler": "^1.12.3"
+  },
+  "scripts": {
+    "build": "build.bat",
+    "start": "parcel serve -d .cache/dist --global jessica index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michaelfig/jessica.git"
+  },
+  "author": "Michael FIG <michael+jessica@fig.org>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/michaelfig/jessica/issues"
+  },
+  "homepage": "https://github.com/michaelfig/jessica#readme"
+}

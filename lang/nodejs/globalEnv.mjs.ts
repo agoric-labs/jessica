@@ -9,7 +9,7 @@
 /// <reference path="../../typings/ses.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 
-import './globalEnv0.mjs';
+import './sesshim.mjs';
 
 const globalEnv: Record<string, any> = {};
 globalEnv.confine = confine;
@@ -45,6 +45,9 @@ const makeHarden = (prepareObject: (obj: any) => void) => {
     const hardMap = new WeakMap<any, Hardened<any>>();
     // FIXME: Needed for bootstrap.
     hardMap.set(setComputedIndex, setComputedIndex);
+    if (typeof window !== 'undefined') {
+        hardMap.set(window, window);
+    }
     function newHarden<T>(root: T): Hardened<T> {
         if (root === null) {
             return root as Hardened<null>;
