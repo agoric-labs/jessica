@@ -165,7 +165,7 @@ const mySlog = makeSlog(
         if (names[level] === 'reject') {
             // Just return a promise rejection.
             return Promise.reject(reduced.join(' '));
-        } else if (level <= levels.get('panic')) {
+        } else if (typeof global !== 'undefined' && level <= levels.get('panic')) {
             // At least allow turns to finish.
             process.exitCode = 99;
         } else if (level <= levels.get('error')) {
