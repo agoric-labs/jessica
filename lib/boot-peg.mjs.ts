@@ -40,7 +40,8 @@ const RUN = (self: IPegParser, ruleOrPatt: PegRuleOrPatt, pos: number, name: str
 const lastFailures = (self: IPegParser): [number, string[]] => {
     let maxPos = 0;
     let fails: string[] = [];
-    for (const [_pos, posm] of self._memo) {
+    for (const posArr of self._memo) {
+        const posm = posArr[1];
         for (const [ruleOrPatt, result] of posm) {
             if (result !== LEFT_RECUR) {
                 const fail = typeof ruleOrPatt === 'function' ?
