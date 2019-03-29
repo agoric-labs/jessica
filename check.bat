@@ -9,6 +9,7 @@
 :;  test ! -f "$build" || "$build" || { status=$?; break; }
 :;  check="$thisdir/lang/$lang/check.bat"
 :;  test ! -f "$check" || "$check" || { status=$?; break; }
+:;  test -f "$thisdir/lang/$lang/jesspipe.bat" || continue
 :;  for emitter in "$thisdir"/lib/emit-*.mjs; do
 :;    target=`echo "$emitter" | sed -e 's/.*\/emit-//; s/\.mjs$//'`
 :;    sfx=`cat "$thisdir/lang/$target/.suffix"`
