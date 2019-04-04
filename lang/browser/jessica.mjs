@@ -1,2 +1,2 @@
 import '../nodejs/globalEnv.mjs';
-export * from '../../lib/index.mjs';
+export * from '../../lib/translate.mjs';

@@ -10,6 +10,10 @@
 
         <p>For now, you can try the following in your browser console:</p>
 
-        <pre>await jessica.translate('export default 123;', {})</pre>
+        <pre>await jessica.translate('export default 123;',
+{sourceType: 'jessie', target: 'jessie-frame', targetType: 'module'});
+await jessica.translate('export default 123;',
+{sourceType: 'jessie', target: 'jessie-frame', targetType: 'function'});
+        </pre>
     </body>
 </html>
