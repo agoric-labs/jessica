@@ -15,50 +15,7 @@ Object.keys(globalEnv).forEach(vname => {
     global[vname] = globalEnv[vname];
 });
 // slog writes to console
-import makeSlog from '../../lib/slog.mjs';
-const contextArg = (context, a) => {
-    if (typeof a !== 'object' || a === null) {
-        // Just stringify the argument.
-        return '' + a;
-    }
-    else if (a.length !== undefined) {
-        // Take the value as the (anonymous) array.
-        return a;
-    }
-    // Deconstruct the argument object.
-    let valname, val;
-    for (const vname of Object.keys(a)) {
-        if (vname === 'format') {
-            // format = a[vname];
-        }
-        else if (valname !== undefined || typeof a[vname] === 'function') {
-            // Too many members or seems to be an active object.
-            return a;
-        }
-        else {
-            // We have at least one non-format member.
-            valname = vname;
-            val = JSON.stringify(a[vname], undefined, 2);
-        }
-    }
-    if (valname === undefined) {
-        // No non-format arguments.
-        return a;
-    }
-    if (valname[0] === '_') {
-        // Do nothing.
-    }
-    else if (context.has(valname)) {
-        const oval = context.get(valname);
-        if (val !== oval) {
-            slog.error `Context value ${{ valname }} mismatch: ${{ val }} vs. ${{ oval }}`;
-        }
-    }
-    else {
-        context.set(valname, val);
-    }
-    return val;
-};
+import makeSlog, { contextArg } from '../../lib/slog.mjs';
 // Create a logger.
 const mySlog = makeSlog((level, names, levels, context, template, args) => {
     let ca;

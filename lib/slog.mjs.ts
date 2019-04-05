@@ -4,6 +4,47 @@ type SlogHandler =
      levels: Map<SlogName, number>, context: SlogContext,
      template: TemplateStringsArray, args: any[]) => any;
 
+export const contextArg = (context: Map<string, any>, a: any) => {
+    if (typeof a !== 'object' || a === null) {
+        // Just stringify the argument.
+        return '' + a;
+    } else if (a.length !== undefined) {
+        // Take the value as the (anonymous) array.
+        return a;
+    }
+    // Deconstruct the argument object.
+    let valname: string, val: any;
+    for (const vname of Object.keys(a)) {
+        if (vname === 'format') {
+            // format = a[vname];
+        } else if (valname !== undefined || typeof a[vname] === 'function') {
+            // Too many members or seems to be an active object.
+            return a;
+        } else {
+            // We have at least one non-format member.
+            valname = vname;
+            val = JSON.stringify(a[vname], undefined, 2);
+        }
+    }
+
+    if (valname === undefined) {
+        // No non-format arguments.
+        return a;
+    }
+
+    if (valname[0] === '_') {
+        // Do nothing.
+    } else if (context.has(valname)) {
+        const oval = context.get(valname);
+        if (val !== oval) {
+            slog.error`Context value ${{valname}} mismatch: ${{val}} vs. ${{oval}}`;
+        }
+    } else {
+        context.set(valname, val);
+    }
+    return val;
+};
+
 const makeSlog = (handler: SlogHandler): Slog => {
     const levels = makeMap<SlogName, number>();
     const names: SlogName[] = [];

@@ -45,7 +45,7 @@ const doRun = (sourceText, output) => {
         writeOutput,
     };
     jessica.translate(sourceText, parameters)
-        .then(translated => jessica.confine(translated.translatedText))
+        .then(translated => jessica.evaluate(translated.translatedText))
         .then(result => {
             // Get the default export.
             const main = result.default;
@@ -66,15 +66,25 @@ const doRun = (sourceText, output) => {
 
 const loadingMap = makeMap();
 const $h_define = (imports, factory) => {
+    const parameters = {
+        sourceType: 'jessie',
+        target: 'jessie-frame',
+        targetType: 'function',
+    };
     const importPromises = imports.map((mod, i) => {
         const uri = '/' + mod;
         let promise = loadingMap.get(mod);
         if (!promise) {
             promise = fetch(uri)
-                .then(res => res.body())
-                .then(body => jessica.translate(body, parameters))
-                .then(text => jessica.confine(translated.translatedText));
-            promiseMap.set(promise);
+                .then(res => {
+                    if (res.ok) {
+                        return res.text();
+                    }
+                    throw Error('Cannot load ' + uri);
+                })
+                .then(text => jessica.translate(text, parameters))
+                .then(translated => jessica.evaluate(translated.translatedText));
+            loadingMap.set(promise);
         }
         return promise;
     });

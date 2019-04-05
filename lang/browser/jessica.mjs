@@ -1,6 +1,6 @@
-import globalEnv from './globalEnv.mjs';
+import globalEnv from '../nodejs/globalEnv.mjs';
 export {translate} from '../../lib/translate.mjs';
 
-export const confine = (src) => {
+export const evaluate = (src) => {
     return globalEnv.confine(src, globalEnv);
 };
