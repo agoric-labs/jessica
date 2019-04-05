@@ -9,23 +9,9 @@
             width: 100%;
         }
         </style>
-        <h1><span style="color: red" id="insecure">INSECURE</span> Browser-Based Jessica</h1>
-
-        <p>Write your Jessie code below:</p>
-        <textarea id="sourceText" rows="20">
-// Use Jessie's main deps to run the program.
-const main = immunize((deps) => {
-    deps.writeOutput('-', 'Hello, world!\n');
-});
-export default immunize(main);</textarea>
-        <button onclick="doRun(sourceText.value, outputPre)">Run</button>
-        
-        <pre id="outputPre">
-        </pre>
-
         <!--@STRIP@<script type="text/javascript" src="./ses.umd.js"></script>@STRIP@-->
-        <script type="text/javascript" src="./jessica.js"></script>
-        <script type="text/javascript">
+        <h1><span style="color: red" id="insecure">INSECURE</span> Browser-Based Jessica</h1>
+<script type="text/javascript">
 let evaluator;
 if (typeof SES !== 'undefined') {
     // Use SES if available.
@@ -37,6 +23,23 @@ if (typeof SES !== 'undefined') {
     evaluator = (src) => jessica.globals.confine(src, {...jessica.globals, $h_define});
     alert('WARNING: Secure Javascript is not available!\n\nUnprotected GLOBAL Scope available to Jessie.');
 }
+</script>
+
+        <p>Write your Jessie code below:</p>
+        <textarea id="sourceText" rows="20">
+// Use Jessie's main deps to run the program.
+const main = immunize((deps) => {
+    const wo = (s) => deps.writeOutput('-', s);
+    wo('Hello, world!\n');
+});
+export default immunize(main);</textarea>
+        <button onclick="doRun(sourceText.value, outputPre)">Run</button>
+        
+        <pre id="outputPre">
+        </pre>
+
+        <script type="text/javascript" src="./jessica.js"></script>
+<script type="text/javascript">
 const doRun = (sourceText, output) => {
     output.textContent = '';
     const parameters = {
