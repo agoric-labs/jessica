@@ -9,7 +9,7 @@
             width: 100%;
         }
         </style>
-        <h1>Browser-Based Jessica</h1>
+        <h1><span style="color: red" id="insecure">INSECURE</span> Browser-Based Jessica</h1>
 
         <p>Write your Jessie code below:</p>
         <textarea id="sourceText" rows="20">
@@ -26,12 +26,16 @@ export default immunize(main);</textarea>
 <script type="text/javascript" src="../ses.umd.js"></script>
         <script type="text/javascript" src="../jessica.js"></script>
         <script type="text/javascript">
+let evaluator;
 if (typeof SES !== 'undefined') {
     // Use SES if available.
     const r = SES.makeSESRootRealm({});
-    jessica.evaluate = (src) => r.evaluate(src, {...jessica.globals, $h_define});
+    evaluator = (src) => r.evaluate(src, {...jessica.globals, $h_define});
+    insecure.style.color = 'green';
+    insecure.textContent = 'SECURE';
 } else {
-    alert('Secure Javascript is not available!');
+    evaluator = (src) => jessica.globals.confine(src, {...jessica.globals, $h_define});
+    alert('WARNING: Secure Javascript is not available!\n\nUnprotected GLOBAL Scope available to Jessie.');
 }
 const doRun = (sourceText, output) => {
     output.textContent = '';
@@ -53,7 +57,7 @@ const doRun = (sourceText, output) => {
         writeOutput,
     };
     jessica.translate(sourceText, parameters)
-        .then(translated => jessica.evaluate(translated.translatedText))
+        .then(translated => evaluator(translated.translatedText))
         .then(result => {
             // Get the default export.
             const main = result.default;
@@ -91,7 +95,7 @@ const $h_define = (imports, factory) => {
                     throw Error('Cannot load ' + uri);
                 })
                 .then(text => jessica.translate(text, parameters))
-                .then(translated => jessica.evaluate(translated.translatedText));
+                .then(translated => evaluator(translated.translatedText));
             loadingMap.set(promise);
         }
         return promise;
