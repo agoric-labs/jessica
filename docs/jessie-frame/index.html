@@ -1,19 +1,86 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Jessie Frame</title>
+        <title>Jessica Browser</title>
     </head>
     <body>
-        <script type="text/javascript" src="../jessica.js"></script>
-        <h1>Jessie Frame</h1>
-        <p>TODO: This demo should use a jessie-frame element.</p>
+        <style type="text/css">
+        #sourceText {
+            width: 100%;
+        }
+        </style>
+        <h1>Browser-Based Jessica</h1>
 
-        <p>For now, you can try the following in your browser console:</p>
-
-        <pre>await jessica.translate('export default 123;',
-{sourceType: 'jessie', target: 'jessie-frame', targetType: 'module'});
-await jessica.translate('export default 123;',
-{sourceType: 'jessie', target: 'jessie-frame', targetType: 'function'});
+        <p>Write your Jessie code below:</p>
+        <textarea id="sourceText" rows="20">
+// Use Jessie's main deps to run the program.
+const main = immunize((deps) => {
+    deps.writeOutput('-', 'Hello, world!\n');
+});
+export default immunize(main);</textarea>
+        <button onclick="doRun(sourceText.value, outputPre)">Run</button>
+        
+        <pre id="outputPre">
         </pre>
+
+        <script type="text/javascript" src="../jessica.js"></script>
+        <script type="text/javascript">
+const doRun = (sourceText, output) => {
+    output.textContent = '';
+    const parameters = {
+        sourceType: 'jessie',
+        target: 'jessie-frame',
+        targetType: 'function',
+    };
+
+    // Make a confined file writer.
+    const writeOutput = (fname, str) => {
+        if (fname !== '-') {
+            slog.error`Cannot write to ${{fname}}: must be -`;
+        }
+        output.textContent += str;
+    };
+
+    const deps = {
+        writeOutput,
+    };
+    jessica.translate(sourceText, parameters)
+        .then(translated => jessica.confine(translated.translatedText))
+        .then(result => {
+            // Get the default export.
+            const main = result.default;
+
+            // Execute as main, if a function.
+            const val = typeof main === 'function' ? main(deps, []) : main;
+
+            // ... maybe Print.
+            if (val !== undefined) {
+                writeOutput('-', val);
+            }
+        })
+        .catch(e => {
+            writeOutput('-', e);
+            throw e;
+        });
+};
+
+const loadingMap = makeMap();
+const $h_define = (imports, factory) => {
+    const importPromises = imports.map((mod, i) => {
+        const uri = '/' + mod;
+        let promise = loadingMap.get(mod);
+        if (!promise) {
+            promise = fetch(uri)
+                .then(res => res.body())
+                .then(body => jessica.translate(body, parameters))
+                .then(text => jessica.confine(translated.translatedText));
+            promiseMap.set(promise);
+        }
+        return promise;
+    });
+    return Promise.all(importPromises).then(ps =>
+        factory.apply(undefined, ps));
+};
+</script>
     </body>
 </html>
