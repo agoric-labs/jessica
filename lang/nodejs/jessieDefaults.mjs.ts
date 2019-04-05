@@ -3,7 +3,7 @@
 
 import sesshim from './sesshim.mjs';
 
-const {confine} = sesshim;
+const {confine, harden} = sesshim;
 
 const globalEnv: Record<string, any> = {};
 globalEnv.confine = confine;
@@ -65,11 +65,16 @@ const makeHarden = (prepareObject: (obj: any) => void) => {
 };
 
 import makeImmunize from '../../lib/immunize.mjs';
-// Need to bootstrap makeImmunize.
-(global as any).makeWeakMap = Object.freeze((...args: any[]) => Object.freeze(new WeakMap(...args)));
-const immunize = makeImmunize(makeHarden, makeWrapper, setComputedIndex);
+if (typeof window === 'undefined') {
+    // Need to bootstrap makeImmunize.
+    (global as any).makeWeakMap = Object.freeze((...args: any[]) => Object.freeze(new WeakMap(...args)));
+    const immunize = makeImmunize(makeHarden, makeWrapper, setComputedIndex);
+    globalEnv.immunize = immunize;
+} else {
+    // FIXME: Until we figure out how to run under SES.
+    globalEnv.immunize = harden;
+}
 
-globalEnv.immunize = immunize;
 globalEnv.makeMap = immunize((...args: any[]) => new Map(...args));
 globalEnv.makeSet = immunize((...args: any[]) => new Set(...args));
 globalEnv.makePromise = immunize((executor: any) => new Promise(executor));

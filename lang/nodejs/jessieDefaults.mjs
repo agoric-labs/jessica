@@ -1,7 +1,7 @@
 /// <reference path="../../typings/ses.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 import sesshim from './sesshim.mjs';
-const { confine } = sesshim;
+const { confine, harden } = sesshim;
 const globalEnv = {};
 globalEnv.confine = confine;
 export const applyMethod = Object.freeze((thisObj, method, args) => method.apply(thisObj, args));
@@ -56,10 +56,16 @@ const makeHarden = (prepareObject) => {
     return newHarden;
 };
 import makeImmunize from '../../lib/immunize.mjs';
-// Need to bootstrap makeImmunize.
-global.makeWeakMap = Object.freeze((...args) => Object.freeze(new WeakMap(...args)));
-const immunize = makeImmunize(makeHarden, makeWrapper, setComputedIndex);
-globalEnv.immunize = immunize;
+if (typeof window === 'undefined') {
+    // Need to bootstrap makeImmunize.
+    global.makeWeakMap = Object.freeze((...args) => Object.freeze(new WeakMap(...args)));
+    const immunize = makeImmunize(makeHarden, makeWrapper, setComputedIndex);
+    globalEnv.immunize = immunize;
+}
+else {
+    // FIXME: Until we figure out how to run under SES.
+    globalEnv.immunize = harden;
+}
 globalEnv.makeMap = immunize((...args) => new Map(...args));
 globalEnv.makeSet = immunize((...args) => new Set(...args));
 globalEnv.makePromise = immunize((executor) => new Promise(executor));

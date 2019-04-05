@@ -61,7 +61,7 @@ function confine(exprSrc: string, env: Record<string, any>) {
   return closedFunc(...names.map(n => env[n]));
 }
 
-// For bootstrapping Jessie modules.
+// FIXME: For bootstrapping Jessie modules.
 ((typeof window === 'undefined' ? global : window) as any).immunize = harden;
 
 export default {confine: harden(confine), harden: harden(harden)};

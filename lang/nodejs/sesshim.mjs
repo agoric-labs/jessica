@@ -57,6 +57,6 @@ function confine(exprSrc, env) {
     const closedFunc = (1, eval)(closedFuncSrc);
     return closedFunc(...names.map(n => env[n]));
 }
-// For bootstrapping Jessie modules.
+// FIXME: For bootstrapping Jessie modules.
 (typeof window === 'undefined' ? global : window).immunize = harden;
 export default { confine: harden(confine), harden: harden(harden) };

@@ -23,8 +23,16 @@ export default immunize(main);</textarea>
         <pre id="outputPre">
         </pre>
 
-        <script type="text/javascript" src="./jessica.mjs"></script>
+        <!--@STRIP@<script type="text/javascript" src="./ses.umd.js"></script>@STRIP@-->
+        <script type="text/javascript" src="./jessica.js"></script>
         <script type="text/javascript">
+if (typeof SES !== 'undefined') {
+    // Use SES if available.
+    const r = SES.makeSESRootRealm({});
+    jessica.evaluate = (src) => r.evaluate(src, {...jessica.globals, $h_define});
+} else {
+    alert('Secure Javascript is not available!');
+}
 const doRun = (sourceText, output) => {
     output.textContent = '';
     const parameters = {
@@ -64,7 +72,7 @@ const doRun = (sourceText, output) => {
         });
 };
 
-const loadingMap = makeMap();
+const loadingMap = new Map();
 const $h_define = (imports, factory) => {
     const parameters = {
         sourceType: 'jessie',
