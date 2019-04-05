@@ -6,7 +6,7 @@ import makeJessieModule from './quasi-jessie-module.mjs';
 import makeJessie from './quasi-jessie.mjs';
 import makeJSON from './quasi-json.mjs';
 import makeJustin from './quasi-justin.mjs';
-import rewriteModuleSES from './rewrite-ses.mjs';
+import rewriteModuleDefine from './rewrite-define.mjs';
 import tagString from './tag-string.mjs';
 
 const pegTag = bootPeg(makePeg, bootPegAst);
@@ -68,7 +68,7 @@ export const translate = (sourceText: Readable, parameters: IJessicaResourcePara
             const moduleAst = tag`${sourceText}`;
 
             // Rewrite the ESM imports/exports into an SES-honouring AMD form.
-            const translatedText = rewriteModuleSES(moduleAst);
+            const translatedText = rewriteModuleDefine(moduleAst, '$h_define');
             const result: IJessicaTranslationResult = {
                 ...parameters,
                 translatedText,

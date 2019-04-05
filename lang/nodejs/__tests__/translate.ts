@@ -23,7 +23,7 @@ test('sanity', async () => {
 const $h_exports = {};
 $h_exports.default = immunize(() => 'hello world');
 return $h_exports;
-});`;
+})`;
     expect(await translate(`export default immunize(() => 'hello world');`, params)).toEqual({
         ...params,
         translatedText,
@@ -44,7 +44,7 @@ const {default: $i_foo} = $h_star0;
 const foo = immunize($i_foo);
 $h_exports.default = immunize(foo);
 return $h_exports;
-});`;
+})`;
     expect(await translate(`import $i_foo from './foo';
 const foo = immunize($i_foo);
 export default immunize(foo);
@@ -65,7 +65,7 @@ $h_exports.bat = bat;
 $h_exports.boz = boz;
 $h_exports.default = immunize(boz);
 return $h_exports;
-});`;
+})`;
     expect(await translate(`import $i_foo, * as $i_bitzy from './foo';
 export const foo = immunize($i_foo), {bat, boz} = immunize($i_bitzy);
 export default immunize(boz);

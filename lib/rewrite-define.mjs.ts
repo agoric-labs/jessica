@@ -1,9 +1,22 @@
 type Rewriter = (...args: any) => string;
 type Node = any[] | string;
 const hide = (vname: string) => `\$h_${vname}`;
-const moduleRewriteSES = (moduleAST: any[]) => {
+
+// Return a string separated by separators.
+const separate = (strs: string[], sep: string) => {
+    let ret = '';
+    let actualSep = '';
+    for (const str of strs) {
+        if (str !== '') {
+            ret += actualSep + str;
+            actualSep = sep;
+        }
+    }
+    return ret;
+};
+
+const moduleRewriteDefine = (moduleAST: any[], DEFINE = hide('define')) => {
     const EXPORTS = hide('exports');
-    const DEFINE = hide('define');
     const imports = makeMap<string, string>();
     const exportVars = makeSet<string>();
     let starName: string;
@@ -29,11 +42,7 @@ const moduleRewriteSES = (moduleAST: any[]) => {
         },
         exportX(qual: string, binds: Node[]) {
             exportVars.clear();
-            let bindings = '', comma = '';
-            for (const bind of binds) {
-                bindings += comma + doRewrite(bind);
-                comma = ', ';
-            }
+            const bindings = separate(binds.map(doRewrite), ', ');
             let assign = '';
             for (const vname of exportVars.keys()) {
                 assign += `${EXPORTS}.${vname} = ${vname};\n`;
@@ -55,25 +64,10 @@ const moduleRewriteSES = (moduleAST: any[]) => {
             return '';
         },
         importBind(bindings: Node[]) {
-            let bound = '';
-            let comma = '';
-            for (const binding of bindings) {
-                const b = doRewrite(binding);
-                if (b !== '') {
-                    bound += comma + doRewrite(binding);
-                    comma = ', ';
-                }
-            }
-            return bound;
+            return separate(bindings.map(doRewrite), ', ');
         },
         matchArray(es: Node[]) {
-            let arr = '';
-            let comma = '';
-            for (const e of es) {
-                arr += comma + doRewrite(e);
-                comma = ', ';
-            }
-            return `[${arr}]`;
+            return `[${separate(es.map(doRewrite), ', ')}]`;
         },
         matchProp(kw: string, prop: Node) {
             const rewrite = doRewrite(prop);
@@ -83,31 +77,24 @@ const moduleRewriteSES = (moduleAST: any[]) => {
             return `${kw}: ${rewrite}`;
         },
         matchRecord(es: Node[]) {
-            let rec = '';
-            let comma = '';
-            for (const e of es) {
-                rec += comma + doRewrite(e);
-                comma = ', ';
-            }
-            return `{${rec}}`;
+            return `{${separate(es.map(doRewrite), ', ')}}`;
         },
         moduleX(decls: Node[]) {
             const body = decls.reduce<string>((prior, cur) => prior + doRewrite(cur), '');
             const modules: string[] = [];
-            let bindings = '';
-            let comma = '';
+            const names: string[] = [];
             for (const [mod, name] of imports.entries()) {
                 modules.push(mod);
-                bindings += comma + name;
-                comma = ', ';
+                names.push(name);
             }
+            const bindings = separate(names, ', ');
             return `${DEFINE}(
 ${JSON.stringify(modules)},
 (${bindings}) => {
 const ${EXPORTS} = {};
 ${body}
 return ${EXPORTS};
-});`;
+})`;
         },
         rest(expr: Node) {
             return `...${doRewrite(expr)}`;
@@ -131,4 +118,4 @@ return ${EXPORTS};
     return doRewrite(moduleAST);
 };
 
-export default moduleRewriteSES;
+export default moduleRewriteDefine;
