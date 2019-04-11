@@ -9,20 +9,11 @@
             width: 100%;
         }
         </style>
-        <!--@STRIP@<script type="text/javascript" src="./ses.umd.js"></script>@STRIP@-->
-        <h1><span style="color: red" id="insecure">INSECURE</span> Browser-Based Jessica</h1>
+        <script type="text/javascript" src="./jessica.mjs"></script>
+        <h1>Browser-Based Jessica</h1>
 <script type="text/javascript">
-let evaluator;
-if (typeof SES !== 'undefined') {
-    // Use SES if available.
-    const r = SES.makeSESRootRealm({});
-    evaluator = (src) => r.evaluate(src, {...jessica.globals, $h_define});
-    insecure.style.color = 'green';
-    insecure.textContent = 'SECURE';
-} else {
-    evaluator = (src) => jessica.globals.confine(src, {...jessica.globals, $h_define});
-    alert('WARNING: Secure Javascript is not available!\n\nUnprotected GLOBAL Scope available to Jessie.');
-}
+const r = jessica.SES.makeSESRootRealm({});
+const evaluator = (src) => r.evaluate(src, {...jessica.globals, $h_define});
 </script>
 
         <p>Write your Jessie code below:</p>
@@ -33,13 +24,13 @@ const main = immunize((deps) => {
     wo('Hello, world!\n');
 });
 export default immunize(main);</textarea>
-        <button onclick="doRun(sourceText.value, outputPre)">Run</button>
+        <button id="btnRun">Run</button>
         
         <pre id="outputPre">
         </pre>
 
-        <script type="text/javascript" src="./jessica.js"></script>
 <script type="text/javascript">
+btnRun.addEventListener('click', () => doRun(sourceText.value, outputPre));
 const doRun = (sourceText, output) => {
     output.textContent = '';
     const parameters = {
@@ -87,7 +78,7 @@ const $h_define = (imports, factory) => {
         targetType: 'function',
     };
     const importPromises = imports.map((mod, i) => {
-        const uri = '/' + mod;
+        const uri = '/' + mod; // FIXME
         let promise = loadingMap.get(mod);
         if (!promise) {
             promise = fetch(uri)
