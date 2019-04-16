@@ -11,10 +11,6 @@
         </style>
         <script type="text/javascript" src="./jessica.mjs"></script>
         <h1>Browser-Based Jessica</h1>
-<script type="text/javascript">
-const r = jessica.SES.makeSESRootRealm({});
-const evaluator = (src) => r.evaluate(src, {...jessica.globals, $h_define});
-</script>
 
         <p>Write your Jessie code below:</p>
         <textarea id="sourceText" rows="20">
@@ -25,7 +21,27 @@ const main = insulate((deps) => {
 });
 export default main;</textarea>
         <button id="btnRun">Run</button>
-        
+
+        <label for="whitelist">
+            <input type="checkbox" id="whitelist" onclick="setEvaluator(this.checked)" />
+            Use the Jessie whitelist to limit the SES realm
+        </label>
+<script type="text/javascript">
+let evaluator;
+function setEvaluator(withWhitelist) {
+    try {
+        const opts = withWhitelist ? {whitelist: jessica.whitelist} : {};
+        const r = jessica.SES.makeSESRootRealm(opts);
+        evaluator = (src) => r.evaluate(src, {...jessica.globals, $h_define});
+    } catch (e) {
+        console.log(e);
+        alert('Cannot ' + (withWhitelist ? 'enable' : 'disable') + ' whitelist: ' + e.toString());
+        whitelist.checked = !withWhitelist;
+    }
+}
+setEvaluator(whitelist.checked);
+</script>
+
         <pre id="outputPre">
         </pre>
 
