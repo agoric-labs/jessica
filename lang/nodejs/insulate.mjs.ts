@@ -92,6 +92,16 @@ const makeInsulate = (nonMapped = new WeakSet<any>()): typeof insulate => {
 
                 // The recursively-wrapping traps.
                 apply(target, thisArg, argumentsList) {
+                    // If the target method is from outside, but thisArg is not from outside,
+                    // nor already exported to outside, we have insulation-crossing `this` capture.
+                    if (Object(thisArg) === thisArg &&
+                        outMap.get(target) && !inMap.get(thisArg) && !outMap.get(thisArg)
+                    ) {
+                        // Block accidental `this`-capture, but don't break
+                        // callers that ignore `this` anyways.
+                        thisArg = undefined;
+                    }
+
                     const wrappedThis = enter(thisArg);
                     const wrappedArguments = argumentsList.map(enter);
                     return leave(() => Reflect.apply(target, wrappedThis, wrappedArguments));

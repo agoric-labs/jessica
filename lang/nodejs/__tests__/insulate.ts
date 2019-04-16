@@ -47,3 +47,28 @@ test('insulate(protection)', () => {
     const obj2 = create();
     expect(() => obj2.abc = 'aaa').toThrow(/^Cannot set property "abc"/);
 });
+
+test('insulate(this-capture)', () => {
+    const captureThis = insulate((inObj: any) => {
+        const obj: any = {
+            a() { return 'innocuous'; },
+            priv: 'THIS VALUE MUST NOT LEAK!',
+        };
+        // Idiomatic usage of this-capture.
+        expect(obj.a()).toBe('innocuous');
+        expect([].slice(0)).toEqual([]);
+        // this-capture probably by accident.
+        obj.a = inObj.b;
+        obj.a();
+        return 'foo';
+    });
+    let exfiltrated = 'nothing leaked';
+    function getPriv() {
+        // Use our captured this to get ahold of the object.
+        exfiltrated = this.priv;
+    }
+
+    // Throw an unwrapped error from the getPriv function.
+    expect(() => captureThis({ b: getPriv })).toThrow(TypeError);
+    expect(exfiltrated).toBe('nothing leaked');
+});
