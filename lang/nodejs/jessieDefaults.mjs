@@ -11,13 +11,13 @@ export const setComputedIndex = harden((obj, index, val) => {
     }
     return obj[index] = val;
 });
-globalEnv.makeMap = harden((...args) => new Map(...args));
-globalEnv.makeSet = harden((...args) => new Set(...args));
-globalEnv.makePromise = harden((executor) => new Promise(executor));
-globalEnv.makeWeakMap = harden((...args) => new WeakMap(...args));
-globalEnv.makeWeakSet = harden((...args) => new WeakSet(...args));
+globalEnv.makeMap = harden((...args) => harden(new Map(...args)));
+globalEnv.makeSet = harden((...args) => harden(new Set(...args)));
+globalEnv.makePromise = harden((executor) => harden(new Promise(executor)));
+globalEnv.makeWeakMap = harden((...args) => harden(new WeakMap(...args)));
+globalEnv.makeWeakSet = harden((...args) => harden(new WeakSet(...args)));
 // Don't insulate the arguments to setComputedIndex or the primitive endowments.
-const nonMapped = new WeakSet(Object.values(globalEnv));
+const nonMapped = new WeakSet();
 nonMapped.add(setComputedIndex);
 export const insulate = makeInsulate(nonMapped);
 // Needed by the parser.
