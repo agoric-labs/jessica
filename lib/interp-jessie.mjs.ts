@@ -60,15 +60,20 @@ const matchPattern = (self: IEvalContext, pattern: any[], value: any): Array<[st
 
         case 'matchArray': {
             return pattern.slice(1).reduce((prior, pat, i) => {
-                matchPattern(self, pat, value[i])
-                    .forEach(binding => prior.push(binding));
+                let bindings: Array<[string, any[]]>;
+                if (pat[0] === 'rest') {
+                    bindings = matchPattern(self, pat[1], value.slice(i));
+                } else {
+                    bindings = matchPattern(self, pat, value[i]);
+                }
+                bindings.forEach(binding => prior.push(binding));
                 return prior;
             }, []);
         }
 
         case 'matchRecord': {
             const remaining = makeMap(Object.entries(value));
-            return pattern.slice(1).reduce((prior, pat) => {
+            return (pattern[1] as any[][]).reduce((prior, pat) => {
                 matchPropPattern(self, pat, remaining)
                     .forEach(binding => prior.push(binding));
                 return prior;
