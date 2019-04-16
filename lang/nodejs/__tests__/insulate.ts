@@ -71,4 +71,18 @@ test('insulate(this-capture)', () => {
     // Throw an unwrapped error from the getPriv function.
     expect(() => captureThis({ b: getPriv })).toThrow(TypeError);
     expect(exfiltrated).toBe('nothing leaked');
+
+    // Create an insulated function who attempts to capture this.
+    let exfiltrated2 = 'still nothing leaked';
+    const getPriv2 = insulate(function() {
+        exfiltrated2 = this.priv2;
+    });
+    const obj2 = {
+        a() { return 'still innocuous'; },
+        priv2: 'THIS VALUE ALSO MUST NOT LEAK!',
+    };
+    expect(obj2.a()).toBe('still innocuous');
+    obj2.a = getPriv2;
+    expect(() => obj2.a()).toThrow(/undefined/);
+    expect(exfiltrated2).toBe('still nothing leaked');
 });
