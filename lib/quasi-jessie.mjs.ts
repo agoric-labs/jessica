@@ -267,7 +267,8 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     insulatedExpr <-
       dataLiteral                                     ${d => ['data', JSON.parse(d)]}
     / "insulate" _WS LEFT_PAREN (pureExpr / useImport) RIGHT_PAREN  ${(fname, _2, expr, _3) =>
-                                                          ['call', ['use', fname], [expr]]};
+                                                          ['call', ['use', fname], [expr]]}
+    / useVar;
 
     # Jessie modules only allow insulated module-level bindings.
     moduleBinding <-

@@ -18,6 +18,11 @@ module.exports = () => {
             case 'BooleanLiteral':
                 // Don't need to insulate.
                 return expr;
+            case 'Identifier':
+                if (!expr.name.startsWith(importPrefix)) {
+                    return expr;
+                }
+                break;
         }
         // Pass it to insulate.
         return t.callExpression(t.identifier(insulateFunction), [expr]);
