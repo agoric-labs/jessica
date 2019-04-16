@@ -62,6 +62,6 @@ function confine(exprSrc: string, env: Record<string, any>) {
 }
 
 // FIXME: For bootstrapping Jessie modules.
-((typeof window === 'undefined' ? global : window) as any).immunize = harden;
+((typeof window === 'undefined' ? global : window) as any).insulate = harden;
 
 export default {confine: harden(confine), harden: harden(harden)};

@@ -8,27 +8,27 @@ interface TemplateStringsArray extends ReadonlyArray<string> {
     readonly sources?: ReadonlyArray<SourceLocation>;
 }
 
-// Note that ImmuneFunctions should not be mutable.
-interface ImmuneArray<T> extends HardenedArray<Immune<T>> {}
-type ImmuneObject<T> = {
-  readonly [K in keyof T]: Immune<T[K]>
+// Note that InsulatedFunctions should not be mutable.
+interface InsulatedArray<T> extends HardenedArray<Insulated<T>> {}
+type InsulatedObject<T> = {
+  readonly [K in keyof T]: Insulated<T[K]>
 };
-type ImmuneFunction<T> = T; // FIXME: Escape hatch.
+type InsulatedFunction<T> = T; // FIXME: Escape hatch.
 
-type Immune<T> =
-  T extends Function ? ImmuneFunction<T> :
+type Insulated<T> =
+  T extends Function ? InsulatedFunction<T> :
   T extends Primitive ? Readonly<T> :
-  T extends Array<infer U> ? ImmuneArray<U> :
+  T extends Array<infer U> ? InsulatedArray<U> :
   // The following are just hardened, as described in lib.jessie.d.ts
   T extends Map<infer K, infer V> ? Map<K, V> :
   T extends WeakMap<infer WK, infer WV> ? WeakMap<WK, WV> :
   T extends Set<infer M> ? Set<M> :
   T extends WeakSet<infer WM> ? WeakSet<WM> :
   T extends Promise<infer R> ? Promise<R> :
-  // All others are manually immunized.
-    ImmuneObject<T>;
+  // All others are manually insulated.
+    InsulatedObject<T>;
 
-declare function immunize<T>(arg: T): Immune<T>;
+declare function insulate<T>(arg: T): Insulated<T>;
 
 interface SlogTag<T> {
     (template: TemplateStringsArray, ...args: any[]): T;

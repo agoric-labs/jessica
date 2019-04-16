@@ -7,7 +7,7 @@ const jesspipe = (deps: IMainDependencies, argv: string[]) => {
         confine,
         confineExpr,
         eval,
-        immunize,
+        insulate,
         makeMap,
         makePromise,
         makeSet,

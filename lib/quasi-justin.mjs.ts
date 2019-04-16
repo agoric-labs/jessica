@@ -282,7 +282,7 @@ const makeJustin = (peg: IPegTag<IParserTag<any>>) => {
     assignExpr <- condExpr;
 
     # The comma expression is not in Jessie because we
-    # opt to pass only immunized expressions as the this-binding.
+    # opt to pass only insulated expressions as the this-binding.
     expr <- assignExpr;
   `;
 };

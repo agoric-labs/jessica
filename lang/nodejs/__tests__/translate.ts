@@ -21,14 +21,14 @@ test('sanity', async () => {
 [],
 () => {
 const $h_exports = {};
-$h_exports.default = immunize(() => 'hello world');
+$h_exports.default = insulate(() => 'hello world');
 return $h_exports;
 })`;
-    expect(await translate(`export default immunize(() => 'hello world');`, params)).toEqual({
+    expect(await translate(`export default insulate(() => 'hello world');`, params)).toEqual({
         ...params,
         translatedText,
     });
-    const module = `export default immunize(() => 'hello world');`;
+    const module = `export default insulate(() => 'hello world');`;
     expect(await translate(module, modParams)).toEqual({
         ...modParams,
         translatedText: module,
@@ -41,13 +41,13 @@ test('imports', async () => {
 ($h_star0) => {
 const $h_exports = {};
 const {default: $i_foo} = $h_star0;
-const foo = immunize($i_foo);
-$h_exports.default = immunize(foo);
+const foo = insulate($i_foo);
+$h_exports.default = insulate(foo);
 return $h_exports;
 })`;
     expect(await translate(`import $i_foo from './foo';
-const foo = immunize($i_foo);
-export default immunize(foo);
+const foo = insulate($i_foo);
+export default insulate(foo);
 `,
         params)).toEqual({
             ...params,
@@ -59,16 +59,16 @@ export default immunize(foo);
 ($i_bitzy) => {
 const $h_exports = {};
 const {default: $i_foo} = $i_bitzy;
-const foo = immunize($i_foo), {bat, boz} = immunize($i_bitzy);
+const foo = insulate($i_foo), {bat, boz} = insulate($i_bitzy);
 $h_exports.foo = foo;
 $h_exports.bat = bat;
 $h_exports.boz = boz;
-$h_exports.default = immunize(boz);
+$h_exports.default = insulate(boz);
 return $h_exports;
 })`;
     expect(await translate(`import $i_foo, * as $i_bitzy from './foo';
-export const foo = immunize($i_foo), {bat, boz} = immunize($i_bitzy);
-export default immunize(boz);
+export const foo = insulate($i_foo), {bat, boz} = insulate($i_bitzy);
+export default insulate(boz);
 `,
         params)).toEqual({
             ...params,

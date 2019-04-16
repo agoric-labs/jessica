@@ -19,11 +19,11 @@ const evaluator = (src) => r.evaluate(src, {...jessica.globals, $h_define});
         <p>Write your Jessie code below:</p>
         <textarea id="sourceText" rows="20">
 // Use Jessie's main deps to run the program.
-const main = immunize((deps) => {
+const main = insulate((deps) => {
     const say = (s) => deps.writeOutput('-', s + '\n');
     say('Hello, world!');
 });
-export default immunize(main);</textarea>
+export default insulate(main);</textarea>
         <button id="btnRun">Run</button>
         
         <pre id="outputPre">

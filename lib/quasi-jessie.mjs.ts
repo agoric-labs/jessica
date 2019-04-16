@@ -263,16 +263,16 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     moduleDeclaration <-
       "const" _WSN moduleBinding ** _COMMA SEMI       ${(op, decls) => [op, decls]};
 
-    # An immunized expression without side-effects.
-    immunizedExpr <-
+    # An insulated expression without side-effects.
+    insulatedExpr <-
       dataLiteral                                     ${d => ['data', JSON.parse(d)]}
-    / "immunize" _WS LEFT_PAREN (pureExpr / useImport) RIGHT_PAREN  ${(fname, _2, expr, _3) =>
+    / "insulate" _WS LEFT_PAREN (pureExpr / useImport) RIGHT_PAREN  ${(fname, _2, expr, _3) =>
                                                           ['call', ['use', fname], [expr]]};
 
-    # Jessie modules only allow immunized module-level bindings.
+    # Jessie modules only allow insulated module-level bindings.
     moduleBinding <-
-      bindingPattern EQUALS immunizedExpr       ${(p, _, e) => ['bind', p, e]}
-    / defVar EQUALS immunizedExpr               ${(p, _, e) => ['bind', p, e]}
+      bindingPattern EQUALS insulatedExpr       ${(p, _, e) => ['bind', p, e]}
+    / defVar EQUALS insulatedExpr               ${(p, _, e) => ['bind', p, e]}
     / defVar;
 
     importClause <-
@@ -296,7 +296,7 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     / EXPORT moduleDeclaration                  ${(_, d) => ['export', ...d]};
 
     # to be extended
-    exportableExpr <- immunizedExpr;
+    exportableExpr <- insulatedExpr;
 
     # Lexical syntax
     ARROW <- "=>" _WS;

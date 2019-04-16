@@ -11,13 +11,13 @@ const makeJessieModule = (jessiePeg: IPegTag<IParserTag<any>>) => {
 
     # A.5 Scripts and Modules
 
-    immunizedExpr <- < super.immunizedExpr >;
+    insulatedExpr <- < super.insulatedExpr >;
 
     moduleBody <- moduleItem*;
     moduleItem <-
       < SEMI >
     / importDecl    # Same AST as in Jessie.
-    / exportDecl    # Similar AST, but immunizedExpr is source string.
+    / exportDecl    # Similar AST, but insulatedExpr is source string.
     / < moduleDeclaration >;  # Source string.
 
     exportDecl <-

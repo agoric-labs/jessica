@@ -21,8 +21,8 @@ function defaultJessieParser() {
 
 test('conciseMethod', () => {
     const parse = defaultJessieParser();
-    expect(parse(`export default immunize({def(abc) { return abc; }, ghi() { }});`)).toEqual(['module', [
-        ast(0, 'exportDefault', ast(15, 'call', ['use', 'immunize'], [
+    expect(parse(`export default insulate({def(abc) { return abc; }, ghi() { }});`)).toEqual(['module', [
+        ast(0, 'exportDefault', ast(15, 'call', ['use', 'insulate'], [
             ast(24, 'record', [
                 ast(25, 'method', 'def', [ast(29, 'def', 'abc')],
                     ast(34, 'block', [ast(36, 'return', ast(43, 'use', 'abc'))])),
@@ -34,7 +34,7 @@ test('conciseMethod', () => {
 
 test('switch', () => {
     const parse = defaultJessieParser();
-    expect(parse(`export default immunize(() => {
+    expect(parse(`export default insulate(() => {
         switch (e) {
             case 'b':{
                 q = '\\b';
@@ -42,7 +42,7 @@ test('switch', () => {
               }
         }
     });`)).toEqual(['module', [
-        ast(0, 'exportDefault', ast(15, 'call', ['use', 'immunize'], [
+        ast(0, 'exportDefault', ast(15, 'call', ['use', 'insulate'], [
             ast(24, 'arrow', ast(24), ast(30, 'block', [
                 ast(40, 'switch', ast(48, 'use', 'e'), [
                     ast(65, 'clause', [ast(65, 'case', ast(70, 'data', 'b'))],
@@ -58,8 +58,8 @@ test('switch', () => {
 
 test('quasi', () => {
     const parse = defaultJessieParser();
-    expect(parse(`export default immunize(() => { bar.foo\`baz \${1} \${2}\`; });`)).toEqual(['module', [
-        ast(0, 'exportDefault', ast(15, 'call', ['use', 'immunize'], [
+    expect(parse(`export default insulate(() => { bar.foo\`baz \${1} \${2}\`; });`)).toEqual(['module', [
+        ast(0, 'exportDefault', ast(15, 'call', ['use', 'insulate'], [
             ast(24, 'arrow', ast(24), ast(30, 'block', [
                 ast(32, 'tag', ['get', ast(32, 'use', 'bar'), "foo"],
                     ast(39, 'quasi', ['baz ', ast(46, 'data', 1), ' ', ast(51, 'data', 2), ''])
@@ -68,10 +68,10 @@ test('quasi', () => {
     ]]);
 });
 
-test('immunize', () => {
+test('insulate', () => {
     const parse = defaultJessieParser();
-    expect(parse(`export default immunize(a);`)).toEqual(['module', [
-        ast(0, 'exportDefault', ast(15, 'call', ['use', 'immunize'], [
+    expect(parse(`export default insulate(a);`)).toEqual(['module', [
+        ast(0, 'exportDefault', ast(15, 'call', ['use', 'insulate'], [
             ast(24, 'use', 'a')
         ]))
     ]]);

@@ -2,13 +2,13 @@ const t = require('@babel/types');
 
 module.exports = () => {
     const topLevelDecls = new WeakSet();
-    const immuneFunction = 'immunize';
+    const insulateFunction = 'insulate';
     const importPrefix = '$i_';
-    const immunizeExpr = (expr) => {
+    const insulateExpr = (expr) => {
         if (expr.type === 'CallExpression' &&
             expr.callee.type === 'Identifier' &&
-            expr.callee.name === immuneFunction) {
-            // Already immunized.
+            expr.callee.name === insulateFunction) {
+            // Already insulated.
             return expr;
         }
     
@@ -16,11 +16,11 @@ module.exports = () => {
             case 'NumericLiteral':
             case 'StringLiteral':
             case 'BooleanLiteral':
-                // Don't need to immunize.
+                // Don't need to insulate.
                 return expr;
         }
-        // Pass it to immunize.
-        return t.callExpression(t.identifier(immuneFunction), [expr]);
+        // Pass it to insulate.
+        return t.callExpression(t.identifier(insulateFunction), [expr]);
     };
     
     const makeSafeImport = (local) => {
@@ -31,13 +31,13 @@ module.exports = () => {
         const safeName = local.name;
         local.name = importPrefix + safeName;
         return [t.variableDeclaration('const',
-            [t.variableDeclarator(t.identifier(safeName), immunizeExpr(local))])];
+            [t.variableDeclarator(t.identifier(safeName), insulateExpr(local))])];
     };
 
     return {
         visitor: {
             ExportDefaultDeclaration(path) {
-                path.node.declaration = immunizeExpr(path.node.declaration);
+                path.node.declaration = insulateExpr(path.node.declaration);
             },
             ImportNamespaceSpecifier(path) {
                 path.parentPath.insertAfter(makeSafeImport(path.node.local));
@@ -63,7 +63,7 @@ module.exports = () => {
                     return;
                 }
                 if (path.node.init) {
-                    path.node.init = immunizeExpr(path.node.init);
+                    path.node.init = insulateExpr(path.node.init);
                 }
             },
         },

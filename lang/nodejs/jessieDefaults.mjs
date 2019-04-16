@@ -11,20 +11,20 @@ export const setComputedIndex = Object.freeze((obj, index, val) => {
     }
     return obj[index] = val;
 });
-export const makeWrapper = Object.freeze((newImmunize, fn) => function wrapper(...args) {
+export const makeWrapper = Object.freeze((newInsulate, fn) => function wrapper(...args) {
     let ret;
     try {
-        // Immunize `this` and arguments before calling.
-        const iargs = args.map(newImmunize);
-        const ithis = newImmunize(this);
+        // Insulate `this` and arguments before calling.
+        const iargs = args.map(newInsulate);
+        const ithis = newInsulate(this);
         ret = fn.apply(ithis, iargs);
     }
     catch (e) {
-        // Immunize exception, and rethrow.
-        throw newImmunize(e);
+        // Insulate exception, and rethrow.
+        throw newInsulate(e);
     }
-    // Immunize return value.
-    return newImmunize(ret);
+    // Insulate return value.
+    return newInsulate(ret);
 });
 // TODO: Need to use @agoric/make-hardener.
 const makeHarden = (prepareObject) => {
@@ -55,20 +55,20 @@ const makeHarden = (prepareObject) => {
     }
     return newHarden;
 };
-import makeImmunize from '../../lib/immunize.mjs';
+import makeInsulate from '../../lib/insulate.mjs';
 if (typeof window === 'undefined') {
-    // Need to bootstrap makeImmunize.
+    // Need to bootstrap makeInsulate.
     global.makeWeakMap = Object.freeze((...args) => Object.freeze(new WeakMap(...args)));
-    const immunize = makeImmunize(makeHarden, makeWrapper, setComputedIndex);
-    globalEnv.immunize = immunize;
+    const insulate = makeInsulate(makeHarden, makeWrapper, setComputedIndex);
+    globalEnv.insulate = insulate;
 }
 else {
     // FIXME: Until we figure out how to run under SES.
-    globalEnv.immunize = harden;
+    globalEnv.insulate = harden;
 }
-globalEnv.makeMap = immunize((...args) => new Map(...args));
-globalEnv.makeSet = immunize((...args) => new Set(...args));
-globalEnv.makePromise = immunize((executor) => new Promise(executor));
-globalEnv.makeWeakMap = immunize((...args) => new WeakMap(...args));
-globalEnv.makeWeakSet = immunize((...args) => new WeakSet(...args));
+globalEnv.makeMap = insulate((...args) => new Map(...args));
+globalEnv.makeSet = insulate((...args) => new Set(...args));
+globalEnv.makePromise = insulate((executor) => new Promise(executor));
+globalEnv.makeWeakMap = insulate((...args) => new WeakMap(...args));
+globalEnv.makeWeakSet = insulate((...args) => new WeakSet(...args));
 export default globalEnv;
