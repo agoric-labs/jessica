@@ -1,9 +1,149 @@
-<!DOCTYPE html><html><head><title>Jessica Browser</title></head><body> <style>#sourceText{width:100%}</style> <script type="text/javascript" src="jessica.0d62a186.js"></script> <h1>Browser-Based Jessica</h1> <p>Write your Jessie code below:</p> <textarea id="sourceText" rows="20">
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jessica Browser</title>
+    </head>
+    <body>
+        <style>#sourceText {
+            width: 100%;
+        }</style>
+        <script type="text/javascript" src="jessica.34dfdaeb.js"></script>
+        <h1>Browser-Based Jessica</h1>
+
+        <p>Write your Jessie code below:</p>
+        <textarea id="sourceText" rows="20">
 // Use Jessie's main deps to run the program.
 const main = insulate((deps) => {
     const say = (s) => deps.writeOutput('-', s + '\n');
     say('Hello, world!');
 });
-export default main;</textarea> <button id="btnRun">Run</button> <label for="whitelist"> <input type="checkbox" id="whitelist" onclick="setEvaluator(this.checked)"> Use the Jessie whitelist to limit the SES realm </label>
- <pre id="outputPre">
-        </pre> <script>function e(){var n=t(["Cannot write to ",": must be -"]);return e=function(){return n},n}function t(e,t){return t||(t=e.slice(0)),Object.freeze(Object.defineProperties(e,{raw:{value:Object.freeze(t)}}))}function n(e){for(var t=1;t<arguments.length;t++){var n=null!=arguments[t]?arguments[t]:{},o=Object.keys(n);"function"==typeof Object.getOwnPropertySymbols&&(o=o.concat(Object.getOwnPropertySymbols(n).filter(function(e){return Object.getOwnPropertyDescriptor(n,e).enumerable}))),o.forEach(function(t){r(e,t,n[t])})}return e}function r(e,t,n){return t in e?Object.defineProperty(e,t,{value:n,enumerable:!0,configurable:!0,writable:!0}):e[t]=n,e}var o;function i(e){try{var t=e?{whitelist:jessica.whitelist}:{},r=jessica.SES.makeSESRootRealm(t);o=function(e){return r.evaluate(e,n({},jessica.globals,{$h_define:u}))}}catch(i){console.log(i),alert("Cannot "+(e?"enable":"disable")+" whitelist: "+i.toString()),whitelist.checked=!e}}i(whitelist.checked),btnRun.addEventListener("click",function(){return a(sourceText.value,outputPre)});var a=function(t,n){n.textContent="";var r=function(t,r){"-"!==t&&slog.error(e(),{fname:t}),n.textContent+=r},i={writeOutput:r};jessica.translate(t,{sourceType:"jessie",target:"jessie-frame",targetType:"function"}).then(function(e){return o(e.translatedText)}).then(function(e){var t=e.default,n="function"==typeof t?t(i,[]):t;void 0!==n&&r("-",n)}).catch(function(e){throw r("-",e),e})},c=new Map,u=function(e,t){var n={sourceType:"jessie",target:"jessie-frame",targetType:"function"},r=e.map(function(e,t){var r="/"+e,i=c.get(e);return i||(i=fetch(r).then(function(e){if(e.ok)return e.text();throw Error("Cannot load "+r)}).then(function(e){return jessica.translate(e,n)}).then(function(e){return o(e.translatedText)}),c.set(i)),i});return Promise.all(r).then(function(e){return t.apply(void 0,e)})};</script> </body></html>
+export default main;</textarea>
+        <button id="btnRun">Run</button>
+
+<label for="whitelist">
+            <input type="checkbox" id="whitelist">
+            Use the Jessie whitelist to limit the SES realm
+        </label>
+<script>function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var evaluator;
+
+var setEvaluator = function setEvaluator(withWhitelist) {
+  try {
+    var opts = withWhitelist ? {
+      whitelist: jessica.whitelist
+    } : {};
+    var r = jessica.SES.makeSESRootRealm(opts);
+
+    evaluator = function evaluator(src) {
+      return r.evaluate(src, _objectSpread({}, jessica.globals, {
+        $h_define: $h_define
+      }));
+    };
+  } catch (e) {
+    console.log(e);
+    alert('Cannot ' + (withWhitelist ? 'enable' : 'disable') + ' whitelist: ' + e.toString());
+    whitelist.checked = !withWhitelist;
+  }
+};
+
+whitelist.addEventListener('click', function () {
+  return setEvaluator(whitelist.checked);
+});
+setEvaluator(whitelist.checked);</script>
+
+        <pre id="outputPre">
+        </pre>
+
+<script>function _templateObject() {
+  var data = _taggedTemplateLiteral(["Cannot write to ", ": must be -"]);
+
+  _templateObject = function _templateObject() {
+    return data;
+  };
+
+  return data;
+}
+
+function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
+
+btnRun.addEventListener('click', function () {
+  return doRun(sourceText.value, outputPre);
+});
+
+var doRun = function doRun(sourceText, output) {
+  output.textContent = '';
+  var parameters = {
+    sourceType: 'jessie',
+    target: 'jessie-frame',
+    targetType: 'function'
+  }; // Make a confined file writer.
+
+  var writeOutput = function writeOutput(fname, str) {
+    if (fname !== '-') {
+      slog.error(_templateObject(), {
+        fname: fname
+      });
+    }
+
+    output.textContent += str;
+  };
+
+  var deps = {
+    writeOutput: writeOutput
+  };
+  jessica.translate(sourceText, parameters).then(function (translated) {
+    return evaluator(translated.translatedText);
+  }).then(function (result) {
+    // Get the default export.
+    var main = result.default; // Execute as main, if a function.
+
+    var val = typeof main === 'function' ? main(deps, []) : main; // ... maybe Print.
+
+    if (val !== undefined) {
+      writeOutput('-', val);
+    }
+  }).catch(function (e) {
+    writeOutput('-', e);
+    throw e;
+  });
+};
+
+var loadingMap = new Map();
+
+var $h_define = function $h_define(imports, factory) {
+  var parameters = {
+    sourceType: 'jessie',
+    target: 'jessie-frame',
+    targetType: 'function'
+  };
+  var importPromises = imports.map(function (mod, i) {
+    var uri = '/' + mod; // FIXME
+
+    var promise = loadingMap.get(mod);
+
+    if (!promise) {
+      promise = fetch(uri).then(function (res) {
+        if (res.ok) {
+          return res.text();
+        }
+
+        throw Error('Cannot load ' + uri);
+      }).then(function (text) {
+        return jessica.translate(text, parameters);
+      }).then(function (translated) {
+        return evaluator(translated.translatedText);
+      });
+      loadingMap.set(promise);
+    }
+
+    return promise;
+  });
+  return Promise.all(importPromises).then(function (ps) {
+    return factory.apply(undefined, ps);
+  });
+};</script>
+    </body>
+</html>

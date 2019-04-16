@@ -22,13 +22,13 @@ const main = insulate((deps) => {
 export default main;</textarea>
         <button id="btnRun">Run</button>
 
-        <label for="whitelist">
-            <input type="checkbox" id="whitelist" onclick="setEvaluator(this.checked)" />
+<label for="whitelist">
+            <input type="checkbox" id="whitelist" />
             Use the Jessie whitelist to limit the SES realm
         </label>
 <script type="text/javascript">
 let evaluator;
-function setEvaluator(withWhitelist) {
+const setEvaluator = (withWhitelist) => {
     try {
         const opts = withWhitelist ? {whitelist: jessica.whitelist} : {};
         const r = jessica.SES.makeSESRootRealm(opts);
@@ -38,7 +38,8 @@ function setEvaluator(withWhitelist) {
         alert('Cannot ' + (withWhitelist ? 'enable' : 'disable') + ' whitelist: ' + e.toString());
         whitelist.checked = !withWhitelist;
     }
-}
+};
+whitelist.addEventListener('click', () => setEvaluator(whitelist.checked));
 setEvaluator(whitelist.checked);
 </script>
 
