@@ -1,14 +1,22 @@
 // Prevent write access, and ensure objects don't pass the barrier
-// between warm (inside warmTarget) and cold (outside warmTarget), unless
-// they are also insulated.
+// between warm (inside warmTarget or the return values of its descendants)
+// and cold (outside warmTarget), unless they are also insulated.
 //
-// All the cold objects share a map to warm objects in order to
-// preserve global identities.  This is needed because some global
-// identities must never be insulated.
+// The cold/warm identity maps are created fresh for each actual insulate()
+// call, but not for the silent wrapping of returns, throws, this, and
+// arguments.  This allows wrapping/unwrapping of values that transition
+// the delineated insulation boundary with read-only Proxies rather
+// having to harden them on every transition and losing useful but
+// harmless mutability.
 //
-// Warm objects, on the other hand, only keep their identity within
-// a given insulated chain of functions.  Once they escape the function
-// chain they are always insulated, and cannot be unwrapped.
+// The proxying provided by insulate() is orthogonal to harden() and
+// Object.freeze.  You can still call harden() on your own data and
+// pass it into insulated() functions, but not on proxies that have
+// originated in an insulated() function, as that data belongs to
+// somebody else).
+//
+// The nonMapped set is a list of global identities that should never
+// be wrapped.  It is included for bootstrap purposes.
 const makeInsulate = (nonMapped = new WeakSet()) => {
     const insulate = (warmTarget) => {
         const warmToColdMap = new WeakMap(), coldToWarmMap = new WeakMap();
@@ -49,18 +57,19 @@ const makeInsulate = (nonMapped = new WeakSet()) => {
                 set(_target, prop, _value) {
                     throw err(`Cannot set property ${JSON.stringify(String(prop))} on insulated object`);
                 },
-                // We maintain our extensible state, only for the
+                // We maintain our extensible state, both for the
                 // Proxy invariants and because we don't want to modify
                 // the target AT ALL!
                 isExtensible(target) {
                     return Reflect.isExtensible(target);
                 },
                 preventExtensions(target) {
-                    // This is a mutation.  Not allowed.
                     if (!Reflect.isExtensible(target)) {
+                        // Already prevented extensions, so succeed.
                         return true;
                     }
-                    throw err(`Cannot prevent extensions on insulated object`);
+                    // This is a mutation.  Not allowed.
+                    throw err(`Cannot prevent extensions of insulated object`);
                 },
                 // The traps that have a reasonably simple implementation:
                 get(target, prop, receiver) {
