@@ -1,5 +1,5 @@
 #! /usr/bin/env ts-node
-import globalEnv, { applyMethod, setComputedIndex } from './globalEnv.mjs';
+import globalEnv, { applyMethod, insulate, setComputedIndex } from './globalEnv.mjs';
 // Read and evaluate the specified module,
 if (process.argv.length < 3) {
     slog.panic `You must specify a MODULE`;
@@ -30,7 +30,7 @@ import bootEnv from '../../lib/boot-env.mjs';
 const jessie = bootEnv(globalEnv, applyMethod, readInput, setComputedIndex);
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
-const doEval = (src, uri) => jessie.confine(src, jessie, { scriptName: uri });
+const doEval = (src, uri) => jessie.confine(src, Object.assign({}, jessie, { insulate }), { scriptName: uri });
 const deps = { applyMethod, readInput, setComputedIndex, writeOutput };
 try {
     repl(deps, doEval, MODULE, ARGV);

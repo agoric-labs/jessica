@@ -1,74 +1,26 @@
 /// <reference path="../../typings/ses.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
+import makeInsulate from './insulate.mjs';
 import sesshim from './sesshim.mjs';
 const { confine, harden } = sesshim;
 const globalEnv = {};
-globalEnv.confine = confine;
-export const applyMethod = Object.freeze((thisObj, method, args) => method.apply(thisObj, args));
-export const setComputedIndex = Object.freeze((obj, index, val) => {
+export const applyMethod = harden((thisObj, method, args) => method.apply(thisObj, args));
+export const setComputedIndex = harden((obj, index, val) => {
     if (index === '__proto__') {
         slog.error `Cannot set ${{ index }} object member`;
     }
     return obj[index] = val;
 });
-export const makeWrapper = Object.freeze((newInsulate, fn) => function wrapper(...args) {
-    let ret;
-    try {
-        // Insulate `this` and arguments before calling.
-        const iargs = args.map(newInsulate);
-        const ithis = newInsulate(this);
-        ret = fn.apply(ithis, iargs);
-    }
-    catch (e) {
-        // Insulate exception, and rethrow.
-        throw newInsulate(e);
-    }
-    // Insulate return value.
-    return newInsulate(ret);
-});
-// TODO: Need to use @agoric/make-hardener.
-const makeHarden = (prepareObject) => {
-    const hardMap = new WeakMap();
-    // FIXME: Needed for bootstrap.
-    hardMap.set(setComputedIndex, setComputedIndex);
-    if (typeof window !== 'undefined') {
-        hardMap.set(window, window);
-    }
-    function newHarden(root) {
-        if (root === null) {
-            return root;
-        }
-        const type = typeof root;
-        if (type !== 'object' && type !== 'function') {
-            return root;
-        }
-        if (hardMap.has(root)) {
-            return hardMap.get(root);
-        }
-        prepareObject(root);
-        const frozen = Object.freeze(root);
-        hardMap.set(root, frozen);
-        for (const value of Object.values(root)) {
-            newHarden(value);
-        }
-        return frozen;
-    }
-    return newHarden;
-};
-import makeInsulate from '../../lib/insulate.mjs';
-if (typeof window === 'undefined') {
-    // Need to bootstrap makeInsulate.
-    global.makeWeakMap = Object.freeze((...args) => Object.freeze(new WeakMap(...args)));
-    const insulate = makeInsulate(makeHarden, makeWrapper, setComputedIndex);
-    globalEnv.insulate = insulate;
-}
-else {
-    // FIXME: Until we figure out how to run under SES.
-    globalEnv.insulate = harden;
-}
-globalEnv.makeMap = insulate((...args) => new Map(...args));
-globalEnv.makeSet = insulate((...args) => new Set(...args));
-globalEnv.makePromise = insulate((executor) => new Promise(executor));
-globalEnv.makeWeakMap = insulate((...args) => new WeakMap(...args));
-globalEnv.makeWeakSet = insulate((...args) => new WeakSet(...args));
+globalEnv.makeMap = harden((...args) => new Map(...args));
+globalEnv.makeSet = harden((...args) => new Set(...args));
+globalEnv.makePromise = harden((executor) => new Promise(executor));
+globalEnv.makeWeakMap = harden((...args) => new WeakMap(...args));
+globalEnv.makeWeakSet = harden((...args) => new WeakSet(...args));
+// Don't insulate the arguments to setComputedIndex or the primitive endowments.
+const nonMapped = new WeakSet(Object.values(globalEnv));
+nonMapped.add(setComputedIndex);
+export const insulate = makeInsulate(nonMapped);
+// Needed by the parser.
+globalEnv.confine = harden(confine);
+globalEnv.insulate = (obj) => obj;
 export default globalEnv;

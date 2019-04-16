@@ -7,7 +7,7 @@
 /// <reference path="../../typings/jessie-proposed.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 
-import globalEnv, {applyMethod, setComputedIndex} from './globalEnv.mjs';
+import globalEnv, {applyMethod, insulate, setComputedIndex} from './globalEnv.mjs';
 
 // Read and evaluate the specified module,
 if (process.argv.length < 3) {
@@ -46,7 +46,7 @@ const jessie = bootEnv(globalEnv, applyMethod, readInput, setComputedIndex);
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
 const doEval = (src: string, uri?: string) =>
-    jessie.confine(src, jessie, {scriptName: uri});
+    jessie.confine(src, {...jessie, insulate}, {scriptName: uri});
 const deps = {applyMethod, readInput, setComputedIndex, writeOutput};
 try {
     repl(deps, doEval, MODULE, ARGV);
