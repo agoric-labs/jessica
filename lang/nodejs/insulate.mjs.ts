@@ -44,7 +44,7 @@ const makeInsulate = (nonMapped = new WeakSet<any>()): typeof insulate => {
             };
 
             const err = (msg: string) => leave(() => {
-                throw TypeError(msg);
+                throw wrapWithMaps(TypeError(msg), inMap, outMap);
             });
             const handler: ProxyHandler<any> = {
                 // Traps that make sure our object is read-only.

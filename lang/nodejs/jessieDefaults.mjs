@@ -4,7 +4,7 @@ import makeInsulate from './insulate.mjs';
 import sesshim from './sesshim.mjs';
 const { confine, harden } = sesshim;
 const globalEnv = {};
-export const applyMethod = harden((thisObj, method, args) => method.apply(thisObj, args));
+export const applyMethod = harden((thisObj, method, args) => Reflect.apply(method, thisObj, args));
 export const setComputedIndex = harden((obj, index, val) => {
     if (index === '__proto__') {
         slog.error `Cannot set ${{ index }} object member`;

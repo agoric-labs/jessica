@@ -9,7 +9,7 @@ const {confine, harden} = sesshim;
 const globalEnv: Record<string, any> = {};
 
 export const applyMethod = harden(<T>(thisObj: any, method: (...args: any) => T, args: any[]): T =>
-    method.apply(thisObj, args));
+    Reflect.apply(method, thisObj, args));
 
 export const setComputedIndex = harden(<T>(obj: any, index: string | number, val: T) => {
     if (index === '__proto__') {

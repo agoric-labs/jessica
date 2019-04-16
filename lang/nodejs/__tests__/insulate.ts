@@ -36,7 +36,7 @@ test('insulate(identity)', () => {
 test('insulate(protection)', () => {
     const mutate = insulate((a: any) => a.bar = 123);
     const obj: Record<string, any> = {bar: 123};
-    expect(() => mutate(obj)).toThrow(TypeError);
+    expect(() => mutate(obj)).toThrow(/^Cannot set property "bar" on insulated object/);
     expect(obj.bar).toBe(123);
     obj.bar = 234;
     expect(obj.bar).toBe(234);

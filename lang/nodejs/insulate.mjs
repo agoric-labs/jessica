@@ -44,7 +44,7 @@ const makeInsulate = (nonMapped = new WeakSet()) => {
                 }
             };
             const err = (msg) => leave(() => {
-                throw TypeError(msg);
+                throw wrapWithMaps(TypeError(msg), inMap, outMap);
             });
             const handler = {
                 // Traps that make sure our object is read-only.
