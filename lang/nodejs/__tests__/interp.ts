@@ -50,3 +50,22 @@ test('repl', () => {
         expect(capturedData).toBe('/* FIXME: Stub */\n');
     }
 });
+
+test('quasi', () => {
+    const jessie = defaultEnv(dontRead);
+    const tag = (template: TemplateStringsArray, ...args: any[]) =>
+        args.reduce((prior, arg, i) => prior + String(arg) + template[i + 1], template[0]);
+
+    expect(jessie.confine('export default insulate(() => `abc 123`);', jessie)())
+        .toBe('abc 123');
+
+    expect(jessie.confine('export default insulate((arg) => `abc ${arg} 456`);', jessie)(123))
+        .toBe('abc 123 456');
+
+    expect(jessie.confine('export default insulate((tag) => tag`My string`);', jessie)(tag))
+        .toBe('My string');
+
+    expect(jessie.confine('export default insulate((tag, arg) => tag`My template ${arg}`);', jessie)(tag, 'hello'))
+        .toBe('My template hello');
+
+});

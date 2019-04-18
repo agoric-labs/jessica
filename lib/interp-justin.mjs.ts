@@ -1,6 +1,6 @@
 import jsonEvaluators from './interp-json.mjs';
-import {BINDING_GET, BINDING_NAME, BINDING_PARENT,
-    doEval, err, Evaluator, getRef, IEvalContext} from './interp-utils.mjs';
+import {BINDING_GET, doEval, err, Evaluator,
+    getRef, IEvalContext, SCOPE_GET} from './interp-utils.mjs';
 import {qrepack} from './quasi-utils.mjs';
 
 const justinEvaluators: Record<string, Evaluator> = {
@@ -157,8 +157,11 @@ const justinEvaluators: Record<string, Evaluator> = {
         return obj[index];
     },
     quasi(self: IEvalContext, parts: any[]) {
-        const argsExpr = qrepack(parts);
-        return argsExpr.map(arg => doEval(self, arg));
+        const argExprs = qrepack(parts);
+        const [template, ...args] = argExprs.map(expr => doEval(self, expr));
+
+        return args.reduce((prior, a, i) =>
+            prior + String(a) + template[i + 1], template[0]);
     },
     record(self: IEvalContext, propDefs: any[][]) {
         const obj: Record<string | number, any> = {};
@@ -185,18 +188,20 @@ const justinEvaluators: Record<string, Evaluator> = {
     },
     tag(self: IEvalContext, tagExpr: any[], quasiExpr: any[]) {
         const {getter, thisObj} = getRef(self, tagExpr);
-        const args = doEval(self, quasiExpr);
+        const [quasi, parts] = quasiExpr;
+        if (quasiExpr[0] !== 'quasi') {
+            err(self)`Unrecognized quasi expression ${{quasi}}`;
+        }
+        const argExprs = qrepack(parts);
+        const args = argExprs.map(expr => doEval(self, expr));
         return self.applyMethod(thisObj, getter(), args);
     },
     typeof(self: IEvalContext, expr: any[]) {
         if (expr[0] === 'use') {
             const name = expr[1];
-            let b = self.env();
-            while (b !== undefined) {
-                if (b[BINDING_NAME] === name) {
-                    return typeof b[BINDING_GET]();
-                }
-                b = b[BINDING_PARENT];
+            const b = self.scope()[SCOPE_GET](name);
+            if (b) {
+                return typeof b[BINDING_GET]();
             }
             // Special case: just return undefined on missing lookup.
             return undefined;
@@ -206,12 +211,9 @@ const justinEvaluators: Record<string, Evaluator> = {
         return typeof val;
     },
     use(self: IEvalContext, name: string) {
-        let b = self.env();
-        while (b !== undefined) {
-            if (b[BINDING_NAME] === name) {
-                return b[BINDING_GET]();
-            }
-            b = b[BINDING_PARENT];
+        const b = self.scope()[SCOPE_GET](name);
+        if (b) {
+            return b[BINDING_GET]();
         }
         err(self)`ReferenceError: ${{name}} is not defined`;
     },

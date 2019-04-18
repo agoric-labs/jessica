@@ -6043,7 +6043,7 @@ exports.default = _default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.reduceElisions = exports.qrepack = exports.qunpack = void 0;
+exports.qrepack = exports.qunpack = void 0;
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -6076,44 +6076,6 @@ var qrepack = insulate(function (parts) {
   return [['data', template]].concat(argExprs);
 });
 exports.qrepack = qrepack;
-var reduceElisions = insulate(function (es) {
-  var reduced = [];
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
-
-  try {
-    for (var _iterator = es[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var e = _step.value;
-
-      if (e[0] === undefined) {
-        // Push the elisions.
-        e.forEach(function (_) {
-          return reduced.push(undefined);
-        });
-      } else {
-        // Push the individual expression.
-        reduced.push(e);
-      }
-    }
-  } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion && _iterator.return != null) {
-        _iterator.return();
-      }
-    } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
-      }
-    }
-  }
-
-  return reduced;
-});
-exports.reduceElisions = reduceElisions;
 },{}],"X5zO":[function(require,module,exports) {
 "use strict";
 
@@ -6739,4 +6701,4 @@ exports.SES = SES;
 var whitelist = (0, _whitelist.buildWhitelist)();
 exports.whitelist = whitelist;
 },{"./node_modules/ses/dist/ses.esm.js":"iDNi","../nodejs/globalEnv.mjs":"fc7A","./whitelist.js":"4nUr","../../lib/translate.mjs":"bRI1"}]},{},["lr5t"], "jessica")
-//# sourceMappingURL=jessica.34dfdaeb.js.map
+//# sourceMappingURL=jessica.630e00b5.js.map

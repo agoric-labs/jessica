@@ -1,4 +1,4 @@
-export const qunpack = (h: string, ms: any[], t: string) => {
+export const qunpack = (h: string, ms: any[][], t: string) => {
   return [h, ...ms, t];
 };
 
@@ -16,18 +16,4 @@ export const qrepack = (parts: any[]) => {
   const template: string[] & { raw?: string[] } = [...raw];
   template.raw = raw;
   return [['data', template], ...argExprs];
-};
-
-export const reduceElisions = (es: any[]) => {
-  const reduced: any[] = [];
-  for (const e of es) {
-    if (e[0] === undefined) {
-      // Push the elisions.
-      (e as undefined[]).forEach(_ => reduced.push(undefined));
-    } else {
-      // Push the individual expression.
-      reduced.push(e);
-    }
-  }
-  return reduced;
 };

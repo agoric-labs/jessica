@@ -6,26 +6,32 @@ export interface IEvalOptions {
 export type Evaluator = (self: IEvalContext, ...args: any[]) => any;
 export type Evaluators = Record<string, Evaluator>;
 
-export const BINDING_PARENT = 0;
-export const BINDING_NAME = 1;
-export const BINDING_GET = 2;
-export const BINDING_SET = 3;
+export const BINDING_GET = 0;
+export const BINDING_SET = 1;
 
 export interface IBinding {
-    [BINDING_PARENT]: IBinding | undefined;
-    [BINDING_NAME]: string;
     [BINDING_GET]: () => any;
-    [BINDING_SET]?: (val: any) => typeof val;
+    [BINDING_SET]?: <T>(val: T) => T;
+}
+
+export const SCOPE_PARENT = 0;
+export const SCOPE_GET = 1;
+export const SCOPE_SET = 2;
+export interface IScope {
+    [SCOPE_PARENT]: IScope | undefined;
+    [SCOPE_GET]: (name: string) => IBinding | undefined;
+    [SCOPE_SET]: (name: string, binding: IBinding) => void;
 }
 
 export interface IEvalContext {
     applyMethod: (obj: any, lambda: (...args: any[]) => any, args: any[]) => any;
     setComputedIndex: <T>(obj: Record<string | number, any>, key: string | number, val: T) => T;
+    binding: (name: string, binding?: IBinding) => IBinding;
     dir: string;
-    env: (binding?: IBinding) => IBinding;
     evaluators: Evaluators;
     import: (path: string) => Record<string, any>;
     setLabel: (label: string | undefined) => string | undefined;
+    scope: (scope?: IScope | true) => IScope;
     pos: (pos?: string) => string;
     uri: string;
 }
@@ -52,8 +58,8 @@ export const addBinding = (
     } else {
         slot = init;
     }
-    const b: IBinding = [self.env(), name, () => slot, setter];
-    return self.env(b);
+    const b: IBinding = [() => slot, setter];
+    return self.binding(name, b);
 };
 
 export const err = (self: IEvalContext) => {
@@ -87,7 +93,7 @@ const makeInterp = (
     function interp(ast: any[], endowments: Record<string, any>, options?: IEvalOptions): any {
         const lastSlash = options.scriptName === undefined ? -1 : options.scriptName.lastIndexOf('/');
         const thisDir = lastSlash < 0 ? '.' : options.scriptName.slice(0, lastSlash);
-        let envp: IBinding, pos = '', label: string;
+        let scope: IScope, pos = '', label: string;
 
         const self: IEvalContext = {
             applyMethod,
@@ -99,11 +105,13 @@ const makeInterp = (
                 return val;
             },
             setComputedIndex,
-            env(newEnv?: IBinding) {
-                if (newEnv) {
-                    envp = newEnv;
+            binding(name: string, newBinding?: IBinding) {
+                if (newBinding) {
+                    scope[SCOPE_SET](name, newBinding);
+                } else {
+                    newBinding = scope[SCOPE_GET](name);
                 }
-                return envp;
+                return newBinding;
             },
             pos(newPos?: string) {
                 const oldPos = pos;
@@ -111,6 +119,23 @@ const makeInterp = (
                     pos = newPos;
                 }
                 return oldPos;
+            },
+            scope(newScope?: IScope | true) {
+                const oldScope = scope;
+                if (newScope) {
+                    if (newScope === true) {
+                        const map = makeMap<string, IBinding>();
+                        newScope = [
+                            oldScope,
+                            (name: string) =>
+                                map.get(name) || (oldScope && oldScope[SCOPE_GET](name)),
+                            (name: string, binding: IBinding) =>
+                                map.has(name) ? err(self)`Cannot redefine ${{name}}` : map.set(name, binding),
+                        ];
+                    }
+                    scope = newScope;
+                }
+                return oldScope;
             },
             setLabel(newLabel: string | undefined) {
                 // This always removes the old label.
@@ -122,6 +147,7 @@ const makeInterp = (
         };
 
         // slog.info`AST: ${{ast}}`;
+        self.scope(true);
         for (const [name, value] of Object.entries(endowments)) {
             // slog.info`Adding ${name}, ${value} to bindings`;
             addBinding(self, name, false, value);
@@ -145,13 +171,10 @@ export const getRef = (self: IEvalContext, astNode: any[], mutable = true): IRef
         self.pos(pos);
         switch (astNode[0]) {
         case 'use': {
-            let b = self.env();
             const name = astNode[1];
-            while (b !== undefined) {
-                if (b[BINDING_NAME] === name) {
-                    return {getter: b[BINDING_GET], setter: b[BINDING_SET]};
-                }
-                b = b[BINDING_PARENT];
+            const b = self.binding(name);
+            if (b) {
+                return {getter: b[BINDING_GET], setter: b[BINDING_SET]};
             }
             throw err(self)`ReferenceError: ${{name}} is not defined`;
         }

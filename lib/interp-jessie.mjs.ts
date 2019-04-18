@@ -1,8 +1,8 @@
 // TODO: Hoisting of functionDecls.
 
 import justinEvaluators from './interp-justin.mjs';
-import {addBinding, BINDING_GET, BINDING_NAME, BINDING_PARENT, doEval, err,
-    Evaluator, getRef, IEvalContext} from './interp-utils.mjs';
+import {addBinding, BINDING_GET, doEval, err,
+    Evaluator, getRef, IBinding, IEvalContext, SCOPE_GET, SCOPE_SET} from './interp-utils.mjs';
 const MAGIC_EXIT = {toString: () => 'MAGIC_EXIT'};
 
 const matchPropPattern = (self: IEvalContext, pattern: any[], remaining: Map<any, any>): Array<[string, any]> => {
@@ -134,7 +134,7 @@ const evalSwitchClause = (self: IEvalContext, clause: any[], val: any) => {
 };
 
 const doApply = (self: IEvalContext, args: any[], bindings: any[][], body: any[]) => {
-    const oldEnv = self.env();
+    const oldScope = self.scope(true);
     try {
         // Bind the arguments.
         const pattern = ['matchArray', ...bindings];
@@ -156,7 +156,7 @@ const doApply = (self: IEvalContext, args: any[], bindings: any[][], body: any[]
             throw e;
         }
     } finally {
-        self.env(oldEnv);
+        self.scope(oldScope);
     }
 };
 
@@ -296,7 +296,7 @@ const jessieEvaluators: Record<string, Evaluator> = {
     },
     for(self: IEvalContext, decl: any[], cond: any[], incr: any[], body: any[]) {
         const label = self.setLabel(undefined);
-        const oldEnv = self.env();
+        const oldScope = self.scope(true);
         try {
             doEval(self, decl);
             while (doEval(self, cond)) {
@@ -321,14 +321,14 @@ const jessieEvaluators: Record<string, Evaluator> = {
                 doEval(self, incr);
             }
         } finally {
-            self.env(oldEnv);
+            self.scope(oldScope);
         }
     },
     forOf(self: IEvalContext, declOp: string, binding: any[], expr: any[], body: any[]) {
         const label = self.setLabel(undefined);
         const mutable = declOp !== 'const';
         const it = doEval(self, expr);
-        const oldEnv = self.env();
+        const oldScope = self.scope(true);
         for (const val of it) {
             try {
                 bindPattern(self, binding, mutable, val);
@@ -350,7 +350,7 @@ const jessieEvaluators: Record<string, Evaluator> = {
                     throw e;
                 }
             } finally {
-                self.env(oldEnv);
+                self.scope(oldScope);
             }
         }
     },
@@ -416,14 +416,13 @@ const jessieEvaluators: Record<string, Evaluator> = {
         }
     },
     lambda(self: IEvalContext, bindings: any[][], body: any[]) {
-        const parentEnv = self.env();
+        const parentScope = self.scope();
         const lambda = (...args: any[]) => {
-            const oldEnv = self.env();
+            const oldScope = self.scope(parentScope);
             try {
-                self.env(parentEnv);
                 return doApply(self, args, bindings, body);
             } finally {
-                self.env(oldEnv);
+                self.scope(oldScope);
             }
         };
         return lambda;
@@ -439,7 +438,7 @@ const jessieEvaluators: Record<string, Evaluator> = {
         return [name, lambda];
     },
     module(self: IEvalContext, body: any[]) {
-        const oldEnv = self.env();
+        const oldScope = self.scope();
         const result: Record<string, any> = {};
         try {
             for (const stmt of body) {
@@ -447,27 +446,24 @@ const jessieEvaluators: Record<string, Evaluator> = {
                     // Handle this production explicitly.
                     result.default = doEval(self, stmt[1]);
                 } else if (stmt[0] === 'export') {
-                    const marker = self.env();
+                    const setter = (name: string, binding: IBinding) => {
+                        oldScope[SCOPE_SET](name, binding);
+                        self.setComputedIndex(result, name, binding[BINDING_GET]());
+                    };
+                    self.scope([oldScope, oldScope[SCOPE_GET], setter]);
                     const [declOp, binds] = stmt.slice(1);
                     const mutable = declOp !== 'const';
                     binds.forEach((bind: any[]) => {
                         const [pattern, val] = doEval(self, bind);
                         bindPattern(self, pattern, mutable, val);
                     });
-                    // Find all the bindings we introduced.
-                    let b = self.env();
-                    while (b && b !== marker) {
-                        const [name, val] = [b[BINDING_NAME], b[BINDING_GET]()];
-                        self.setComputedIndex(result, name, val);
-                        b = b[BINDING_PARENT];
-                    }
                 } else {
                     doEval(self, stmt);
                 }
             }
             return result;
         } finally {
-            self.env(oldEnv);
+            self.scope(oldScope);
         }
     },
     return(self: IEvalContext, expr: any[]) {
