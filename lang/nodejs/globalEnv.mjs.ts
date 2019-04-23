@@ -11,7 +11,7 @@
 
 import primEnv from './jessieDefaults.mjs';
 export * from './jessieDefaults.mjs';
-const globalEnv = {...primEnv};
+const globalEnv: Record<string, any> = {...primEnv};
 
 // Export the bootstrapped primitives.
 Object.keys(globalEnv).forEach(vname => {

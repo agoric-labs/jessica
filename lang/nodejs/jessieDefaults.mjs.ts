@@ -2,8 +2,10 @@
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 
 import * as jessie from '@agoric/jessie';
-const globalEnv: Record<string, any> = {...jessie};
+const {insulate: _, ...globalEnv} = {...jessie};
 const harden = jessie.harden;
+
+// Cannot be used for bootstrap.
 export const insulate = jessie.insulate;
 
 export const applyMethod = harden(<T>(thisObj: any, method: (...args: any) => T, args: any[]): T =>

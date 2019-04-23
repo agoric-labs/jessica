@@ -4,7 +4,6 @@
   "description": "Jessica implementation for Node.js",
   "main": "jesspipe.js",
   "dependencies": {
-    "@agoric/harden": "file:../../../../harden",
     "@agoric/jessie": "file:../../../../Jessie",
     "@types/agoric__jessie": "file:../../../../agoric__jessie",
     "ses": "^0.4.0"
@@ -12,12 +11,10 @@
   "devDependencies": {
     "@babel/core": "^7.4.0",
     "@babel/plugin-transform-modules-commonjs": "^7.4.3",
-    "@babel/preset-env": "^7.4.3",
     "@babel/preset-typescript": "^7.3.3",
     "@types/jest": "^24.0.9",
     "@types/node": "^11.9.6",
     "jest": "^24.5.0",
-    "ts-jest": "^24.0.2",
     "typescript": "^3.3.3333"
   },
   "scripts": {
