@@ -603,7 +603,7 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
         const parserTraitMakerSrc = compile(baseAST);
         // slog.trace`SOURCES: ${parserTraitMakerSrc}\n`;
         type ParserTrait = (base: PegParserCreator) => PegParserCreator;
-        const makeParserTrait = confine<(...actions: any[]) => ParserTrait>(parserTraitMakerSrc, {
+        const makeParserTrait = confineExpr<(...actions: any[]) => ParserTrait>(parserTraitMakerSrc, {
             DONE,
             EAT,
             ERROR,

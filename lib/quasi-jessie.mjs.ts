@@ -6,6 +6,19 @@
 
 /// <reference path="peg.d.ts"/>
 
+// Safe Modules are ones that can be imported without
+// insulating their symbols.
+const isSafeModule = (moduleName: string) => {
+  switch (moduleName) {
+    case '@agoric/jessie': {
+      return true;
+    }
+    default: {
+      return false;
+    }
+  }
+};
+
 type TerminatedBody = [any[][], any[]];
 const terminatedBlock = (manyBodies: TerminatedBody[]) => {
   const stmts = manyBodies.reduce<any[][]>((prior, body) => {
@@ -18,7 +31,7 @@ const terminatedBlock = (manyBodies: TerminatedBody[]) => {
 };
 
 const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag<any>>) => {
-    const {SKIP} = justinPeg;
+    const {FAIL, SKIP} = justinPeg;
     const jessieTag = justinPeg`
     # Override rather than inherit start production.
     # Only module syntax is permitted.
@@ -284,14 +297,30 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     / defImport _COMMA namedImports             ${(d, n) => ['importBind', [['as', 'default', d[1]], ...n]]}
     / defImport                                 ${(d) => ['importBind', [['as', 'default', d[1]]]]};
 
+    safeImportClause <-
+      safeNamedImports                          ${(n) => ['importBind', n]};
+
     importSpecifier <-
       defImport                                 ${(d) => ['as', d[1], d[1]]}
     / IDENT_NAME AS defImport                   ${(i, _, d) => ['as', i, d[1]]};
 
+    safeImportSpecifier <-
+      defVar                                    ${(d) => ['as', d[1], d[1]]}
+    / IDENT_NAME AS defVar                      ${(i, _, d) => ['as', i, d[1]]};
+
     namedImports <-
       LEFT_BRACE importSpecifier ** _COMMA _COMMA? RIGHT_BRACE ${(_, s, _2) => s};
 
-    importDecl <- IMPORT importClause FROM STRING SEMI  ${(_, v, _2, s, _3) => ['import', v, JSON.parse(s)]};
+    safeNamedImports <-
+      LEFT_BRACE safeImportSpecifier ** _COMMA _COMMA? RIGHT_BRACE ${(_, s, _2) => s};
+
+    safeModule <-
+      STRING ${(s) => { const mod = JSON.parse(s); return isSafeModule(mod) ? mod : FAIL; }};
+
+    importDecl <-
+      IMPORT importClause FROM STRING SEMI  ${(_, v, _2, s, _3) => ['import', v, JSON.parse(s)]}
+    / IMPORT safeImportClause FROM safeModule SEMI   ${(_, v, _2, s, _3) => ['import', v, s]};
+
     exportDecl <-
       EXPORT DEFAULT exportableExpr SEMI        ${(_, _2, e, _3) => ['exportDefault', e]}
     / EXPORT moduleDeclaration                  ${(_, d) => ['export', ...d]};

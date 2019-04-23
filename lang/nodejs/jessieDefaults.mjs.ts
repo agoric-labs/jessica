@@ -1,12 +1,10 @@
 /// <reference path="../../typings/ses.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 
-import makeInsulate from './insulate.mjs';
-import sesshim from './sesshim.mjs';
-
-const {confine, harden} = sesshim;
-
-const globalEnv: Record<string, any> = {};
+import * as jessie from '@agoric/jessie';
+const globalEnv: Record<string, any> = {...jessie};
+const harden = jessie.harden;
+export const insulate = jessie.insulate;
 
 export const applyMethod = harden(<T>(thisObj: any, method: (...args: any) => T, args: any[]): T =>
     Reflect.apply(method, thisObj, args));
@@ -18,19 +16,12 @@ export const setComputedIndex = harden(<T>(obj: any, index: string | number, val
     return obj[index] = val;
 });
 
-globalEnv.makeMap = harden((...args: any[]) => harden(new Map(...args)));
-globalEnv.makeSet = harden((...args: any[]) => harden(new Set(...args)));
-globalEnv.makePromise = harden((executor: any) => harden(new Promise(executor)));
-globalEnv.makeWeakMap = harden((...args: any[]) => harden(new WeakMap(...args)));
-globalEnv.makeWeakSet = harden((...args: any[]) => harden(new WeakSet(...args)));
+// Don't insulate the arguments to setComputedIndex.
+import { $h_uninsulated } from '@agoric/jessie/lib/insulate.mjs';
+$h_uninsulated.add(setComputedIndex);
 
-// Don't insulate the arguments to setComputedIndex or the primitive endowments.
-const nonMapped = new WeakSet();
-nonMapped.add(setComputedIndex);
-export const insulate = makeInsulate(nonMapped);
-
-// Needed by the parser.
-globalEnv.confine = harden(confine);
-globalEnv.insulate = (obj: any) => obj;
+// Truncate sourceURL.
+import { $h_sourceURLLength } from '@agoric/jessie/lib/confine.mjs';
+$h_sourceURLLength(40);
 
 export default globalEnv;

@@ -66,7 +66,8 @@ globalEnv.slog = mySlog;
 // Export the environment as global endowments.  This is only possible
 // because we are in control of the main program, and we are setting
 // this policy for all our modules.
+const globals = typeof window === 'undefined' ? global : window;
 Object.keys(globalEnv).forEach(vname => {
-    global[vname] = globalEnv[vname];
+    globals[vname] = globalEnv[vname];
 });
 export default globalEnv;

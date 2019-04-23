@@ -10,7 +10,10 @@
   },
   "author": "Michael FIG <michael@fig.org>",
   "license": "Apache-2.0",
-  "dependencies": {},
+  "dependencies": {
+    "@agoric/jessie": "file:../../Jessie",
+    "@types/agoric__jessie": "file:../../agoric__jessie"
+  },
   "devDependencies": {
     "tslint": "^5.13.0",
     "typescript": "^3.3.0"

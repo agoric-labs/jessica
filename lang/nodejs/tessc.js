@@ -29,8 +29,7 @@ const compile = async (srcs) => {
     const dst = mjs === src ? src + '.js' : mjs;
     const base = src.substr(src.lastIndexOf('/') + 1);
     const {ast, code: out} = await babel.transformFileAsync(src, opts);
-    compiled[dst] = `// DO NOT EDIT - Generated automatically from ${base} by tessc
-${out}`
+    compiled[dst] = `import { insulate } from '@agoric/jessie'; ${out}`
   }
   for (const dst in compiled) {
     // console.log(`Writing ${dst}`);

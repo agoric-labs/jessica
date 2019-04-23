@@ -4,6 +4,10 @@ module.exports = () => {
     const topLevelDecls = new WeakSet();
     const insulateFunction = 'insulate';
     const importPrefix = '$i_';
+    const safeModules = ['@agoric/jessie'];
+    const isSafeModule = (moduleName) => {
+        return safeModules.indexOf(moduleName) >= 0;
+    };
     const insulateExpr = (expr) => {
         if (expr.type === 'CallExpression' &&
             expr.callee.type === 'Identifier' &&
@@ -45,13 +49,19 @@ module.exports = () => {
                 path.node.declaration = insulateExpr(path.node.declaration);
             },
             ImportNamespaceSpecifier(path) {
-                path.parentPath.insertAfter(makeSafeImport(path.node.local));
+                if (!isSafeModule(path.parentPath.node.source.value)) {
+                    path.parentPath.insertAfter(makeSafeImport(path.node.local));
+                }
             },
             ImportDefaultSpecifier(path) {
-                path.parentPath.insertAfter(makeSafeImport(path.node.local));
+                if (!isSafeModule(path.parentPath.node.source.value)) {
+                    path.parentPath.insertAfter(makeSafeImport(path.node.local));
+                }
             },
             ImportSpecifier(path) {
-                path.parentPath.insertAfter(makeSafeImport(path.node.local));
+                if (!isSafeModule(path.parentPath.node.source.value)) {
+                    path.parentPath.insertAfter(makeSafeImport(path.node.local));
+                }
             },
             VariableDeclaration(path) {
                 if (path.parent.type !== 'Program' &&

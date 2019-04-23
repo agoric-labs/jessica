@@ -1,5 +1,5 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
-import {insulate} from '../globalEnv.mjs';
+import {insulate} from '@agoric/jessie';
 
 test('insulate(primitives)', () => {
     expect(insulate('foo')).toBe('foo');
@@ -76,6 +76,7 @@ test('insulate(this-capture)', () => {
     let exfiltrated2 = 'still nothing leaked';
     const getPriv2 = insulate(function() {
         exfiltrated2 = this.priv2;
+        return 'really innocuous';
     });
     const obj2 = {
         a() { return 'still innocuous'; },

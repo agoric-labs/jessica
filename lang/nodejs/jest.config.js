@@ -2,16 +2,20 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   moduleNameMapper: {
-      '^(\..*\.mjs)$': '$1.ts',
+      '^(\\..*\\.mjs)$': '$1.ts',
   },
   testPathIgnorePatterns: [
-    "/node_modules/",
+    // "/node_modules/",
     "/skip-",
-    "parser-utils.ts$",
+    "parser-utils\\.ts$",
+  ],
+  transformIgnorePatterns: [
+    '\\.tsx?$',
   ],
   globals: {
       'ts-jest': {
           tsConfig: './tsconfig.test.json',
+          babelConfig: './babelrc.test.json',
       },
   },
 };
