@@ -304,9 +304,9 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
       defImport                                 ${(d) => ['as', d[1], d[1]]}
     / IDENT_NAME AS defImport                   ${(i, _, d) => ['as', i, d[1]]};
 
+    # No renaming of safe imports.
     safeImportSpecifier <-
-      defVar                                    ${(d) => ['as', d[1], d[1]]}
-    / IDENT_NAME AS defVar                      ${(i, _, d) => ['as', i, d[1]]};
+      defVar                                    ${(d) => ['as', d[1], d[1]]};
 
     namedImports <-
       LEFT_BRACE importSpecifier ** _COMMA _COMMA? RIGHT_BRACE ${(_, s, _2) => s};

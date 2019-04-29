@@ -13,7 +13,7 @@ export const applyMethod = harden(<T>(thisObj: any, method: (...args: any) => T,
 
 export const setComputedIndex = harden(<T>(obj: any, index: string | number, val: T) => {
     if (index === '__proto__') {
-        slog.error`Cannot set ${{index}} object member`;
+        jessie.slog.error`Cannot set ${{index}} object member`;
     }
     return obj[index] = val;
 });

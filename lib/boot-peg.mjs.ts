@@ -2,6 +2,7 @@
 // https://github.com/erights/quasiParserGenerator/tree/master/src/bootbnf.js
 
 /// <reference path="peg.d.ts"/>
+import { confineExpr, makeMap, makeWeakMap, slog } from '@agoric/jessie';
 
 import indent from './indent.mjs';
 
@@ -611,6 +612,7 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
             FIND,
             RUN,
             SKIP,
+            makeMap,
             makeTokStr,
         });
 

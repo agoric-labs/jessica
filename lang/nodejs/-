@@ -1,0 +1,27 @@
+import harden from '@agoric/harden';
+interface SlogTag<T> {
+    (template: TemplateStringsArray, ...args: any[]): T;
+    (context: {}): (template: TemplateStringsArray, ...args: any[]) => T;
+    (contextOrTemplate: {} | TemplateStringsArray, ...args: any[]): ((template: TemplateStringsArray, ...args: any[]) => T) | T;
+}
+
+type SlogName = 'panic' | 'alert' | 'crit' | 'error' | 'warn' | 'notice' |
+    'info' | 'debug' | 'trace' | 'stringify' | 'reject';
+
+interface Slog extends SlogTag<string> {
+    LEVELS: Map<SlogName, number>;
+    NAMES: SlogName[];
+    panic: SlogTag<never>; // Displays to user, waits for confirm, then exits.
+    alert: SlogTag<never>; // Displays to user, waits for confirm, then throws error.
+    crit: SlogTag<never>; // Displays to user, then throws error.
+    error: SlogTag<never>; // Throws error.
+    warn: SlogTag<string>; // Just logs.
+    notice: SlogTag<string>;
+    info: SlogTag<string>;
+    debug: SlogTag<string>;
+    trace: SlogTag<string>; // Normally invisible.
+
+    reject: SlogTag<Promise<never>>; // Returns a rejected Promise.
+}
+
+export declare const slog: harden.Hardened<Slog>;
