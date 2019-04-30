@@ -7,7 +7,9 @@
 /// <reference path="../../typings/jessie-proposed.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 
-import globalEnv, {applyMethod, insulate, setComputedIndex} from './globalEnv.mjs';
+import { insulate } from '@agoric/jessie';
+import { slog } from '@michaelfig/slog';
+import { applyMethod, setComputedIndex } from './jessieDefaults.mjs';
 
 // Read and evaluate the specified module,
 if (process.argv.length < 3) {
@@ -18,7 +20,7 @@ const ARGV = process.argv.slice(2);
 
 // Make a confined file loader specified by the arguments.
 const dashdash = ARGV.indexOf('--');
-const CAN_LOAD_ASSETS = makeSet([MODULE]);
+const CAN_LOAD_ASSETS = new Set([MODULE]);
 if (dashdash >= 0) {
     ARGV.slice(dashdash + 1).forEach(file => CAN_LOAD_ASSETS.add(file));
 }
@@ -41,7 +43,7 @@ const writeOutput = (fname: string, str: string) => {
 
 // Create a Jessie bootstrap environment for the endowments.
 import bootEnv from '../../lib/boot-env.mjs';
-const jessie = bootEnv(globalEnv, applyMethod, readInput, setComputedIndex);
+const jessie = bootEnv(applyMethod, readInput, setComputedIndex);
 
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';

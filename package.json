@@ -12,11 +12,13 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@agoric/jessie": "file:../../Jessie",
-    "@types/agoric__jessie": "file:../../agoric__jessie"
+    "@michaelfig/slog": "file:../slog",
+    "@types/agoric__jessie": "file:../../agoric__jessie",
+    "@types/michaelfig__slog": "file:../../michaelfig__slog"
   },
   "devDependencies": {
     "tslint": "^5.13.0",
-    "typescript": "^3.3.0"
+    "typescript": "^3.4.5"
   },
   "repository": {
     "type": "git",

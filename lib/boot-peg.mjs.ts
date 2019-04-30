@@ -2,7 +2,8 @@
 // https://github.com/erights/quasiParserGenerator/tree/master/src/bootbnf.js
 
 /// <reference path="peg.d.ts"/>
-import { confineExpr, makeMap, makeWeakMap, slog } from '@agoric/jessie';
+import { confineExpr, makeMap, makeWeakMap } from '@agoric/jessie';
+import { slog } from '@michaelfig/slog';
 
 import indent from './indent.mjs';
 

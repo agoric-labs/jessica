@@ -10,8 +10,9 @@ import jessieEvaluators from './interp-jessie.mjs';
 import makeInterp from './interp-utils.mjs';
 import tagString from './tag-string.mjs';
 
+import { ConfineOptions } from '@agoric/jessie/lib/confine.mjs';
+
 const bootEnv = (
-    endowments: Record<string, any>,
     applyMethod: IMainDependencies['applyMethod'],
     readInput: IMainDependencies['readInput'],
     setComputedIndex: IMainDependencies['setComputedIndex']) => {
@@ -27,7 +28,6 @@ const bootEnv = (
     const interpJessie = makeInterp(jessieEvaluators, applyMethod, importer, setComputedIndex);
 
     const env = {
-        ...endowments,
         confine: (src: string, evalenv: object, options: ConfineOptions = {}) => {
             let tag = tagString<any[]>(jessieTag, options.scriptName);
             if (options.debug) {
@@ -45,7 +45,7 @@ const bootEnv = (
             return interpJessie(ast, evalenv, options || {});
         },
         eval: (src: string): any => {
-            return confineExpr(src, env);
+            return env.confineExpr(src, {eval: env.eval});
         },
     };
     return env;

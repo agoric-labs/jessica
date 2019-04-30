@@ -10,12 +10,6 @@ module.exports = {
     '\\.ts$': 'babel-jest',
   },
   transformIgnorePatterns: [
-    "/node_modules/(?!@agoric/jessie)"
+    "/node_modules/(?!(@agoric/jessie|@michaelfig/slog))"
   ],
-  globals: {
-      'ts-jest': {
-          tsConfig: './tsconfig.test.json',
-          babelConfig: './babelrc.test.json',
-      },
-  },
 };
