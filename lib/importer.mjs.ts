@@ -1,8 +1,12 @@
 import * as jessie from '@agoric/jessie';
+import { slog } from '@michaelfig/slog';
 import tagString from './tag-string.mjs';
 
 const makeImporter = (readInput: (file: string) => string, languageTag: IParserTag<any[]>) => {
-    const importCache = makeMap<string, any>([['@agoric/jessie', jessie]]);
+    const importCache = jessie.makeMap<string, any>([
+        ['@agoric/jessie', jessie],
+        ['@michaelfig/slog', { slog }],
+    ]);
 
     const IMPORT_RECURSION = {
         toString: () => 'IMPORT_RECURSION',

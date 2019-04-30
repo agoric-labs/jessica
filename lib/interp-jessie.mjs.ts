@@ -1,5 +1,6 @@
 // TODO: Hoisting of functionDecls.
 
+import { makeMap } from '@agoric/jessie';
 import justinEvaluators from './interp-justin.mjs';
 import {addBinding, BINDING_GET, doEval, err,
     Evaluator, getRef, IBinding, IEvalContext, SCOPE_GET, SCOPE_SET} from './interp-utils.mjs';

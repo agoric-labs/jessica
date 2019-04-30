@@ -1,5 +1,10 @@
 #! /usr/bin/env ts-node
-import globalEnv, { applyMethod, insulate, setComputedIndex } from './globalEnv.mjs';
+// jesspipe.ts - Evaluate a Jessie script as part of a pipeline
+// Usage is:
+// $ ts-node jesspipe.ts \
+//    MODULE [OPTIONS...] [-- [INFILE...]]
+import { slog } from '@michaelfig/slog';
+import { applyMethod, setComputedIndex } from './jessieDefaults.mjs';
 // Read and evaluate the specified module,
 if (process.argv.length < 3) {
     slog.panic `You must specify a MODULE`;
@@ -8,7 +13,7 @@ const MODULE = process.argv[2] || '-';
 const ARGV = process.argv.slice(2);
 // Make a confined file loader specified by the arguments.
 const dashdash = ARGV.indexOf('--');
-const CAN_LOAD_ASSETS = makeSet([MODULE]);
+const CAN_LOAD_ASSETS = new Set([MODULE]);
 if (dashdash >= 0) {
     ARGV.slice(dashdash + 1).forEach(file => CAN_LOAD_ASSETS.add(file));
 }
@@ -25,15 +30,15 @@ const writeOutput = (fname, str) => {
     written = true;
     process.stdout.write(str);
 };
-// Create a Jessie bootstrap environment for the endowments.
-import bootEnv from '../../lib/boot-env.mjs';
-const jessie = bootEnv(globalEnv, applyMethod, readInput, setComputedIndex);
+// Create a Jessica bootstrap interpreter.
+import bootJessica from '../../lib/boot-jessica.mjs';
+const jessica = bootJessica(applyMethod, readInput, setComputedIndex);
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
-const doEval = (src, uri) => jessie.confine(src, Object.assign({}, jessie, { insulate }), { scriptName: uri });
+const runModule = (src, uri) => jessica.runModule(src, { eval: jessica.eval }, { scriptName: uri });
 const deps = { applyMethod, readInput, setComputedIndex, writeOutput };
 try {
-    repl(deps, doEval, MODULE, ARGV);
+    repl(deps, runModule, MODULE, ARGV);
 }
 catch (e) {
     if (!written) {
