@@ -1,3 +1,8 @@
+// These are exported explicitly below.
+import { harden, insulate, makeMap, makePromise,
+    makeSet, makeWeakMap, makeWeakSet } from '@agoric/jessie';
+import { slog } from '@michaelfig/slog';
+
 import bootPeg from './boot-peg.mjs';
 import bootPegAst from './boot-pegast.mjs';
 import makeJessie from './quasi-jessie.mjs';
@@ -24,30 +29,58 @@ const bootJessica = (
     const justinTag = makeJustin(pegTag.extends(jsonTag));
     const [jessieTag, jessieExprTag] = makeJessie(pegTag, pegTag.extends(justinTag));
 
-    const importer = makeImporter(readInput, jessieTag);
+    // No, this isn't an empty Map.
+    // (It's initialized after jessica.runExpr is defined.)
+    const importCache = makeMap<string, any>();
+    const importer = makeImporter(importCache, readInput, jessieTag);
     const interpJessie = makeInterp(jessieEvaluators, applyMethod, importer, setComputedIndex);
 
     const jessica = {
         eval: (src: string): any => {
-            return jessica.runExpr(src, {eval: jessica.eval});
+            // Don't inherit any endowments.
+            return jessica.runExpr(src, {});
         },
-        runExpr: (src: string, evalenv: Record<string, any>, options: ConfineOptions = {}) => {
+        runExpr: (src: string, env: Record<string, any>, options: ConfineOptions = {}) => {
             let tag = tagString<any[]>(jessieExprTag, options.scriptName);
             if (options.debug) {
                 tag = tag('DEBUG');
             }
             const ast = tag`${src}`;
+            const evalenv = {eval: jessica.eval, ...env};
             return interpJessie(ast, evalenv, options || {});
         },
-        runModule: (src: string, evalenv: Record<string, any>, options: ConfineOptions = {}) => {
+        runModule: (src: string, env: Record<string, any>, options: ConfineOptions = {}) => {
             let tag = tagString<any[]>(jessieTag, options.scriptName);
             if (options.debug) {
                 tag = tag('DEBUG');
             }
             const ast = tag`${src}`;
+            const evalenv = {eval: jessica.eval, ...env};
             return interpJessie(ast, evalenv, options || {}).default;
         },
     };
+
+    // Only allow the Jessie library we know about, with a self-hosted
+    // confine and confineExpr.
+    const jessie = harden({
+        confine(src: string, env: Record<string, any>, options: ConfineOptions = {}) {
+            // Evaluate as an IIFE, but return nothing.
+            jessica.runExpr(`(()=>{${src}
+;})()`, env, options);
+        },
+        confineExpr: jessica.runExpr,
+        harden,
+        insulate,
+        makeMap,
+        makePromise,
+        makeSet,
+        makeWeakMap,
+        makeWeakSet,
+    });
+    importCache.set('@agoric/jessie', harden(jessie));
+
+    // The default slog is also allowed.
+    importCache.set('@michaelfig/slog', harden({slog}));
     return jessica;
 };
 
