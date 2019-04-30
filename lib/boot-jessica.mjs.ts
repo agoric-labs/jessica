@@ -12,7 +12,7 @@ import tagString from './tag-string.mjs';
 
 import { ConfineOptions } from '@agoric/jessie/lib/confine.mjs';
 
-const bootEnv = (
+const bootJessica = (
     applyMethod: IMainDependencies['applyMethod'],
     readInput: IMainDependencies['readInput'],
     setComputedIndex: IMainDependencies['setComputedIndex']) => {
@@ -27,16 +27,11 @@ const bootEnv = (
     const importer = makeImporter(readInput, jessieTag);
     const interpJessie = makeInterp(jessieEvaluators, applyMethod, importer, setComputedIndex);
 
-    const env = {
-        confine: (src: string, evalenv: object, options: ConfineOptions = {}) => {
-            let tag = tagString<any[]>(jessieTag, options.scriptName);
-            if (options.debug) {
-                tag = tag('DEBUG');
-            }
-            const ast = tag`${src}`;
-            return interpJessie(ast, evalenv, options || {}).default;
+    const jessica = {
+        eval: (src: string): any => {
+            return jessica.runExpr(src, {eval: jessica.eval});
         },
-        confineExpr: (src: string, evalenv: object, options: ConfineOptions = {}) => {
+        runExpr: (src: string, evalenv: Record<string, any>, options: ConfineOptions = {}) => {
             let tag = tagString<any[]>(jessieExprTag, options.scriptName);
             if (options.debug) {
                 tag = tag('DEBUG');
@@ -44,11 +39,16 @@ const bootEnv = (
             const ast = tag`${src}`;
             return interpJessie(ast, evalenv, options || {});
         },
-        eval: (src: string): any => {
-            return env.confineExpr(src, {eval: env.eval});
+        runModule: (src: string, evalenv: Record<string, any>, options: ConfineOptions = {}) => {
+            let tag = tagString<any[]>(jessieTag, options.scriptName);
+            if (options.debug) {
+                tag = tag('DEBUG');
+            }
+            const ast = tag`${src}`;
+            return interpJessie(ast, evalenv, options || {}).default;
         },
     };
-    return env;
+    return jessica;
 };
 
-export default bootEnv;
+export default bootJessica;

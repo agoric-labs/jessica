@@ -41,17 +41,17 @@ const writeOutput = (fname: string, str: string) => {
     process.stdout.write(str);
 };
 
-// Create a Jessie bootstrap environment for the endowments.
-import bootEnv from '../../lib/boot-env.mjs';
-const jessie = bootEnv(applyMethod, readInput, setComputedIndex);
+// Create a Jessica bootstrap interpreter.
+import bootJessica from '../../lib/boot-jessica.mjs';
+const jessica = bootJessica(applyMethod, readInput, setComputedIndex);
 
 // Read, eval, print loop.
 import repl from '../../lib/repl.mjs';
-const doEval = (src: string, uri?: string) =>
-    jessie.confine(src, {...jessie, insulate}, {scriptName: uri});
+const runModule = (src: string, uri?: string) =>
+    jessica.runModule(src, {eval: jessica.eval}, {scriptName: uri});
 const deps = {applyMethod, readInput, setComputedIndex, writeOutput};
 try {
-    repl(deps, doEval, MODULE, ARGV);
+    repl(deps, runModule, MODULE, ARGV);
 } catch (e) {
     if (!written) {
         writeOutput('-', `/* FIXME: Stub */\n`);
