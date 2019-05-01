@@ -1,4 +1,5 @@
 :; cd `dirname "$0"` || exit $?
+:; (cd ../.. && { test -d ./node_modules/@agoric/jessie || npm install; }) || exit $?
 :; test -d ./node_modules/typescript || npm install || exit $?
 :; status=0
 :; rm -rf tsout
