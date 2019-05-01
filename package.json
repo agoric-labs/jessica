@@ -10,10 +10,11 @@
   "author": "Michael FIG <michael@fig.org>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@agoric/jessie": "file:../../Jessie",
+    "@agoric/jessie": "file:unpublished/agoric-jessie-0.1.0.tgz",
     "@michaelfig/slog": "0.0.1",
-    "@types/agoric__jessie": "file:../../agoric__jessie",
-    "@types/michaelfig__slog": "file:../../michaelfig__slog"
+    "@types/agoric__harden": "file:unpublished/types-agoric__harden-1.0.0.tgz",
+    "@types/agoric__jessie": "file:unpublished/types-agoric__jessie-1.0.0.tgz",
+    "@types/michaelfig__slog": "file:unpublished/types-michaelfig__slog-1.0.0.tgz"
   },
   "devDependencies": {
     "tslint": "^5.13.0",

@@ -47,6 +47,7 @@ type Record<K extends string | number, T> = {
 
 interface Symbol {}
 interface SymbolConstructor {
+    readonly toStringTag: symbol;
     readonly iterator: symbol;
 }
 declare const Symbol: SymbolConstructor;
