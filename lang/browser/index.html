@@ -36,8 +36,10 @@ const setEvaluator = (withWhitelist) => {
         evaluator = (src) => r.evaluate(src, {$h_define});
     } catch (e) {
         console.log(e);
-        alert('Cannot ' + (withWhitelist ? 'enable' : 'disable') + ' whitelist: ' + e.toString());
         whitelist.checked = !withWhitelist;
+        outputPre.textContent = 'Cannot ' +
+            (withWhitelist ? 'enable' : 'disable') +
+            ' whitelist: ' + e.toString();
     }
 };
 whitelist.addEventListener('click', () => setEvaluator(whitelist.checked));
