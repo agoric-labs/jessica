@@ -1,4 +1,5 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
+import {insulate} from '@agoric/jessie';
 import {applyMethod, setComputedIndex} from '../jessieDefaults.mjs';
 
 import bootJessica from '../../../lib/boot-jessica.mjs';
@@ -53,19 +54,20 @@ test('repl', () => {
 
 test('quasi', () => {
     const jessica = defaultJessica(dontRead);
+    const runModule = (src: string) => jessica.runModule(src, {insulate});
     const tag = (template: TemplateStringsArray, ...args: any[]) =>
         args.reduce((prior, arg, i) => prior + String(arg) + template[i + 1], template[0]);
 
-    expect(jessica.runModule('export default insulate(() => `abc 123`);')())
+    expect(runModule('export default insulate(() => `abc 123`);')())
         .toBe('abc 123');
 
-    expect(jessica.runModule('export default insulate((arg) => `abc ${arg} 456`);')(123))
+    expect(runModule('export default insulate((arg) => `abc ${arg} 456`);')(123))
         .toBe('abc 123 456');
 
-    expect(jessica.runModule('export default insulate((tag) => tag`My string`);')(tag))
+    expect(runModule('export default insulate((tag) => tag`My string`);')(tag))
         .toBe('My string');
 
-    expect(jessica.runModule('export default insulate((tag, arg) => tag`My template ${arg}`);')(tag, 'hello'))
+    expect(runModule('export default insulate((tag, arg) => tag`My template ${arg}`);')(tag, 'hello'))
         .toBe('My template hello');
 
 });

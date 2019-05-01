@@ -86,7 +86,9 @@ const makeJustin = (peg: IPegTag<IParserTag<any>>) => {
 
     IDENT_NAME <- ~(HIDDEN_PFX / "__proto__") (IDENT / RESERVED_WORD);
 
-    IDENT <- ~(HIDDEN_PFX / IMPORT_PFX / "insulate") < [$A-Za-z_] [$A-Za-z0-9_]* > _WS;
+    IDENT <-
+      ~(HIDDEN_PFX / IMPORT_PFX / "insulate" / RESERVED_WORD)
+      < [$A-Za-z_] [$A-Za-z0-9_]* > _WSN;
     HIDDEN_PFX <- "$h_";
     IMPORT_PFX <- "$i_";
 
@@ -116,7 +118,8 @@ const makeJustin = (peg: IPegTag<IParserTag<any>>) => {
       ("class"
     / "delete" / "do"
     / "extends"
-    / "in" / "instanceof"
+    / "instanceof"
+    / "in"
     / "new"
     / "super"
     / "this"
