@@ -14,6 +14,7 @@
 
         <p>Write your Jessie code below:</p>
         <textarea id="sourceText" rows="20">
+import {insulate} from '@agoric/jessie';
 // Use Jessie's main deps to run the program.
 const main = insulate((deps) => {
     const say = (s) => deps.writeOutput('-', s + '\n');
@@ -32,7 +33,7 @@ const setEvaluator = (withWhitelist) => {
     try {
         const opts = withWhitelist ? {whitelist: jessica.whitelist} : {};
         const r = jessica.SES.makeSESRootRealm(opts);
-        evaluator = (src) => r.evaluate(src, {...jessica.globals, $h_define});
+        evaluator = (src) => r.evaluate(src, {$h_define});
     } catch (e) {
         console.log(e);
         alert('Cannot ' + (withWhitelist ? 'enable' : 'disable') + ' whitelist: ' + e.toString());
@@ -88,6 +89,12 @@ const doRun = (sourceText, output) => {
 };
 
 const loadingMap = new Map();
+// Expose some builtin modules.
+const jessie = {};
+['harden', 'insulate', 'makeMap', 'makePromise', 'makeSet',
+ 'makeWeakMap', 'makeWeakSet'].forEach(s => jessie[s] = jessica[s]);
+loadingMap.set('@agoric/jessie', Promise.resolve(jessie));
+loadingMap.set('@michaelfig/slog', Promise.resolve({slog: jessica.slog}));
 const $h_define = (imports, factory) => {
     const parameters = {
         sourceType: 'jessie',
@@ -95,9 +102,9 @@ const $h_define = (imports, factory) => {
         targetType: 'function',
     };
     const importPromises = imports.map((mod, i) => {
-        const uri = '/' + mod; // FIXME
         let promise = loadingMap.get(mod);
         if (!promise) {
+            const uri = '/' + mod; // FIXME
             promise = fetch(uri)
                 .then(res => {
                     if (res.ok) {

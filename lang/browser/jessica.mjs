@@ -1,8 +1,9 @@
-import iSES from './node_modules/ses/dist/ses.esm.js';
-import globalEnv from '../nodejs/globalEnv.mjs';
+import SES from './node_modules/ses/dist/ses.esm.js';
 import {buildWhitelist} from './whitelist.js';
+
 export {translate} from '../../lib/translate.mjs';
 
-export const globals = globalEnv;
-export const SES = iSES;
+export { SES };
+export * from '@agoric/jessie';
+export { slog } from '@michaelfig/slog';
 export const whitelist = buildWhitelist();

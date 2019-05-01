@@ -7,11 +7,12 @@
         <style>#sourceText {
             width: 100%;
         }</style>
-        <script type="text/javascript" src="jessica.630e00b5.js"></script>
+        <script type="text/javascript" src="jessica.d9f69d51.js"></script>
         <h1>Browser-Based Jessica</h1>
 
         <p>Write your Jessie code below:</p>
         <textarea id="sourceText" rows="20">
+import {insulate} from '@agoric/jessie';
 // Use Jessie's main deps to run the program.
 const main = insulate((deps) => {
     const say = (s) => deps.writeOutput('-', s + '\n');
@@ -24,11 +25,7 @@ export default main;</textarea>
             <input type="checkbox" id="whitelist">
             Use the Jessie whitelist to limit the SES realm
         </label>
-<script>function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-var evaluator;
+<script>var evaluator;
 
 var setEvaluator = function setEvaluator(withWhitelist) {
   try {
@@ -38,9 +35,9 @@ var setEvaluator = function setEvaluator(withWhitelist) {
     var r = jessica.SES.makeSESRootRealm(opts);
 
     evaluator = function evaluator(src) {
-      return r.evaluate(src, _objectSpread({}, jessica.globals, {
+      return r.evaluate(src, {
         $h_define: $h_define
-      }));
+      });
     };
   } catch (e) {
     console.log(e);
@@ -111,7 +108,16 @@ var doRun = function doRun(sourceText, output) {
   });
 };
 
-var loadingMap = new Map();
+var loadingMap = new Map(); // Expose some builtin modules.
+
+var jessie = {};
+['harden', 'insulate', 'makeMap', 'makePromise', 'makeSet', 'makeWeakMap', 'makeWeakSet'].forEach(function (s) {
+  return jessie[s] = jessica[s];
+});
+loadingMap.set('@agoric/jessie', Promise.resolve(jessie));
+loadingMap.set('@michaelfig/slog', Promise.resolve({
+  slog: jessica.slog
+}));
 
 var $h_define = function $h_define(imports, factory) {
   var parameters = {
@@ -120,11 +126,11 @@ var $h_define = function $h_define(imports, factory) {
     targetType: 'function'
   };
   var importPromises = imports.map(function (mod, i) {
-    var uri = '/' + mod; // FIXME
-
     var promise = loadingMap.get(mod);
 
     if (!promise) {
+      var uri = '/' + mod; // FIXME
+
       promise = fetch(uri).then(function (res) {
         if (res.ok) {
           return res.text();
