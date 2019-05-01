@@ -3343,6 +3343,20 @@ function buildWhitelist() {
 
   var j = true; // included in the Jessie runtime
 
+  var necessary = true; // Not included, but needed for operation
+  // These are necessary for most Javascript environments.
+
+  var anonIntrinsics = {
+    ThrowTypeError: {},
+    IteratorPrototype: {
+      next: '*',
+      constructor: false
+    },
+    ArrayIteratorPrototype: {},
+    StringIteratorPrototype: {},
+    MapIteratorPrototype: {},
+    SetIteratorPrototype: {}
+  };
   var namedIntrinsics = {
     cajaVM: {
       // Caja support
@@ -3367,7 +3381,10 @@ function buildWhitelist() {
       seal: j,
       entries: j,
       keys: j,
-      values: j
+      values: j,
+      prototype: {
+        __proto__: necessary
+      }
     },
     Boolean: {// 19.3
     },
@@ -3503,10 +3520,10 @@ function buildWhitelist() {
   };
   return {
     namedIntrinsics: namedIntrinsics,
-    anonIntrinsics: {}
+    anonIntrinsics: anonIntrinsics
   };
 }
-},{}],"t+IF":[function(require,module,exports) {
+},{}],"KXoB":[function(require,module,exports) {
 var define;
 var global = arguments[3];
 (function (global, factory) {
@@ -5036,7 +5053,7 @@ const confine = (0, _harden.default)((src, env) => {
   closedFunc(...names.map(n => env[n])); // We return nothing.
 });
 exports.confine = confine;
-},{"@agoric/harden":"t+IF"}],"zfHG":[function(require,module,exports) {
+},{"@agoric/harden":"KXoB"}],"zfHG":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5058,7 +5075,7 @@ const makeWeakMap = (0, _harden.default)(entries => (0, _harden.default)(new Wea
 exports.makeWeakMap = makeWeakMap;
 const makeWeakSet = (0, _harden.default)(values => (0, _harden.default)(new WeakSet(values)));
 exports.makeWeakSet = makeWeakSet;
-},{"@agoric/harden":"t+IF"}],"63Wy":[function(require,module,exports) {
+},{"@agoric/harden":"KXoB"}],"63Wy":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5227,7 +5244,7 @@ const insulate = (0, _harden.default)(warmTarget => {
 $h_already.add(insulate);
 var _default = insulate;
 exports.default = _default;
-},{"@agoric/harden":"t+IF"}],"YilW":[function(require,module,exports) {
+},{"@agoric/harden":"KXoB"}],"YilW":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5297,7 +5314,7 @@ var _harden = _interopRequireDefault(require("@agoric/harden"));
 var _insulate = _interopRequireDefault(require("./insulate.mjs"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-},{"./confine.mjs":"1dyn","./makers.mjs":"zfHG","@agoric/harden":"t+IF","./insulate.mjs":"63Wy"}],"g5I+":[function(require,module,exports) {
+},{"./confine.mjs":"1dyn","./makers.mjs":"zfHG","@agoric/harden":"KXoB","./insulate.mjs":"63Wy"}],"g5I+":[function(require,module,exports) {
 
 // shim for using process in browser
 var process = module.exports = {}; // cached from whatever global is present so that test runners that stub it
@@ -8132,4 +8149,4 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var whitelist = (0, _whitelist.buildWhitelist)();
 exports.whitelist = whitelist;
 },{"./node_modules/ses/dist/ses.esm.js":"iDNi","./whitelist.js":"4nUr","../../lib/translate.mjs":"bRI1","@agoric/jessie":"YilW","@michaelfig/slog":"Ipmo"}]},{},["lr5t"], "jessica")
-//# sourceMappingURL=jessica.d9f69d51.js.map
+//# sourceMappingURL=jessica.44060a04.js.map

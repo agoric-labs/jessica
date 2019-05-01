@@ -7,7 +7,7 @@
         <style>#sourceText {
             width: 100%;
         }</style>
-        <script type="text/javascript" src="jessica.d9f69d51.js"></script>
+        <script type="text/javascript" src="jessica.44060a04.js"></script>
         <h1>Browser-Based Jessica</h1>
 
         <p>Write your Jessie code below:</p>
@@ -41,8 +41,8 @@ var setEvaluator = function setEvaluator(withWhitelist) {
     };
   } catch (e) {
     console.log(e);
-    alert('Cannot ' + (withWhitelist ? 'enable' : 'disable') + ' whitelist: ' + e.toString());
     whitelist.checked = !withWhitelist;
+    outputPre.textContent = 'Cannot ' + (withWhitelist ? 'enable' : 'disable') + ' whitelist: ' + e.toString();
   }
 };
 
