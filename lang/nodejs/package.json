@@ -4,16 +4,16 @@
   "description": "Jessica implementation for Node.js",
   "main": "jesspipe.js",
   "dependencies": {
-    "ses": "^0.4.0"
+    "esm": "^3.2.22"
   },
   "devDependencies": {
     "@babel/core": "^7.4.0",
+    "@babel/plugin-transform-modules-commonjs": "^7.4.3",
     "@babel/preset-typescript": "^7.3.3",
     "@types/jest": "^24.0.9",
     "@types/node": "^11.9.6",
     "jest": "^24.5.0",
-    "ts-jest": "^24.0.0",
-    "typescript": "^3.3.3333"
+    "typescript": "^3.4.5"
   },
   "scripts": {
     "build": "build.bat",

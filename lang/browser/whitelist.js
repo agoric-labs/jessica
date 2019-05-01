@@ -22,6 +22,20 @@ export function buildWhitelist() {
   "use strict";
 
   var j = true;  // included in the Jessie runtime
+  var necessary = true; // Not included, but needed for operation
+
+  // These are necessary for most Javascript environments.
+  const anonIntrinsics = {
+    ThrowTypeError: {},
+    IteratorPrototype: {
+      next: '*',
+      constructor: false,
+    },
+    ArrayIteratorPrototype: {},
+    StringIteratorPrototype: {},
+    MapIteratorPrototype: {},
+    SetIteratorPrototype: {},
+  };
 
   const namedIntrinsics = {
     cajaVM: {                        // Caja support
@@ -51,6 +65,9 @@ export function buildWhitelist() {
       entries: j,
       keys: j,
       values: j,
+      prototype: {
+        __proto__: necessary,
+      },
     },
 
     Boolean: {  // 19.3
@@ -113,7 +130,7 @@ export function buildWhitelist() {
         reduce: j,
         reduceRight: j,
         slice: j,
-      }
+      },
     },
 
     // 23 Keyed Collections          all ES-Harmony
@@ -182,5 +199,5 @@ export function buildWhitelist() {
     }
   };
 
-  return {namedIntrinsics, anonIntrinsics: {}};
+  return {namedIntrinsics, anonIntrinsics};
 }

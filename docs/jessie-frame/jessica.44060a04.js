@@ -3310,13 +3310,1782 @@ const creatorStrings = "(function (exports) {\n  'use strict';\n\n  // Adapted f
 const SES = createSESWithRealmConstructor(creatorStrings, Realm);
 var _default = SES;
 exports.default = _default;
-},{"@agoric/make-hardener":"Pi9h","vm":"boWn"}],"kax4":[function(require,module,exports) {
+},{"@agoric/make-hardener":"Pi9h","vm":"boWn"}],"4nUr":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.buildWhitelist = buildWhitelist;
+
+// Copyright (C) 2011 Google Inc.
+// Copyright (C) 2018 Agoric
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * Based on https://github.com/Agoric/SES/blob/master/src/bundle/whitelist.js
+ *
+ * @author Mark S. Miller,
+ */
+function buildWhitelist() {
+  "use strict";
+
+  var j = true; // included in the Jessie runtime
+
+  var necessary = true; // Not included, but needed for operation
+  // These are necessary for most Javascript environments.
+
+  var anonIntrinsics = {
+    ThrowTypeError: {},
+    IteratorPrototype: {
+      next: '*',
+      constructor: false
+    },
+    ArrayIteratorPrototype: {},
+    StringIteratorPrototype: {},
+    MapIteratorPrototype: {},
+    SetIteratorPrototype: {}
+  };
+  var namedIntrinsics = {
+    cajaVM: {
+      // Caja support
+      Nat: j,
+      def: j,
+      confine: j
+    },
+    // In order according to
+    // http://www.ecma-international.org/ecma-262/ with chapter
+    // numbers where applicable
+    // 18 The Global Object
+    Infinity: j,
+    NaN: j,
+    undefined: j,
+    // 19 Fundamental Objects
+    Object: {
+      // 19.1
+      freeze: j,
+      is: j,
+      // ES-Harmony
+      preventExtensions: j,
+      seal: j,
+      entries: j,
+      keys: j,
+      values: j,
+      prototype: {
+        __proto__: necessary
+      }
+    },
+    Boolean: {// 19.3
+    },
+    // 20 Numbers and Dates
+    Number: {
+      // 20.1
+      isFinite: j,
+      // ES-Harmony
+      isNaN: j,
+      // ES-Harmony
+      isSafeInteger: j,
+      // ES-Harmony
+      MAX_SAFE_INTEGER: j,
+      // ES-Harmony
+      MIN_SAFE_INTEGER: j // ES-Harmony
+
+    },
+    Math: {
+      // 20.2
+      E: j,
+      PI: j,
+      abs: j,
+      ceil: j,
+      floor: j,
+      max: j,
+      min: j,
+      round: j,
+      trunc: j // ES-Harmony
+
+    },
+    // 21 Text Processing
+    String: {
+      // 21.2
+      fromCharCode: j,
+      raw: j,
+      // ES-Harmony
+      prototype: {
+        charCodeAt: j,
+        endsWith: j,
+        // ES-Harmony
+        indexOf: j,
+        lastIndexOf: j,
+        slice: j,
+        split: j,
+        startsWith: j // ES-Harmony
+
+      }
+    },
+    // 22 Indexed Collections
+    Array: {
+      // 22.1
+      from: j,
+      isArray: j,
+      of: j,
+      // ES-Harmony?
+      prototype: {
+        filter: j,
+        forEach: j,
+        indexOf: j,
+        join: j,
+        lastIndexOf: j,
+        map: j,
+        pop: j,
+        push: j,
+        reduce: j,
+        reduceRight: j,
+        slice: j
+      }
+    },
+    // 23 Keyed Collections          all ES-Harmony
+    Map: {
+      // 23.1
+      prototype: {
+        clear: j,
+        delete: j,
+        entries: j,
+        forEach: j,
+        get: j,
+        has: j,
+        keys: j,
+        set: j,
+        values: j
+      }
+    },
+    Set: {
+      // 23.2
+      prototype: {
+        add: j,
+        clear: j,
+        delete: j,
+        entries: j,
+        forEach: j,
+        has: j,
+        keys: j,
+        values: j
+      }
+    },
+    WeakMap: {
+      // 23.3
+      prototype: {
+        // Note: coordinate this list with maintenance of repairES5.js
+        delete: j,
+        get: j,
+        has: j,
+        set: j
+      }
+    },
+    WeakSet: {
+      // 23.4
+      prototype: {
+        add: j,
+        delete: j,
+        has: j
+      }
+    },
+    // 24.4 TODO: Omitting Atomics for now
+    JSON: {
+      // 24.5
+      parse: j,
+      stringify: j
+    },
+    Promise: {
+      // 25.4
+      all: j,
+      race: j,
+      reject: j,
+      resolve: j,
+      prototype: {
+        catch: j,
+        then: j
+      }
+    }
+  };
+  return {
+    namedIntrinsics: namedIntrinsics,
+    anonIntrinsics: anonIntrinsics
+  };
+}
+},{}],"KXoB":[function(require,module,exports) {
+var define;
+var global = arguments[3];
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (global = global || self, global.harden = factory());
+}(this, function () { 'use strict';
+
+  // Adapted from SES/Caja - Copyright (C) 2011 Google Inc.
+  // Copyright (C) 2018 Agoric
+
+  // Licensed under the Apache License, Version 2.0 (the "License");
+  // you may not use this file except in compliance with the License.
+  // You may obtain a copy of the License at
+  //
+  // http://www.apache.org/licenses/LICENSE-2.0
+  //
+  // Unless required by applicable law or agreed to in writing, software
+  // distributed under the License is distributed on an "AS IS" BASIS,
+  // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  // See the License for the specific language governing permissions and
+  // limitations under the License.
+
+  // based upon:
+  // https://github.com/google/caja/blob/master/src/com/google/caja/ses/startSES.js
+  // https://github.com/google/caja/blob/master/src/com/google/caja/ses/repairES5.js
+  // then copied from proposal-frozen-realms deep-freeze.js
+  // then copied from SES/src/bundle/deepFreeze.js
+
+  function makeHardener(initialFringe) {
+    const { freeze, getOwnPropertyDescriptors, getPrototypeOf } = Object;
+    const { ownKeys } = Reflect;
+    // Objects that we won't freeze, either because we've frozen them already,
+    // or they were one of the initial roots (terminals). These objects form
+    // the "fringe" of the hardened object graph.
+    const fringeSet = new WeakSet(initialFringe);
+
+    function harden(root) {
+      const toFreeze = new Set();
+      const prototypes = new Map();
+      const paths = new WeakMap();
+
+      // If val is something we should be freezing but aren't yet,
+      // add it to toFreeze.
+      function enqueue(val, path) {
+        if (Object(val) !== val) {
+          // ignore primitives
+          return;
+        }
+        const type = typeof val;
+        if (type !== 'object' && type !== 'function') {
+          // future proof: break until someone figures out what it should do
+          throw new TypeError(`Unexpected typeof: ${type}`);
+        }
+        if (fringeSet.has(val) || toFreeze.has(val)) {
+          // Ignore if this is an exit, or we've already visited it
+          return;
+        }
+        // console.log(`adding ${val} to toFreeze`, val);
+        toFreeze.add(val);
+        paths.set(val, path);
+      }
+
+      function freezeAndTraverse(obj) {
+        // Immediately freeze the object to ensure reactive
+        // objects such as proxies won't add properties
+        // during traversal, before they get frozen.
+
+        // Object are verified before being enqueued,
+        // therefore this is a valid candidate.
+        // Throws if this fails (strict mode).
+        freeze(obj);
+
+        // we rely upon certain commitments of Object.freeze and proxies here
+
+        // get stable/immutable outbound links before a Proxy has a chance to do
+        // something sneaky.
+        const proto = getPrototypeOf(obj);
+        const descs = getOwnPropertyDescriptors(obj);
+        const path = paths.get(obj) || 'unknown';
+
+        // console.log(`adding ${proto} to prototypes under ${path}`);
+        if (proto !== null && !prototypes.has(proto)) {
+          prototypes.set(proto, path);
+          paths.set(proto, `${path}.__proto__`);
+        }
+
+        ownKeys(descs).forEach(name => {
+          const pathname = `${path}.${String(name)}`;
+          // todo uncurried form
+          // todo: getOwnPropertyDescriptors is guaranteed to return well-formed
+          // descriptors, but they still inherit from Object.prototype. If
+          // someone has poisoned Object.prototype to add 'value' or 'get'
+          // properties, then a simple 'if ("value" in desc)' or 'desc.value'
+          // test could be confused. We use hasOwnProperty to be sure about
+          // whether 'value' is present or not, which tells us for sure that this
+          // is a data property.
+          const desc = descs[name];
+          if ('value' in desc) {
+            // todo uncurried form
+            enqueue(desc.value, `${pathname}`);
+          } else {
+            enqueue(desc.get, `${pathname}(get)`);
+            enqueue(desc.set, `${pathname}(set)`);
+          }
+        });
+      }
+
+      function dequeue() {
+        // New values added before forEach() has finished will be visited.
+        toFreeze.forEach(freezeAndTraverse); // todo curried forEach
+      }
+
+      function checkPrototypes() {
+        prototypes.forEach((path, p) => {
+          if (!(toFreeze.has(p) || fringeSet.has(p))) {
+            // all reachable properties have already been frozen by this point
+            throw new TypeError(
+              `prototype ${p} of ${path} is not already in the fringeSet`,
+            );
+          }
+        });
+      }
+
+      function commit() {
+        // todo curried forEach
+        // we capture the real WeakSet.prototype.add above, in case someone
+        // changes it. The two-argument form of forEach passes the second
+        // argument as the 'this' binding, so we add to the correct set.
+        toFreeze.forEach(fringeSet.add, fringeSet);
+      }
+
+      enqueue(root);
+      dequeue();
+      // console.log("fringeSet", fringeSet);
+      // console.log("prototype set:", prototypes);
+      // console.log("toFreeze set:", toFreeze);
+      checkPrototypes();
+      commit();
+
+      return root;
+    }
+
+    return harden;
+  }
+
+  // Copyright (C) 2011 Google Inc.
+  // Copyright (C) 2018 Agoric
+  //
+  // Licensed under the Apache License, Version 2.0 (the "License");
+  // you may not use this file except in compliance with the License.
+  // You may obtain a copy of the License at
+  //
+  // https://www.apache.org/licenses/LICENSE-2.0
+  //
+  // Unless required by applicable law or agreed to in writing, software
+  // distributed under the License is distributed on an "AS IS" BASIS,
+  // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  // See the License for the specific language governing permissions and
+  // limitations under the License.
+
+  // TODO(erights): We should test for
+  // We now have a reason to omit Proxy from the whitelist.
+  // The makeBrandTester in repairES5 uses Allen's trick at
+  // https://esdiscuss.org/topic/tostringtag-spoofing-for-null-and-undefined#content-59
+  // , but testing reveals that, on FF 35.0.1, a proxy on an exotic
+  // object X will pass this brand test when X will. This is fixed as of
+  // FF Nightly 38.0a1.
+
+  /**
+   * <p>Qualifying platforms generally include all JavaScript platforms
+   * shown on <a href="http://kangax.github.com/es5-compat-table/"
+   * >ECMAScript 5 compatibility table</a> that implement {@code
+   * Object.getOwnPropertyNames}. At the time of this writing,
+   * qualifying browsers already include the latest released versions of
+   * Internet Explorer (9), Firefox (4), Chrome (11), and Safari
+   * (5.0.5), their corresponding standalone (e.g., server-side) JavaScript
+   * engines, Rhino 1.73, and BESEN.
+   *
+   * <p>On such not-quite-ES5 platforms, some elements of these
+   * emulations may lose SES safety, as enumerated in the comment on
+   * each problem record in the {@code baseProblems} and {@code
+   * supportedProblems} array below. The platform must at least provide
+   * {@code Object.getOwnPropertyNames}, because it cannot reasonably be
+   * emulated.
+   *
+   * <p>This file is useful by itself, as it has no dependencies on the
+   * rest of SES. It creates no new global bindings, but merely repairs
+   * standard globals or standard elements reachable from standard
+   * globals. If the future-standard {@code WeakMap} global is present,
+   * as it is currently on FF7.0a1, then it will repair it in place. The
+   * one non-standard element that this file uses is {@code console} if
+   * present, in order to report the repairs it found necessary, in
+   * which case we use its {@code log, info, warn}, and {@code error}
+   * methods. If {@code console.log} is absent, then this file performs
+   * its repairs silently.
+   *
+   * <p>Generally, this file should be run as the first script in a
+   * JavaScript context (i.e. a browser frame), as it relies on other
+   * primordial objects and methods not yet being perturbed.
+   *
+   * <p>TODO(erights): This file tries to protect itself from some
+   * post-initialization perturbation by stashing some of the
+   * primordials it needs for later use, but this attempt is currently
+   * incomplete. We need to revisit this when we support Confined-ES5,
+   * as a variant of SES in which the primordials are not frozen. See
+   * previous failed attempt at <a
+   * href="https://codereview.appspot.com/5278046/" >Speeds up
+   * WeakMap. Preparing to support unfrozen primordials.</a>. From
+   * analysis of this failed attempt, it seems that the only practical
+   * way to support CES is by use of two frames, where most of initSES
+   * runs in a SES frame, and so can avoid worrying about most of these
+   * perturbations.
+   */
+  function getAnonIntrinsics(global) {
+
+    const gopd = Object.getOwnPropertyDescriptor;
+    const getProto = Object.getPrototypeOf;
+
+    // ////////////// Undeniables and Intrinsics //////////////
+
+    /**
+     * The undeniables are the primordial objects which are ambiently
+     * reachable via compositions of strict syntax, primitive wrapping
+     * (new Object(x)), and prototype navigation (the equivalent of
+     * Object.getPrototypeOf(x) or x.__proto__). Although we could in
+     * theory monkey patch primitive wrapping or prototype navigation,
+     * we won't. Hence, without parsing, the following are undeniable no
+     * matter what <i>other</i> monkey patching we do to the primordial
+     * environment.
+     */
+
+    // The first element of each undeniableTuple is a string used to
+    // name the undeniable object for reporting purposes. It has no
+    // other programmatic use.
+    //
+    // The second element of each undeniableTuple should be the
+    // undeniable itself.
+    //
+    // The optional third element of the undeniableTuple, if present,
+    // should be an example of syntax, rather than use of a monkey
+    // patchable API, evaluating to a value from which the undeniable
+    // object in the second element can be reached by only the
+    // following steps:
+    // If the value is primitve, convert to an Object wrapper.
+    // Is the resulting object either the undeniable object, or does
+    // it inherit directly from the undeniable object?
+
+    function* aStrictGenerator() {} // eslint-disable-line no-empty-function
+    const Generator = getProto(aStrictGenerator);
+    async function* aStrictAsyncGenerator() {} // eslint-disable-line no-empty-function
+    const AsyncGenerator = getProto(aStrictAsyncGenerator);
+    async function aStrictAsyncFunction() {} // eslint-disable-line no-empty-function
+    const AsyncFunctionPrototype = getProto(aStrictAsyncFunction);
+
+    // TODO: this is dead code, but could be useful: make this the
+    // 'undeniables' object available via some API.
+
+    const undeniableTuples = [
+      ['Object.prototype', Object.prototype, {}],
+      ['Function.prototype', Function.prototype, function foo() {}],
+      ['Array.prototype', Array.prototype, []],
+      ['RegExp.prototype', RegExp.prototype, /x/],
+      ['Boolean.prototype', Boolean.prototype, true],
+      ['Number.prototype', Number.prototype, 1],
+      ['String.prototype', String.prototype, 'x'],
+      ['%Generator%', Generator, aStrictGenerator],
+      ['%AsyncGenerator%', AsyncGenerator, aStrictAsyncGenerator],
+      ['%AsyncFunction%', AsyncFunctionPrototype, aStrictAsyncFunction],
+    ];
+
+    undeniableTuples.forEach(tuple => {
+      const name = tuple[0];
+      const undeniable = tuple[1];
+      let start = tuple[2];
+      if (start === undefined) {
+        return;
+      }
+      start = Object(start);
+      if (undeniable === start) {
+        return;
+      }
+      if (undeniable === getProto(start)) {
+        return;
+      }
+      throw new Error(`Unexpected undeniable: ${undeniable}`);
+    });
+
+    function registerIteratorProtos(registery, base, name) {
+      const iteratorSym =
+        (global.Symbol && global.Symbol.iterator) || '@@iterator'; // used instead of a symbol on FF35
+
+      if (base[iteratorSym]) {
+        const anIter = base[iteratorSym]();
+        const anIteratorPrototype = getProto(anIter);
+        registery[name] = anIteratorPrototype; // eslint-disable-line no-param-reassign
+        const anIterProtoBase = getProto(anIteratorPrototype);
+        if (anIterProtoBase !== Object.prototype) {
+          if (!registery.IteratorPrototype) {
+            if (getProto(anIterProtoBase) !== Object.prototype) {
+              throw new Error(
+                '%IteratorPrototype%.__proto__ was not Object.prototype',
+              );
+            }
+            registery.IteratorPrototype = anIterProtoBase; // eslint-disable-line no-param-reassign
+          } else if (registery.IteratorPrototype !== anIterProtoBase) {
+            throw new Error(`unexpected %${name}%.__proto__`);
+          }
+        }
+      }
+    }
+
+    /**
+     * Get the intrinsics not otherwise reachable by named own property
+     * traversal. See
+     * https://people.mozilla.org/~jorendorff/es6-draft.html#sec-well-known-intrinsic-objects
+     * and the instrinsics section of whitelist.js
+     *
+     * <p>Unlike getUndeniables(), the result of sampleAnonIntrinsics()
+     * does depend on the current state of the primordials, so we must
+     * run this again after all other relevant monkey patching is done,
+     * in order to properly initialize cajaVM.intrinsics
+     */
+
+    // TODO: we can probably unwrap this into the outer function, and stop
+    // using a separately named 'sampleAnonIntrinsics'
+    function sampleAnonIntrinsics() {
+      const result = {};
+
+      // If there are still other ThrowTypeError objects left after
+      // noFuncPoison-ing, this should be caught by
+      // test_THROWTYPEERROR_NOT_UNIQUE below, so we assume here that
+      // this is the only surviving ThrowTypeError intrinsic.
+      // eslint-disable-next-line prefer-rest-params
+      result.ThrowTypeError = gopd(arguments, 'callee').get;
+
+      // Get the ES6 %ArrayIteratorPrototype%,
+      // %StringIteratorPrototype%, %MapIteratorPrototype%,
+      // %SetIteratorPrototype% and %IteratorPrototype% intrinsics, if
+      // present.
+      registerIteratorProtos(result, [], 'ArrayIteratorPrototype');
+      registerIteratorProtos(result, '', 'StringIteratorPrototype');
+      if (typeof Map === 'function') {
+        registerIteratorProtos(result, new Map(), 'MapIteratorPrototype');
+      }
+      if (typeof Set === 'function') {
+        registerIteratorProtos(result, new Set(), 'SetIteratorPrototype');
+      }
+
+      // Get the ES6 %GeneratorFunction% intrinsic, if present.
+      if (getProto(Generator) !== Function.prototype) {
+        throw new Error('Generator.__proto__ was not Function.prototype');
+      }
+      const GeneratorFunction = Generator.constructor;
+      if (getProto(GeneratorFunction) !== Function.prototype.constructor) {
+        throw new Error(
+          'GeneratorFunction.__proto__ was not Function.prototype.constructor',
+        );
+      }
+      result.GeneratorFunction = GeneratorFunction;
+      const genProtoBase = getProto(Generator.prototype);
+      if (genProtoBase !== result.IteratorPrototype) {
+        throw new Error('Unexpected Generator.prototype.__proto__');
+      }
+
+      // Get the ES6 %AsyncGeneratorFunction% intrinsic, if present.
+      if (getProto(AsyncGenerator) !== Function.prototype) {
+        throw new Error('AsyncGenerator.__proto__ was not Function.prototype');
+      }
+      const AsyncGeneratorFunction = AsyncGenerator.constructor;
+      if (getProto(AsyncGeneratorFunction) !== Function.prototype.constructor) {
+        throw new Error(
+          'GeneratorFunction.__proto__ was not Function.prototype.constructor',
+        );
+      }
+      result.AsyncGeneratorFunction = AsyncGeneratorFunction;
+      // it appears that the only way to get an AsyncIteratorPrototype is
+      // through this getProto() process, so there's nothing to check it
+      // against
+      /*
+        const agenProtoBase = getProto(AsyncGenerator.prototype);
+        if (agenProtoBase !== result.AsyncIteratorPrototype) {
+          throw new Error('Unexpected AsyncGenerator.prototype.__proto__');
+        } */
+
+      // Get the ES6 %AsyncFunction% intrinsic, if present.
+      if (getProto(AsyncFunctionPrototype) !== Function.prototype) {
+        throw new Error(
+          'AsyncFunctionPrototype.__proto__ was not Function.prototype',
+        );
+      }
+      const AsyncFunction = AsyncFunctionPrototype.constructor;
+      if (getProto(AsyncFunction) !== Function.prototype.constructor) {
+        throw new Error(
+          'AsyncFunction.__proto__ was not Function.prototype.constructor',
+        );
+      }
+      result.AsyncFunction = AsyncFunction;
+
+      // Get the ES6 %TypedArray% intrinsic, if present.
+      (function getTypedArray() {
+        if (!global.Float32Array) {
+          return;
+        }
+        const TypedArray = getProto(global.Float32Array);
+        if (TypedArray === Function.prototype) {
+          return;
+        }
+        if (getProto(TypedArray) !== Function.prototype) {
+          // http://bespin.cz/~ondras/html/classv8_1_1ArrayBufferView.html
+          // has me worried that someone might make such an intermediate
+          // object visible.
+          throw new Error('TypedArray.__proto__ was not Function.prototype');
+        }
+        result.TypedArray = TypedArray;
+      })();
+
+      Object.keys(result).forEach(name => {
+        if (result[name] === undefined) {
+          throw new Error(`Malformed intrinsic: ${name}`);
+        }
+      });
+
+      return result;
+    }
+
+    return sampleAnonIntrinsics();
+  }
+
+  // Copyright (C) 2011 Google Inc.
+  // Copyright (C) 2018 Agoric
+  //
+  // Licensed under the Apache License, Version 2.0 (the "License");
+  // you may not use this file except in compliance with the License.
+  // You may obtain a copy of the License at
+  //
+  // http://www.apache.org/licenses/LICENSE-2.0
+  //
+  // Unless required by applicable law or agreed to in writing, software
+  // distributed under the License is distributed on an "AS IS" BASIS,
+  // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  // See the License for the specific language governing permissions and
+  // limitations under the License.
+
+  /**
+   * @fileoverview Exports {@code ses.whitelist}, a recursively defined
+   * JSON record enumerating all the naming paths in the ES5.1 spec,
+   * those de-facto extensions that we judge to be safe, and SES and
+   * Dr. SES extensions provided by the SES runtime.
+   *
+   * <p>Assumes only ES3. Compatible with ES5, ES5-strict, or
+   * anticipated ES6.
+   *
+   * //provides ses.whitelist
+   * @author Mark S. Miller,
+   * @overrides ses, whitelistModule
+   */
+
+  /**
+   * <p>Each JSON record enumerates the disposition of the properties on
+   * some corresponding primordial object, with the root record
+   * representing the global object. For each such record, the values
+   * associated with its property names can be
+   * <ul>
+   * <li>Another record, in which case this property is simply
+   *     whitelisted and that next record represents the disposition of
+   *     the object which is its value. For example, {@code "Object"}
+   *     leads to another record explaining what properties {@code
+   *     "Object"} may have and how each such property, if present,
+   *     and its value should be tamed.
+   * <li>true, in which case this property is simply whitelisted. The
+   *     value associated with that property is still traversed and
+   *     tamed, but only according to the taming of the objects that
+   *     object inherits from. For example, {@code "Object.freeze"} leads
+   *     to true, meaning that the {@code "freeze"} property of {@code
+   *     Object} should be whitelisted and the value of the property (a
+   *     function) should be further tamed only according to the
+   *     markings of the other objects it inherits from, like {@code
+   *     "Function.prototype"} and {@code "Object.prototype").
+   *     If the property is an accessor property, it is not
+   *     whitelisted (as invoking an accessor might not be meaningful,
+   *     yet the accessor might return a value needing taming).
+   * <li>"maybeAccessor", in which case this accessor property is simply
+   *     whitelisted and its getter and/or setter are tamed according to
+   *     inheritance. If the property is not an accessor property, its
+   *     value is tamed according to inheritance.
+   * <li>"*", in which case this property on this object is whitelisted,
+   *     as is this property as inherited by all objects that inherit
+   *     from this object. The values associated with all such properties
+   *     are still traversed and tamed, but only according to the taming
+   *     of the objects that object inherits from. For example, {@code
+   *     "Object.prototype.constructor"} leads to "*", meaning that we
+   *     whitelist the {@code "constructor"} property on {@code
+   *     Object.prototype} and on every object that inherits from {@code
+   *     Object.prototype} that does not have a conflicting mark. Each
+   *     of these is tamed as if with true, so that the value of the
+   *     property is further tamed according to what other objects it
+   *     inherits from.
+   * <li>false, which suppresses permission inherited via "*".
+   * </ul>
+   *
+   * <p>TODO: We want to do for constructor: something weaker than '*',
+   * but rather more like what we do for [[Prototype]] links, which is
+   * that it is whitelisted only if it points at an object which is
+   * otherwise reachable by a whitelisted path.
+   *
+   * <p>The members of the whitelist are either
+   * <ul>
+   * <li>(uncommented) defined by the ES5.1 normative standard text,
+   * <li>(questionable) provides a source of non-determinism, in
+   *     violation of pure object-capability rules, but allowed anyway
+   *     since we've given up on restricting JavaScript to a
+   *     deterministic subset.
+   * <li>(ES5 Appendix B) common elements of de facto JavaScript
+   *     described by the non-normative Appendix B.
+   * <li>(Harmless whatwg) extensions documented at
+   *     <a href="http://wiki.whatwg.org/wiki/Web_ECMAScript"
+   *     >http://wiki.whatwg.org/wiki/Web_ECMAScript</a> that seem to be
+   *     harmless. Note that the RegExp constructor extensions on that
+   *     page are <b>not harmless</b> and so must not be whitelisted.
+   * <li>(ES-Harmony proposal) accepted as "proposal" status for
+   *     EcmaScript-Harmony.
+   * </ul>
+   *
+   * <p>With the above encoding, there are some sensible whitelists we
+   * cannot express, such as marking a property both with "*" and a JSON
+   * record. This is an expedient decision based only on not having
+   * encountered such a need. Should we need this extra expressiveness,
+   * we'll need to refactor to enable a different encoding.
+   *
+   * <p>We factor out {@code true} into the variable {@code t} just to
+   * get a bit better compression from simple minifiers.
+   */
+
+  const t = true;
+  const j = true; // included in the Jessie runtime
+
+  let TypedArrayWhitelist; // defined and used below
+
+  const whitelist = {
+    // The accessible intrinsics which are not reachable by own
+    // property name traversal are listed here so that they are
+    // processed by the whitelist, although this also makes them
+    // accessible by this path.  See
+    // https://people.mozilla.org/~jorendorff/es6-draft.html#sec-well-known-intrinsic-objects
+    // Of these, ThrowTypeError is the only one from ES5. All the
+    // rest were introduced in ES6.
+    anonIntrinsics: {
+      ThrowTypeError: {},
+      IteratorPrototype: {
+        // 25.1
+        // Technically, for SES-on-ES5, we should not need to
+        // whitelist 'next'. However, browsers are accidentally
+        // relying on it
+        // https://bugs.chromium.org/p/v8/issues/detail?id=4769#
+        // https://bugs.webkit.org/show_bug.cgi?id=154475
+        // and we will be whitelisting it as we transition to ES6
+        // anyway, so we unconditionally whitelist it now.
+        next: '*',
+        constructor: false,
+      },
+      ArrayIteratorPrototype: {},
+      StringIteratorPrototype: {},
+      MapIteratorPrototype: {},
+      SetIteratorPrototype: {},
+
+      // The %GeneratorFunction% intrinsic is the constructor of
+      // generator functions, so %GeneratorFunction%.prototype is
+      // the %Generator% intrinsic, which all generator functions
+      // inherit from. A generator function is effectively the
+      // constructor of its generator instances, so, for each
+      // generator function (e.g., "g1" on the diagram at
+      // http://people.mozilla.org/~jorendorff/figure-2.png )
+      // its .prototype is a prototype that its instances inherit
+      // from. Paralleling this structure, %Generator%.prototype,
+      // i.e., %GeneratorFunction%.prototype.prototype, is the
+      // object that all these generator function prototypes inherit
+      // from. The .next, .return and .throw that generator
+      // instances respond to are actually the builtin methods they
+      // inherit from this object.
+      GeneratorFunction: {
+        // 25.2
+        length: '*', // Not sure why this is needed
+        prototype: {
+          // 25.4
+          prototype: {
+            next: '*',
+            return: '*',
+            throw: '*',
+            constructor: '*', // Not sure why this is needed
+          },
+        },
+      },
+      AsyncGeneratorFunction: {
+        // 25.3
+        length: '*',
+        prototype: {
+          // 25.5
+          prototype: {
+            next: '*',
+            return: '*',
+            throw: '*',
+            constructor: '*', // Not sure why this is needed
+          },
+        },
+      },
+      AsyncFunction: {
+        // 25.7
+        length: '*',
+        prototype: '*',
+      },
+
+      TypedArray: (TypedArrayWhitelist = {
+        // 22.2
+        length: '*', // does not inherit from Function.prototype on Chrome
+        name: '*', // ditto
+        from: t,
+        of: t,
+        BYTES_PER_ELEMENT: '*',
+        prototype: {
+          buffer: 'maybeAccessor',
+          byteLength: 'maybeAccessor',
+          byteOffset: 'maybeAccessor',
+          copyWithin: '*',
+          entries: '*',
+          every: '*',
+          fill: '*',
+          filter: '*',
+          find: '*',
+          findIndex: '*',
+          forEach: '*',
+          includes: '*',
+          indexOf: '*',
+          join: '*',
+          keys: '*',
+          lastIndexOf: '*',
+          length: 'maybeAccessor',
+          map: '*',
+          reduce: '*',
+          reduceRight: '*',
+          reverse: '*',
+          set: '*',
+          slice: '*',
+          some: '*',
+          sort: '*',
+          subarray: '*',
+          values: '*',
+          BYTES_PER_ELEMENT: '*',
+        },
+      }),
+    },
+
+    namedIntrinsics: {
+      // In order according to
+      // http://www.ecma-international.org/ecma-262/ with chapter
+      // numbers where applicable
+
+      // 18 The Global Object
+
+      // 18.1
+      Infinity: j,
+      NaN: j,
+      undefined: j,
+
+      // 18.2
+      // eval: t,                      // Whitelisting under separate control
+      // by TAME_GLOBAL_EVAL in startSES.js
+      isFinite: t,
+      isNaN: t,
+      parseFloat: t,
+      parseInt: t,
+      decodeURI: t,
+      decodeURIComponent: t,
+      encodeURI: t,
+      encodeURIComponent: t,
+
+      // 19 Fundamental Objects
+
+      Object: {
+        // 19.1
+        assign: t, // ES-Harmony
+        create: t,
+        defineProperties: t, // ES-Harmony
+        defineProperty: t,
+        entries: t, // ES-Harmony
+        freeze: j,
+        getOwnPropertyDescriptor: t,
+        getOwnPropertyDescriptors: t, // proposed ES-Harmony
+        getOwnPropertyNames: t,
+        getOwnPropertySymbols: t, // ES-Harmony
+        getPrototypeOf: t,
+        is: j, // ES-Harmony
+        isExtensible: t,
+        isFrozen: t,
+        isSealed: t,
+        keys: t,
+        preventExtensions: j,
+        seal: j,
+        setPrototypeOf: t, // ES-Harmony
+        values: t, // ES-Harmony
+
+        prototype: {
+          // B.2.2
+          // __proto__: t, whitelisted manually in startSES.js
+          __defineGetter__: t,
+          __defineSetter__: t,
+          __lookupGetter__: t,
+          __lookupSetter__: t,
+
+          constructor: '*',
+          hasOwnProperty: t,
+          isPrototypeOf: t,
+          propertyIsEnumerable: t,
+          toLocaleString: '*',
+          toString: '*',
+          valueOf: '*',
+
+          // Generally allowed
+          [Symbol.iterator]: '*',
+          [Symbol.toPrimitive]: '*',
+          [Symbol.toStringTag]: '*',
+          [Symbol.unscopables]: '*',
+        },
+      },
+
+      Function: {
+        // 19.2
+        length: t,
+        prototype: {
+          apply: t,
+          bind: t,
+          call: t,
+          [Symbol.hasInstance]: '*',
+
+          // 19.2.4 instances
+          length: '*',
+          name: '*', // ES-Harmony
+          prototype: '*',
+          arity: '*', // non-std, deprecated in favor of length
+
+          // Generally allowed
+          [Symbol.species]: 'maybeAccessor', // ES-Harmony?
+        },
+      },
+
+      Boolean: {
+        // 19.3
+        prototype: t,
+      },
+
+      Symbol: {
+        // 19.4               all ES-Harmony
+        asyncIterator: t, // proposed? ES-Harmony
+        for: t,
+        hasInstance: t,
+        isConcatSpreadable: t,
+        iterator: t,
+        keyFor: t,
+        match: t,
+        replace: t,
+        search: t,
+        species: t,
+        split: t,
+        toPrimitive: t,
+        toStringTag: t,
+        unscopables: t,
+        prototype: t,
+      },
+
+      Error: {
+        // 19.5
+        prototype: {
+          name: '*',
+          message: '*',
+        },
+      },
+      // In ES6 the *Error "subclasses" of Error inherit from Error,
+      // since constructor inheritance generally mirrors prototype
+      // inheritance. As explained at
+      // https://code.google.com/p/google-caja/issues/detail?id=1963 ,
+      // debug.js hides away the Error constructor itself, and so needs
+      // to rewire these "subclass" constructors. Until we have a more
+      // general mechanism, please maintain this list of whitelisted
+      // subclasses in sync with the list in debug.js of subclasses to
+      // be rewired.
+      EvalError: {
+        prototype: t,
+      },
+      RangeError: {
+        prototype: t,
+      },
+      ReferenceError: {
+        prototype: t,
+      },
+      SyntaxError: {
+        prototype: t,
+      },
+      TypeError: {
+        prototype: t,
+      },
+      URIError: {
+        prototype: t,
+      },
+
+      // 20 Numbers and Dates
+
+      Number: {
+        // 20.1
+        EPSILON: t, // ES-Harmony
+        isFinite: j, // ES-Harmony
+        isInteger: t, // ES-Harmony
+        isNaN: j, // ES-Harmony
+        isSafeInteger: j, // ES-Harmony
+        MAX_SAFE_INTEGER: j, // ES-Harmony
+        MAX_VALUE: t,
+        MIN_SAFE_INTEGER: j, // ES-Harmony
+        MIN_VALUE: t,
+        NaN: t,
+        NEGATIVE_INFINITY: t,
+        parseFloat: t, // ES-Harmony
+        parseInt: t, // ES-Harmony
+        POSITIVE_INFINITY: t,
+        prototype: {
+          toExponential: t,
+          toFixed: t,
+          toPrecision: t,
+        },
+      },
+
+      Math: {
+        // 20.2
+        E: j,
+        LN10: j,
+        LN2: j,
+        LOG10E: t,
+        LOG2E: t,
+        PI: j,
+        SQRT1_2: t,
+        SQRT2: t,
+
+        abs: j,
+        acos: t,
+        acosh: t, // ES-Harmony
+        asin: t,
+        asinh: t, // ES-Harmony
+        atan: t,
+        atanh: t, // ES-Harmony
+        atan2: t,
+        cbrt: t, // ES-Harmony
+        ceil: j,
+        clz32: t, // ES-Harmony
+        cos: t,
+        cosh: t, // ES-Harmony
+        exp: t,
+        expm1: t, // ES-Harmony
+        floor: j,
+        fround: t, // ES-Harmony
+        hypot: t, // ES-Harmony
+        imul: t, // ES-Harmony
+        log: j,
+        log1p: t, // ES-Harmony
+        log10: j, // ES-Harmony
+        log2: j, // ES-Harmony
+        max: j,
+        min: j,
+        pow: j,
+        random: t, // questionable
+        round: j,
+        sign: t, // ES-Harmony
+        sin: t,
+        sinh: t, // ES-Harmony
+        sqrt: j,
+        tan: t,
+        tanh: t, // ES-Harmony
+        trunc: j, // ES-Harmony
+      },
+
+      // no-arg Date constructor is questionable
+      Date: {
+        // 20.3
+        now: t, // questionable
+        parse: t,
+        UTC: t,
+        prototype: {
+          // Note: coordinate this list with maintanence of repairES5.js
+          getDate: t,
+          getDay: t,
+          getFullYear: t,
+          getHours: t,
+          getMilliseconds: t,
+          getMinutes: t,
+          getMonth: t,
+          getSeconds: t,
+          getTime: t,
+          getTimezoneOffset: t,
+          getUTCDate: t,
+          getUTCDay: t,
+          getUTCFullYear: t,
+          getUTCHours: t,
+          getUTCMilliseconds: t,
+          getUTCMinutes: t,
+          getUTCMonth: t,
+          getUTCSeconds: t,
+          setDate: t,
+          setFullYear: t,
+          setHours: t,
+          setMilliseconds: t,
+          setMinutes: t,
+          setMonth: t,
+          setSeconds: t,
+          setTime: t,
+          setUTCDate: t,
+          setUTCFullYear: t,
+          setUTCHours: t,
+          setUTCMilliseconds: t,
+          setUTCMinutes: t,
+          setUTCMonth: t,
+          setUTCSeconds: t,
+          toDateString: t,
+          toISOString: t,
+          toJSON: t,
+          toLocaleDateString: t,
+          toLocaleString: t,
+          toLocaleTimeString: t,
+          toTimeString: t,
+          toUTCString: t,
+
+          // B.2.4
+          getYear: t,
+          setYear: t,
+          toGMTString: t,
+        },
+      },
+
+      // 21 Text Processing
+
+      String: {
+        // 21.2
+        fromCharCode: j,
+        fromCodePoint: t, // ES-Harmony
+        raw: j, // ES-Harmony
+        prototype: {
+          charAt: t,
+          charCodeAt: t,
+          codePointAt: t, // ES-Harmony
+          concat: t,
+          endsWith: j, // ES-Harmony
+          includes: t, // ES-Harmony
+          indexOf: j,
+          lastIndexOf: j,
+          localeCompare: t,
+          match: t,
+          normalize: t, // ES-Harmony
+          padEnd: t, // ES-Harmony
+          padStart: t, // ES-Harmony
+          repeat: t, // ES-Harmony
+          replace: t,
+          search: t,
+          slice: j,
+          split: t,
+          startsWith: j, // ES-Harmony
+          substring: t,
+          toLocaleLowerCase: t,
+          toLocaleUpperCase: t,
+          toLowerCase: t,
+          toUpperCase: t,
+          trim: t,
+
+          // B.2.3
+          substr: t,
+          anchor: t,
+          big: t,
+          blink: t,
+          bold: t,
+          fixed: t,
+          fontcolor: t,
+          fontsize: t,
+          italics: t,
+          link: t,
+          small: t,
+          strike: t,
+          sub: t,
+          sup: t,
+
+          trimLeft: t, // non-standard
+          trimRight: t, // non-standard
+
+          // 21.1.4 instances
+          length: '*',
+        },
+      },
+
+      RegExp: {
+        // 21.2
+        prototype: {
+          exec: t,
+          flags: 'maybeAccessor',
+          global: 'maybeAccessor',
+          ignoreCase: 'maybeAccessor',
+          [Symbol.match]: '*', // ES-Harmony
+          multiline: 'maybeAccessor',
+          [Symbol.replace]: '*', // ES-Harmony
+          [Symbol.search]: '*', // ES-Harmony
+          source: 'maybeAccessor',
+          [Symbol.split]: '*', // ES-Harmony
+          sticky: 'maybeAccessor',
+          test: t,
+          unicode: 'maybeAccessor', // ES-Harmony
+          dotAll: 'maybeAccessor', // proposed ES-Harmony
+
+          // B.2.5
+          compile: false, // UNSAFE. Purposely suppressed
+
+          // 21.2.6 instances
+          lastIndex: '*',
+          options: '*', // non-std
+        },
+      },
+
+      // 22 Indexed Collections
+
+      Array: {
+        // 22.1
+        from: j,
+        isArray: t,
+        of: j, // ES-Harmony?
+        prototype: {
+          concat: t,
+          copyWithin: t, // ES-Harmony
+          entries: t, // ES-Harmony
+          every: t,
+          fill: t, // ES-Harmony
+          filter: j,
+          find: t, // ES-Harmony
+          findIndex: t, // ES-Harmony
+          forEach: j,
+          includes: t, // ES-Harmony
+          indexOf: j,
+          join: t,
+          keys: t, // ES-Harmony
+          lastIndexOf: j,
+          map: j,
+          pop: j,
+          push: j,
+          reduce: j,
+          reduceRight: j,
+          reverse: t,
+          shift: j,
+          slice: j,
+          some: t,
+          sort: t,
+          splice: t,
+          unshift: j,
+          values: t, // ES-Harmony
+
+          // 22.1.4 instances
+          length: '*',
+        },
+      },
+
+      // 22.2 Typed Array stuff
+      // TODO: Not yet organized according to spec order
+
+      Int8Array: TypedArrayWhitelist,
+      Uint8Array: TypedArrayWhitelist,
+      Uint8ClampedArray: TypedArrayWhitelist,
+      Int16Array: TypedArrayWhitelist,
+      Uint16Array: TypedArrayWhitelist,
+      Int32Array: TypedArrayWhitelist,
+      Uint32Array: TypedArrayWhitelist,
+      Float32Array: TypedArrayWhitelist,
+      Float64Array: TypedArrayWhitelist,
+
+      // 23 Keyed Collections          all ES-Harmony
+
+      Map: {
+        // 23.1
+        prototype: {
+          clear: j,
+          delete: j,
+          entries: j,
+          forEach: j,
+          get: j,
+          has: j,
+          keys: j,
+          set: j,
+          size: 'maybeAccessor',
+          values: j,
+        },
+      },
+
+      Set: {
+        // 23.2
+        prototype: {
+          add: j,
+          clear: j,
+          delete: j,
+          entries: j,
+          forEach: j,
+          has: j,
+          keys: j,
+          size: 'maybeAccessor',
+          values: j,
+        },
+      },
+
+      WeakMap: {
+        // 23.3
+        prototype: {
+          // Note: coordinate this list with maintenance of repairES5.js
+          delete: j,
+          get: j,
+          has: j,
+          set: j,
+        },
+      },
+
+      WeakSet: {
+        // 23.4
+        prototype: {
+          add: j,
+          delete: j,
+          has: j,
+        },
+      },
+
+      // 24 Structured Data
+
+      ArrayBuffer: {
+        // 24.1            all ES-Harmony
+        isView: t,
+        length: t, // does not inherit from Function.prototype on Chrome
+        name: t, // ditto
+        prototype: {
+          byteLength: 'maybeAccessor',
+          slice: t,
+        },
+      },
+
+      // 24.2 TODO: Omitting SharedArrayBuffer for now
+
+      DataView: {
+        // 24.3               all ES-Harmony
+        length: t, // does not inherit from Function.prototype on Chrome
+        name: t, // ditto
+        BYTES_PER_ELEMENT: '*', // non-standard. really?
+        prototype: {
+          buffer: 'maybeAccessor',
+          byteOffset: 'maybeAccessor',
+          byteLength: 'maybeAccessor',
+          getFloat32: t,
+          getFloat64: t,
+          getInt8: t,
+          getInt16: t,
+          getInt32: t,
+          getUint8: t,
+          getUint16: t,
+          getUint32: t,
+          setFloat32: t,
+          setFloat64: t,
+          setInt8: t,
+          setInt16: t,
+          setInt32: t,
+          setUint8: t,
+          setUint16: t,
+          setUint32: t,
+        },
+      },
+
+      // 24.4 TODO: Omitting Atomics for now
+
+      JSON: {
+        // 24.5
+        parse: j,
+        stringify: j,
+      },
+
+      // 25 Control Abstraction Objects
+
+      Promise: {
+        // 25.4
+        all: j,
+        race: j,
+        reject: j,
+        resolve: j,
+        prototype: {
+          catch: t,
+          then: j,
+          finally: t, // proposed ES-Harmony
+
+          // nanoq.js
+          get: t,
+          put: t,
+          del: t,
+          post: t,
+          invoke: t,
+          fapply: t,
+          fcall: t,
+
+          // Temporary compat with the old makeQ.js
+          send: t,
+          delete: t,
+          end: t,
+        },
+      },
+
+      // nanoq.js
+      Q: {
+        all: t,
+        race: t,
+        reject: t,
+        resolve: t,
+
+        join: t,
+        isPassByCopy: t,
+        passByCopy: t,
+        makeRemote: t,
+        makeFar: t,
+
+        // Temporary compat with the old makeQ.js
+        shorten: t,
+        isPromise: t,
+        async: t,
+        rejected: t,
+        promise: t,
+        delay: t,
+        memoize: t,
+        defer: t,
+      },
+
+      // 26 Reflection
+
+      Reflect: {
+        // 26.1
+        apply: t,
+        construct: t,
+        defineProperty: t,
+        deleteProperty: t,
+        get: t,
+        getOwnPropertyDescriptor: t,
+        getPrototypeOf: t,
+        has: t,
+        isExtensible: t,
+        ownKeys: t,
+        preventExtensions: t,
+        set: t,
+        setPrototypeOf: t,
+      },
+
+      Proxy: {
+        // 26.2
+        revocable: t,
+      },
+
+      // Appendix B
+
+      // B.2.1
+      escape: t,
+      unescape: t,
+
+      // B.2.5 (RegExp.prototype.compile) is marked 'false' up in 21.2
+
+      // Other
+
+      StringMap: {
+        // A specialized approximation of ES-Harmony's Map.
+        prototype: {}, // Technically, the methods should be on the prototype,
+        // but doing so while preserving encapsulation will be
+        // needlessly expensive for current usage.
+      },
+
+      Realm: {
+        makeRootRealm: t,
+        makeCompartment: t,
+        prototype: {
+          global: 'maybeAccessor',
+          evaluate: t,
+        },
+      },
+
+      SES: {
+        confine: t,
+        confineExpr: t,
+      },
+
+      Nat: j,
+      def: j,
+    },
+  };
+
+  // Copyright (C) 2011 Google Inc.
+
+  const { create, getOwnPropertyDescriptors } = Object;
+
+  function buildTable(global) {
+    // walk global object, add whitelisted properties to table
+
+    const uncurryThis = fn => (thisArg, ...args) =>
+      Reflect.apply(fn, thisArg, args);
+    const {
+      getOwnPropertyDescriptor: gopd,
+      getOwnPropertyNames: gopn,
+      keys,
+    } = Object;
+    const getProto = Object.getPrototypeOf;
+    const hop = uncurryThis(Object.prototype.hasOwnProperty);
+
+    const whiteTable = new Map();
+
+    function addToWhiteTable(rootValue, rootPermit) {
+      /**
+       * The whiteTable should map from each path-accessible primordial
+       * object to the permit object that describes how it should be
+       * cleaned.
+       *
+       * We initialize the whiteTable only so that {@code getPermit} can
+       * process "*" inheritance using the whitelist, by walking actual
+       * inheritance chains.
+       */
+      const whitelistSymbols = [true, false, '*', 'maybeAccessor'];
+      function register(value, permit) {
+        if (value !== Object(value)) {
+          return;
+        }
+        if (typeof permit !== 'object') {
+          if (whitelistSymbols.indexOf(permit) < 0) {
+            throw new Error(
+              `syntax error in whitelist; unexpected value: ${permit}`,
+            );
+          }
+          return;
+        }
+        if (whiteTable.has(value)) {
+          throw new Error('primordial reachable through multiple paths');
+        }
+        whiteTable.set(value, permit);
+        keys(permit).forEach(name => {
+          // Use gopd to avoid invoking an accessor property.
+          // Accessor properties for which permit !== 'maybeAccessor'
+          // are caught later by clean().
+          const desc = gopd(value, name);
+          if (desc) {
+            register(desc.value, permit[name]);
+          }
+        });
+      }
+      register(rootValue, rootPermit);
+    }
+
+    /**
+     * Should the property named {@code name} be whitelisted on the
+     * {@code base} object, and if so, with what Permit?
+     *
+     * <p>If it should be permitted, return the Permit (where Permit =
+     * true | "maybeAccessor" | "*" | Record(Permit)), all of which are
+     * truthy. If it should not be permitted, return false.
+     */
+    function getPermit(base, name) {
+      let permit = whiteTable.get(base);
+      if (permit) {
+        if (hop(permit, name)) {
+          return permit[name];
+        }
+      }
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        base = getProto(base); // eslint-disable-line no-param-reassign
+        if (base === null) {
+          return false;
+        }
+        permit = whiteTable.get(base);
+        if (permit && hop(permit, name)) {
+          const result = permit[name];
+          if (result === '*') {
+            return result;
+          }
+          return false;
+        }
+      }
+    }
+
+    const fringeTable = new Set();
+    /**
+     * Walk the table, adding everything that's on the whitelist to a Set for
+       later use.
+     *
+     */
+    function addToFringeTable(value, prefix) {
+      if (value !== Object(value)) {
+        return;
+      }
+      if (fringeTable.has(value)) {
+        return;
+      }
+
+      fringeTable.add(value);
+      gopn(value).forEach(name => {
+        const path = prefix + (prefix ? '.' : '') + name;
+        const p = getPermit(value, name);
+        if (p) {
+          const desc = gopd(value, name);
+          if (hop(desc, 'value')) {
+            // Is a data property
+            const subValue = desc.value;
+            addToFringeTable(subValue, path);
+          }
+        }
+      });
+    }
+
+    // To avoid including the global itself in this set, we make a new object
+    // that has all the same properties. In SES, we'll freeze the global
+    // separately.
+    const globals = create(null, getOwnPropertyDescriptors(global));
+    addToWhiteTable(globals, whitelist.namedIntrinsics);
+    const intrinsics = getAnonIntrinsics(global);
+    addToWhiteTable(intrinsics, whitelist.anonIntrinsics);
+    // whiteTable is now a map from objects to a 'permit'
+
+    // getPermit() is a non-recursive function taking (obj, propname) and
+    // returning a permit
+
+    // addToFringeTable() does a recursive property walk of its first argument,
+    // finds everything that getPermit() allows, and puts them all into the Set
+    // named 'fringeTable'
+
+    addToFringeTable(globals, '');
+    addToFringeTable(intrinsics, '');
+    return fringeTable;
+  }
+
+  // Adapted from SES/Caja - Copyright (C) 2011 Google Inc.
+
+  // this use of 'global' is why Harden is a "resource module", whereas
+  // MakeHardener is "pure".
+  const initialRoots = buildTable((0, eval)('this')); // eslint-disable-line no-eval
+  // console.log('initialRoots are', initialRoots);
+
+  const harden = makeHardener(initialRoots);
+
+  return harden;
+
+}));
+
+},{}],"1dyn":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.confine = exports.confineExpr = exports.$h_sourceURLLength = void 0;
+
+var _harden = _interopRequireDefault(require("@agoric/harden"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+let _sourceURLLength = -1;
+
+const $h_sourceURLLength = (0, _harden.default)(len => _sourceURLLength = len);
+exports.$h_sourceURLLength = $h_sourceURLLength;
+
+const dataSource = src => {
+  if (_sourceURLLength >= 0) {
+    if (src.length > _sourceURLLength) {
+      src = src.slice(0, _sourceURLLength) + '...';
+    } else {
+      src = src.slice(0, _sourceURLLength);
+    }
+  }
+
+  return `data:${encodeURIComponent(src)}`;
+};
+/**
+ * The faux version of SES's <tt>confineExpr</tt> evals an
+ * expression in an environment consisting of the global environment
+ * as enhanced and shadowed by the own properties of the
+ * <tt>env</tt> object. Unlike real <tt>confineExpr</tt>, <ul>
+ * <li>The faux <tt>confineExpr</tt> does not have a third
+ *     <tt>opt_options</tt> parameter. An options argument can of
+ *     course be provided by the caller, but it will be ignored.
+ * <li>The expression can be in the subset of ES6 supported by
+ *     Babel.
+ * <li>All dangerous globals that are not shadowed, such as "window"
+ *     or "document", are still accessible by the evaled expression.
+ * <li>The current binding of these properties at the time that
+ *     <tt>confineExpr</tt> is called are used as the initial
+ *     bindings. Further changes to either the properties or the
+ *     bindings are not tracked by the other.
+ * <li>In the evaled expression, <tt>this</tt> is bound to
+ *     <tt>undefined</tt>.
+ * </ul>
+ */
+
+
+const confineExpr = (0, _harden.default)((exprSrc, env) => {
+  exprSrc = '' + exprSrc;
+  const names = Object.getOwnPropertyNames(env); // Note: no newline prior to ${exprSrc}, so that line numbers for
+  // errors within exprSrc are accurate. Column numbers on the first
+  // line won't be, but will on following lines.
+
+  const closedFuncSrc = `(function(${names.join(',')}) { "use strict"; return (${exprSrc}
+  );
+  })
+  //# sourceURL=${dataSource(exprSrc)}
+  `;
+  const closedFunc = (1, eval)(closedFuncSrc);
+  return closedFunc(...names.map(n => env[n]));
+});
+/**
+ * The faux version of confine is similar to confineExpr, but is for
+ * statements.  It returns undefined (or throws).
+ */
+
+exports.confineExpr = confineExpr;
+const confine = (0, _harden.default)((src, env) => {
+  src = '' + src;
+  const names = Object.getOwnPropertyNames(env); // Note: no newline prior to ${src}, so that line numbers for
+  // errors within src are accurate. Column numbers on the first
+  // line won't be, but will on following lines.
+
+  const closedFuncSrc = `(function(${names.join(',')}) { "use strict"; ${src}
+  ;
+  })
+  //# sourceURL=${dataSource(src)}
+  `;
+  const closedFunc = (1, eval)(closedFuncSrc);
+  closedFunc(...names.map(n => env[n])); // We return nothing.
+});
+exports.confine = confine;
+},{"@agoric/harden":"KXoB"}],"zfHG":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.makeWeakSet = exports.makeWeakMap = exports.makeSet = exports.makeMap = exports.makePromise = void 0;
+
+var _harden = _interopRequireDefault(require("@agoric/harden"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const makePromise = (0, _harden.default)(executor => (0, _harden.default)(new Promise(executor)));
+exports.makePromise = makePromise;
+const makeMap = (0, _harden.default)(entriesOrIterable => (0, _harden.default)(new Map(entriesOrIterable)));
+exports.makeMap = makeMap;
+const makeSet = (0, _harden.default)(values => (0, _harden.default)(new Set(values)));
+exports.makeSet = makeSet;
+const makeWeakMap = (0, _harden.default)(entries => (0, _harden.default)(new WeakMap(entries)));
+exports.makeWeakMap = makeWeakMap;
+const makeWeakSet = (0, _harden.default)(values => (0, _harden.default)(new WeakSet(values)));
+exports.makeWeakSet = makeWeakSet;
+},{"@agoric/harden":"KXoB"}],"63Wy":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = exports.$h_already = void 0;
+
+var _harden = _interopRequireDefault(require("@agoric/harden"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // Prevent write access, and ensure objects don't pass the barrier
 // between warm (inside warmTarget or the return values of its descendants)
@@ -3334,464 +5103,218 @@ exports.default = void 0;
 // pass it into insulated() functions, but not on proxies that have
 // originated in an insulated() function, as that data belongs to
 // somebody else).
+// The $h_uninsulated set is a list of global identities that should never
+// be wrapped.  It is included for bootstrap purposes, but MUST NOT
+// be exportd to Jessie.
 //
-// The nonMapped set is a list of global identities that should never
-// be wrapped.  It is included for bootstrap purposes.
-var makeInsulate = function makeInsulate() {
-  var nonMapped = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new WeakSet();
-
-  var insulate = function insulate(warmTarget) {
-    var warmToColdMap = new WeakMap(),
+// The `$h_` prefix is a safeguard to prevent valid Jessie code from ever
+// referencing this set as an identifier.
+const $h_already = (0, _harden.default)(new WeakSet());
+exports.$h_already = $h_already;
+const insulate = (0, _harden.default)(warmTarget => {
+  const warmToColdMap = new WeakMap(),
         coldToWarmMap = new WeakMap();
 
-    var wrapWithMaps = function wrapWithMaps(obj, inMap, outMap) {
-      if (Object(obj) !== obj || nonMapped.has(obj)) {
-        // It's a neutral (primitive) type.
-        return obj;
-      } // We are sending out the object, so find it in the cache.
+  const wrapWithMaps = (obj, inMap, outMap) => {
+    if (Object(obj) !== obj) {
+      // It's a neutral (primitive) type.
+      return obj;
+    } // We are sending out the object, so find it in the cache.
 
 
-      var wrapped = outMap.get(obj);
+    const wrapped = outMap.get(obj);
 
-      if (wrapped) {
-        return wrapped;
-      } // If we want an object to come in, we reverse the map (our
-      // inside is the object's outside).
+    if (wrapped) {
+      return wrapped;
+    }
 
-
-      var enter = function enter(inbound) {
-        return wrapWithMaps(inbound, outMap, inMap);
-      }; // If we want send an object out, we keep the order (our inside
-      // is the object's inside).
-
-
-      var leave = function leave(outThunk) {
-        try {
-          return wrapWithMaps(outThunk(), inMap, outMap);
-        } catch (e) {
-          throw wrapWithMaps(e, inMap, outMap);
-        }
-      };
-
-      var err = function err(msg) {
-        return leave(function () {
-          throw wrapWithMaps(TypeError(msg), inMap, outMap);
-        });
-      };
-
-      var handler = {
-        // Traps that make sure our object is read-only.
-        defineProperty: function defineProperty(_target, prop, _attributes) {
-          throw err("Cannot define property ".concat(JSON.stringify(String(prop)), " on insulated object"));
-        },
-        setPrototypeOf: function setPrototypeOf(_target, _v) {
-          throw err("Cannot set prototype of insulated object");
-        },
-        set: function set(_target, prop, _value) {
-          throw err("Cannot set property ".concat(JSON.stringify(String(prop)), " on insulated object"));
-        },
-        // We maintain our extensible state, both for the
-        // Proxy invariants and because we don't want to modify
-        // the target AT ALL!
-        isExtensible: function isExtensible(target) {
-          return Reflect.isExtensible(target);
-        },
-        preventExtensions: function preventExtensions(target) {
-          if (!Reflect.isExtensible(target)) {
-            // Already prevented extensions, so succeed.
-            return true;
-          } // This is a mutation.  Not allowed.
+    if ($h_already.has(obj)) {
+      // Don't doubly insulate.
+      return obj;
+    } // If we want an object to come in, we reverse the map (our
+    // inside is the object's outside).
 
 
-          throw err("Cannot prevent extensions of insulated object");
-        },
-        // The traps that have a reasonably simple implementation:
-        get: function get(target, prop, receiver) {
-          return leave(function () {
-            return Reflect.get(target, prop, receiver);
-          });
-        },
-        getPrototypeOf: function getPrototypeOf(target) {
-          return leave(function () {
-            return Reflect.getPrototypeOf(target);
-          });
-        },
-        ownKeys: function ownKeys(target) {
-          return leave(function () {
-            return Reflect.ownKeys(target);
-          });
-        },
-        has: function has(target, key) {
-          return leave(function () {
-            return key in target;
-          });
-        },
-        getOwnPropertyDescriptor: function getOwnPropertyDescriptor(target, prop) {
-          return leave(function () {
-            return Reflect.getOwnPropertyDescriptor(target, prop);
-          });
-        },
-        // The recursively-wrapping traps.
-        apply: function apply(target, thisArg, argumentsList) {
-          // If the target method is from outside, but thisArg is not from outside,
-          // nor already exported to outside, we have insulation-crossing `this` capture.
-          if (Object(thisArg) === thisArg && outMap.get(target) && !inMap.get(thisArg) && !outMap.get(thisArg)) {
-            // Block accidental `this`-capture, but don't break
-            // callers that ignore `this` anyways.
-            thisArg = undefined;
-          }
+    const enter = inbound => wrapWithMaps(inbound, outMap, inMap); // If we want send an object out, we keep the order (our inside
+    // is the object's inside).
 
-          var wrappedThis = enter(thisArg);
-          var wrappedArguments = argumentsList.map(enter);
-          return leave(function () {
-            return Reflect.apply(target, wrappedThis, wrappedArguments);
-          });
-        },
-        construct: function construct(target, args) {
-          var wrappedArguments = args.map(enter);
-          return leave(function () {
-            return Reflect.construct(target, wrappedArguments);
-          });
-        }
-      }; // Now we can construct an insulated object, which
-      // makes it effectively read-only and transitively
-      // maintains the temperatures of the inside and outside.
 
-      var insulated = new Proxy(obj, handler); // We're putting the insulated object outside, so mark it
-      // for our future inputs/outputs.
-
-      outMap.set(obj, insulated);
-      inMap.set(insulated, obj);
-      return insulated;
+    const leave = outThunk => {
+      try {
+        return wrapWithMaps(outThunk(), inMap, outMap);
+      } catch (e) {
+        throw wrapWithMaps(e, inMap, outMap);
+      }
     };
 
-    return wrapWithMaps(warmTarget, coldToWarmMap, warmToColdMap);
-  }; // Prevent infinite regress.
+    const err = msg => leave(() => {
+      throw wrapWithMaps(TypeError(msg), inMap, outMap);
+    });
+
+    const handler = {
+      // Traps that make sure our object is read-only.
+      defineProperty(_target, prop, _attributes) {
+        throw err(`Cannot define property ${JSON.stringify(String(prop))} on insulated object`);
+      },
+
+      setPrototypeOf(_target, _v) {
+        throw err(`Cannot set prototype of insulated object`);
+      },
+
+      set(_target, prop, _value) {
+        throw err(`Cannot set property ${JSON.stringify(String(prop))} on insulated object`);
+      },
+
+      // Traps that we default:
+      // isExtensible(target)
+      // getOwnPropertyDescriptor(target, prop)
+      // We prevent freezing because we don't want to modify
+      // the target object AT ALL!
+      preventExtensions(target) {
+        if (!Reflect.isExtensible(target)) {
+          // Already prevented extensions, so succeed.
+          return true;
+        } // This is a mutation.  Not allowed.
 
 
-  nonMapped.add(insulate);
-  return insulate;
-};
+        throw err(`Cannot prevent extensions of insulated object`);
+      },
 
-var _default = makeInsulate;
+      // The traps that have a reasonably simple implementation:
+      get(target, prop, receiver) {
+        const desc = Reflect.getOwnPropertyDescriptor(target, prop);
+        const value = Reflect.get(target, prop, receiver);
+
+        if (desc && !desc.writable && !desc.configurable) {
+          return value;
+        }
+
+        return leave(() => value);
+      },
+
+      getPrototypeOf(target) {
+        return leave(() => Reflect.getPrototypeOf(target));
+      },
+
+      ownKeys(target) {
+        return leave(() => Reflect.ownKeys(target));
+      },
+
+      has(target, key) {
+        return leave(() => key in target);
+      },
+
+      // The recursively-wrapping traps.
+      apply(target, thisArg, argumentsList) {
+        // If the target method is from outside, but thisArg is not from outside,
+        // nor already exported to outside, we have insulation-crossing `this` capture.
+        if (Object(thisArg) === thisArg && outMap.get(target) && !inMap.get(thisArg) && !outMap.get(thisArg)) {
+          // Block accidental `this`-capture, but don't break
+          // callers that ignore `this` anyways.
+          thisArg = undefined;
+        }
+
+        const wrappedThis = enter(thisArg);
+        const wrappedArguments = argumentsList.map(enter);
+        return leave(() => Reflect.apply(target, wrappedThis, wrappedArguments));
+      },
+
+      construct(target, args) {
+        const wrappedArguments = args.map(enter);
+        return leave(() => Reflect.construct(target, wrappedArguments));
+      }
+
+    }; // Now we can construct an insulated object, which
+    // makes it effectively read-only and transitively
+    // maintains the temperatures of the inside and outside.
+
+    const insulated = new Proxy(obj, handler); // Prevent double-insulation.
+
+    $h_already.add(insulated); // We're putting the insulated object outside, so mark it
+    // for our future inputs/outputs.
+
+    outMap.set(obj, insulated);
+    inMap.set(insulated, obj);
+    return insulated;
+  };
+
+  return wrapWithMaps(warmTarget, coldToWarmMap, warmToColdMap);
+}); // Prevent infinite regress.
+
+$h_already.add(insulate);
+var _default = insulate;
 exports.default = _default;
-},{}],"eb5I":[function(require,module,exports) {
-var global = arguments[3];
+},{"@agoric/harden":"KXoB"}],"YilW":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
-
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
-/**
- * By requiring sesshim.js, if you are not already in a SES
- * environment, you obtain a trivial polyfil of a small bit of SES's
- * API with none of its security. At the moment, you get only
- * <tt>def</tt> and <tt>confine</tt>, but with little of their
- * functionality. More API and more functionality will be provided on
- * an as-needed basis by my current uses, though I will try not to
- * break old clients that were compatible with both SES and
- * sesshim.js.
- *
- * <p>Currently, even if you are already in a SES environment,
- * sesshim.js will ignore that and do the same thing. Once actual SES
- * works on node/iojs/ES6, sesshim.js should test if it is in such an
- * environment, and re-export SES's versions of the APIs that
- * sesshim.js does provide, or wrappings that adapt them to ES6.
- */
-
-/**
- * The faux version of SES's <tt>harden</tt> is currently just a
- * synonym for Object.freeze.
- */
-var harden = Object.freeze;
-/**
- * The faux version of SES's <tt>confine</tt> evals an
- * expression in an environment consisting of the global environment
- * as enhanced and shadowed by the own properties of the
- * <tt>env</tt> object. Unlike real <tt>confine</tt>, <ul>
- * <li>The faux <tt>confine</tt> does not have a third
- *     <tt>opt_options</tt> parameter. An options argument can of
- *     course be provided by the caller, but it will be ignored.
- * <li>The expression can be in the subset of ES6 supported by
- *     Babel.
- * <li>All dangerous globals that are not shadowed, such as "window"
- *     or "document", are still accessible by the evaled expression.
- * <li>The current binding of these properties at the time that
- *     <tt>confine</tt> is called are used as the initial
- *     bindings. Further changes to either the properties or the
- *     bindings are not tracked by the other.
- * <li>In the evaled expression, <tt>this</tt> is bound to
- *     <tt>undefined</tt>.
- * </ul>
- * When sesshim.js is enhanced to use SES if present, this confine
- * should wrap SES's confine rather than export it directly, in
- * order to continue to support ES6 expressions.
- */
-
-function confine(exprSrc, env) {
-  exprSrc = '' + exprSrc;
-  var names = Object.getOwnPropertyNames(env); // Note: no newline prior to ${exprSrc}, so that line numbers for
-  // errors within exprSrc are accurate. Column numbers on the first
-  // line won't be, but will on following lines.
-
-  var closedFuncSrc = "(function(".concat(names.join(','), ") { \"use strict\"; return (").concat(exprSrc, "\n);\n})\n//# sourceURL=data:").concat(encodeURIComponent(exprSrc).slice(0, 48), "...\n"); // tslint:disable-next-line:no-unused-expression
-
-  var closedFunc = (1, eval)(closedFuncSrc);
-  return closedFunc.apply(void 0, _toConsumableArray(names.map(function (n) {
-    return env[n];
-  })));
-} // FIXME: For bootstrapping Jessie modules.
-
-
-(typeof window === 'undefined' ? global : window).insulate = harden;
-var _default = {
-  confine: harden(confine),
-  harden: harden(harden)
-};
-exports.default = _default;
-},{}],"3KG6":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
+Object.defineProperty(exports, "confine", {
+  enumerable: true,
+  get: function () {
+    return _confine.confine;
+  }
 });
-exports.default = exports.insulate = exports.setComputedIndex = exports.applyMethod = void 0;
+Object.defineProperty(exports, "confineExpr", {
+  enumerable: true,
+  get: function () {
+    return _confine.confineExpr;
+  }
+});
+Object.defineProperty(exports, "makePromise", {
+  enumerable: true,
+  get: function () {
+    return _makers.makePromise;
+  }
+});
+Object.defineProperty(exports, "makeMap", {
+  enumerable: true,
+  get: function () {
+    return _makers.makeMap;
+  }
+});
+Object.defineProperty(exports, "makeSet", {
+  enumerable: true,
+  get: function () {
+    return _makers.makeSet;
+  }
+});
+Object.defineProperty(exports, "makeWeakMap", {
+  enumerable: true,
+  get: function () {
+    return _makers.makeWeakMap;
+  }
+});
+Object.defineProperty(exports, "makeWeakSet", {
+  enumerable: true,
+  get: function () {
+    return _makers.makeWeakSet;
+  }
+});
+Object.defineProperty(exports, "harden", {
+  enumerable: true,
+  get: function () {
+    return _harden.default;
+  }
+});
+Object.defineProperty(exports, "insulate", {
+  enumerable: true,
+  get: function () {
+    return _insulate.default;
+  }
+});
+
+var _confine = require("./confine.mjs");
+
+var _makers = require("./makers.mjs");
+
+var _harden = _interopRequireDefault(require("@agoric/harden"));
 
 var _insulate = _interopRequireDefault(require("./insulate.mjs"));
 
-var _sesshim = _interopRequireDefault(require("./sesshim.mjs"));
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
-function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
-
-function _templateObject() {
-  var data = _taggedTemplateLiteral(["Cannot set ", " object member"]);
-
-  _templateObject = function _templateObject() {
-    return data;
-  };
-
-  return data;
-}
-
-function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
-
-var confine = _sesshim.default.confine,
-    harden = _sesshim.default.harden;
-var globalEnv = {};
-var applyMethod = harden(function (thisObj, method, args) {
-  return Reflect.apply(method, thisObj, args);
-});
-exports.applyMethod = applyMethod;
-var setComputedIndex = harden(function (obj, index, val) {
-  if (index === '__proto__') {
-    slog.error(_templateObject(), {
-      index: index
-    });
-  }
-
-  return obj[index] = val;
-});
-exports.setComputedIndex = setComputedIndex;
-globalEnv.makeMap = harden(function () {
-  for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-    args[_key] = arguments[_key];
-  }
-
-  return harden(_construct(Map, args));
-});
-globalEnv.makeSet = harden(function () {
-  for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-    args[_key2] = arguments[_key2];
-  }
-
-  return harden(_construct(Set, args));
-});
-globalEnv.makePromise = harden(function (executor) {
-  return harden(new Promise(executor));
-});
-globalEnv.makeWeakMap = harden(function () {
-  for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-    args[_key3] = arguments[_key3];
-  }
-
-  return harden(_construct(WeakMap, args));
-});
-globalEnv.makeWeakSet = harden(function () {
-  for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-    args[_key4] = arguments[_key4];
-  }
-
-  return harden(_construct(WeakSet, args));
-}); // Don't insulate the arguments to setComputedIndex or the primitive endowments.
-
-var nonMapped = new WeakSet();
-nonMapped.add(setComputedIndex);
-var insulate = (0, _insulate.default)(nonMapped); // Needed by the parser.
-
-exports.insulate = insulate;
-globalEnv.confine = harden(confine);
-
-globalEnv.insulate = function (obj) {
-  return obj;
-};
-
-var _default = globalEnv;
-exports.default = _default;
-},{"./insulate.mjs":"kax4","./sesshim.mjs":"eb5I"}],"sRTJ":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = exports.contextArg = void 0;
-
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
-function _templateObject() {
-  var data = _taggedTemplateLiteral(["Context value ", " mismatch: ", " vs. ", ""]);
-
-  _templateObject = function _templateObject() {
-    return data;
-  };
-
-  return data;
-}
-
-function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-// DO NOT EDIT - Generated automatically from slog.mjs.ts by tessc
-var contextArg = insulate(function (context, a) {
-  if (_typeof(a) !== 'object' || a === null) {
-    // Just stringify the argument.
-    return '' + a;
-  } else if (a.length !== undefined) {
-    // Take the value as the (anonymous) array.
-    return a;
-  } // Deconstruct the argument object.
-
-
-  var valname, val;
-
-  var _arr = Object.keys(a);
-
-  for (var _i = 0; _i < _arr.length; _i++) {
-    var vname = _arr[_i];
-
-    if (vname === 'format') {// format = a[vname];
-    } else if (valname !== undefined || typeof a[vname] === 'function') {
-      // Too many members or seems to be an active object.
-      return a;
-    } else {
-      // We have at least one non-format member.
-      valname = vname;
-      val = JSON.stringify(a[vname], undefined, 2);
-    }
-  }
-
-  if (valname === undefined) {
-    // No non-format arguments.
-    return a;
-  }
-
-  if (valname[0] === '_') {// Do nothing.
-  } else if (context.has(valname)) {
-    var oval = context.get(valname);
-
-    if (val !== oval) {
-      slog.error(_templateObject(), {
-        valname: valname
-      }, {
-        val: val
-      }, {
-        oval: oval
-      });
-    }
-  } else {
-    context.set(valname, val);
-  }
-
-  return val;
-});
-exports.contextArg = contextArg;
-var makeSlog = insulate(function (handler) {
-  var levels = makeMap();
-  var names = [];
-
-  var doit = function doit(level, name) {
-    if (level >= 0) {
-      names[level] = name;
-      levels.set(name, level);
-    }
-
-    function tag(contextOrTemplate) {
-      var context;
-
-      if (!contextOrTemplate.raw) {
-        context = makeMap(_toConsumableArray(Object.entries(contextOrTemplate)));
-        return function (t) {
-          for (var _len2 = arguments.length, a = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-            a[_key2 - 1] = arguments[_key2];
-          }
-
-          return handler(level, names, levels, context, t, a);
-        };
-      } // No specified context, this is the template tag.
-
-
-      context = makeMap();
-      var template = contextOrTemplate;
-
-      for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-        args[_key - 1] = arguments[_key];
-      }
-
-      return handler(level, names, levels, context, template, args);
-    }
-
-    return tag;
-  };
-
-  var i = 0;
-  var slog = doit(-1, 'stringify');
-  slog.panic = doit(i++, 'panic');
-  slog.alert = doit(i++, 'alert');
-  slog.crit = doit(i++, 'crit');
-  slog.error = doit(i++, 'error');
-  slog.reject = doit(i++, 'reject');
-  slog.warn = doit(i++, 'warn');
-  slog.notice = doit(i++, 'notice');
-  slog.info = doit(i++, 'info');
-  slog.debug = doit(i++, 'debug');
-  slog.trace = doit(i++, 'trace');
-  return slog;
-});
-var _default = makeSlog;
-exports.default = _default;
-},{}],"g5I+":[function(require,module,exports) {
+},{"./confine.mjs":"1dyn","./makers.mjs":"zfHG","@agoric/harden":"KXoB","./insulate.mjs":"63Wy"}],"g5I+":[function(require,module,exports) {
 
 // shim for using process in browser
 var process = module.exports = {}; // cached from whatever global is present so that test runners that stub it
@@ -4000,317 +5523,168 @@ process.chdir = function (dir) {
 process.umask = function () {
   return 0;
 };
-},{}],"fc7A":[function(require,module,exports) {
+},{}],"Ipmo":[function(require,module,exports) {
+var define;
 var global = arguments[3];
 var process = require("process");
-"use strict";
+(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+    typeof define === 'function' && define.amd ? define(['exports'], factory) :
+    (global = global || self, factory(global.slog = {}));
+}(this, function (exports) { 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var _exportNames = {};
-exports.default = void 0;
+    var SlogLevel;
+    (function (SlogLevel) {
+        SlogLevel[SlogLevel["reject"] = -2] = "reject";
+        SlogLevel[SlogLevel["stringify"] = -1] = "stringify";
+        SlogLevel[SlogLevel["panic"] = 0] = "panic";
+        SlogLevel[SlogLevel["alert"] = 1] = "alert";
+        SlogLevel[SlogLevel["crit"] = 2] = "crit";
+        SlogLevel[SlogLevel["error"] = 3] = "error";
+        SlogLevel[SlogLevel["warn"] = 4] = "warn";
+        SlogLevel[SlogLevel["notice"] = 5] = "notice";
+        SlogLevel[SlogLevel["info"] = 6] = "info";
+        SlogLevel[SlogLevel["debug"] = 7] = "debug";
+        SlogLevel[SlogLevel["trace"] = 8] = "trace";
+    })(SlogLevel || (SlogLevel = {}));
+    const contextArg = (context, a) => {
+        if (typeof a !== 'object' || a === null) {
+            // Just stringify the argument.
+            return '' + a;
+        }
+        else if (a.length !== undefined) {
+            // Take the value as the (anonymous) array.
+            return a;
+        }
+        // Deconstruct the argument object.
+        let valname, val;
+        for (const vname of Object.keys(a)) {
+            if (vname === 'format') ;
+            else if (valname !== undefined || typeof a[vname] === 'function') {
+                // Too many members or seems to be an active object.
+                return a;
+            }
+            else {
+                // We have at least one non-format member.
+                valname = vname;
+                val = JSON.stringify(a[vname], undefined, 2);
+            }
+        }
+        if (valname === undefined) {
+            // No non-format arguments.
+            return a;
+        }
+        if (valname[0] === '_') ;
+        else if (valname in context) {
+            const oval = context[valname];
+            if (val !== oval) {
+                slog.error `Context value ${{ valname }} mismatch: ${{ val }} vs. ${{ oval }}`;
+            }
+        }
+        else {
+            context[valname] = val;
+        }
+        return val;
+    };
+    const makeSlog = (makeHandler) => {
+        const doit = (level, name) => {
+            const handler = makeHandler(level, name);
+            function tag(contextOrTemplate, ...args) {
+                if (!contextOrTemplate.raw) {
+                    const c = { ...contextOrTemplate };
+                    return (t, ...a) => handler(c, t, a);
+                }
+                // No specified context, this is the template tag.
+                const context = new Map();
+                const template = contextOrTemplate;
+                return handler(context, template, args);
+            }
+            return tag;
+        };
+        const slog = doit(SlogLevel.stringify, 'stringify');
+        slog.panic = doit(SlogLevel.panic, 'panic');
+        slog.alert = doit(SlogLevel.alert, 'alert');
+        slog.crit = doit(SlogLevel.crit, 'crit');
+        slog.error = doit(SlogLevel.error, 'error');
+        slog.reject = doit(SlogLevel.reject, 'reject');
+        slog.warn = doit(SlogLevel.warn, 'warn');
+        slog.notice = doit(SlogLevel.notice, 'notice');
+        slog.info = doit(SlogLevel.info, 'info');
+        slog.debug = doit(SlogLevel.debug, 'debug');
+        slog.trace = doit(SlogLevel.trace, 'trace');
+        return slog;
+    };
+    const defaultMakeHandler = (rawLevel, name) => {
+        const level = rawLevel;
+        const prefix = level < 0 ? '' : name + ': ';
+        return (context, template, args) => {
+            let ca;
+            const reduced = args.reduce((prior, a, i) => {
+                ca = contextArg(context, a);
+                const last = prior[prior.length - 1];
+                if (typeof ca === 'object' && ca !== undefined) {
+                    prior[prior.length - 1] = last.trimRight();
+                    prior.push(ca, template[i + 1].trimLeft());
+                }
+                else {
+                    prior[prior.length - 1] = last + String(ca) + template[i + 1];
+                }
+                return prior;
+            }, [prefix + template[0]]);
+            if (level === SlogLevel.reject) {
+                // Just return a promise rejection.
+                return Promise.reject(reduced.join(' '));
+            }
+            else if (level < 0) {
+                // Just stringify.
+                return reduced.join(' ');
+            }
+            if (level >= SlogLevel.warn) {
+                // Use console.error to provide an inspectable result in the
+                // browser without polluting stdout on Node.
+                console.error(...reduced);
+            }
+            else {
+                // Record a location, too.
+                const at0 = new Error().stack;
+                console.error(...reduced, at0);
+            }
+            if (level <= SlogLevel.panic && typeof process !== 'undefined') {
+                // Exit the process.
+                process.exit(99);
+            }
+            else if (level <= SlogLevel.alert && typeof alert !== 'undefined') {
+                alert(reduced.join(' '));
+            }
+            else if (level <= SlogLevel.error) {
+                // Throw an exception without revealing stack.
+                throw reduced.join(' ');
+            }
+            // Return nothing.
+        };
+    };
+    const slog = makeSlog(defaultMakeHandler);
 
-var _jessieDefaults = _interopRequireDefault(require("./jessieDefaults.mjs"));
+    exports.contextArg = contextArg;
+    exports.defaultMakeHandler = defaultMakeHandler;
+    exports.makeSlog = makeSlog;
+    exports.slog = slog;
 
-Object.keys(_jessieDefaults).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function () {
-      return _jessieDefaults[key];
-    }
-  });
-});
+    Object.defineProperty(exports, '__esModule', { value: true });
 
-var _slog = _interopRequireDefault(require("../../lib/slog.mjs"));
+}));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-var globalEnv = Object.assign({}, _jessieDefaults.default); // Export the bootstrapped primitives.
-
-Object.keys(globalEnv).forEach(function (vname) {
-  global[vname] = globalEnv[vname];
-}); // slog writes to console
-
-// Create a logger.
-var mySlog = (0, _slog.default)(function (level, names, levels, context, template, args) {
-  var ca;
-  var reduced = args.reduce(function (prior, a, i) {
-    ca = (0, _slog.contextArg)(context, a);
-    var last = prior[prior.length - 1];
-
-    if (_typeof(ca) === 'object' && ca !== undefined) {
-      prior[prior.length - 1] = last.trimRight();
-      prior.push(ca, template[i + 1].trimLeft());
-    } else {
-      prior[prior.length - 1] = last + String(ca) + template[i + 1];
-    }
-
-    return prior;
-  }, [names[level] + ': ' + template[0]]);
-
-  if (level === levels.get('stringify')) {
-    // Just stringify.
-    return reduced.join(' ');
-  }
-
-  if (level >= levels.get('warn')) {
-    var _console;
-
-    // Use console.error to provide an inspectable result.
-    (_console = console).error.apply(_console, _toConsumableArray(reduced));
-  } else {
-    var _console2;
-
-    // Record a location, too.
-    var at0 = new Error().stack; // Remove the current entry and our parent.
-
-    var at1 = at0.slice(at0.indexOf('\n') + 1);
-    var at2 = at1.slice(at1.indexOf('\n') + 1);
-    var at3 = at2.slice(at2.indexOf('\n'));
-
-    (_console2 = console).error.apply(_console2, _toConsumableArray(reduced).concat([at3]));
-  }
-
-  if (names[level] === 'reject') {
-    // Just return a promise rejection.
-    return Promise.reject(reduced.join(' '));
-  } else if (typeof global !== 'undefined' && level <= levels.get('panic')) {
-    // At least allow turns to finish.
-    process.exitCode = 99;
-  } else if (level <= levels.get('error')) {
-    // Throw an exception without revealing stack.
-    throw reduced.join(' ');
-  }
-
-  return reduced.join(' ');
-});
-globalEnv.slog = mySlog; // Export the environment as global endowments.  This is only possible
-// because we are in control of the main program, and we are setting
-// this policy for all our modules.
-
-Object.keys(globalEnv).forEach(function (vname) {
-  global[vname] = globalEnv[vname];
-});
-var _default = globalEnv;
-exports.default = _default;
-},{"./jessieDefaults.mjs":"3KG6","../../lib/slog.mjs":"sRTJ","process":"g5I+"}],"4nUr":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.buildWhitelist = buildWhitelist;
-
-// Copyright (C) 2011 Google Inc.
-// Copyright (C) 2018 Agoric
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-/**
- * Based on https://github.com/Agoric/SES/blob/master/src/bundle/whitelist.js
- *
- * @author Mark S. Miller,
- */
-function buildWhitelist() {
-  "use strict";
-
-  var j = true; // included in the Jessie runtime
-
-  var namedIntrinsics = {
-    cajaVM: {
-      // Caja support
-      Nat: j,
-      def: j,
-      confine: j
-    },
-    // In order according to
-    // http://www.ecma-international.org/ecma-262/ with chapter
-    // numbers where applicable
-    // 18 The Global Object
-    Infinity: j,
-    NaN: j,
-    undefined: j,
-    // 19 Fundamental Objects
-    Object: {
-      // 19.1
-      freeze: j,
-      is: j,
-      // ES-Harmony
-      preventExtensions: j,
-      seal: j,
-      entries: j,
-      keys: j,
-      values: j
-    },
-    Boolean: {// 19.3
-    },
-    // 20 Numbers and Dates
-    Number: {
-      // 20.1
-      isFinite: j,
-      // ES-Harmony
-      isNaN: j,
-      // ES-Harmony
-      isSafeInteger: j,
-      // ES-Harmony
-      MAX_SAFE_INTEGER: j,
-      // ES-Harmony
-      MIN_SAFE_INTEGER: j // ES-Harmony
-
-    },
-    Math: {
-      // 20.2
-      E: j,
-      PI: j,
-      abs: j,
-      ceil: j,
-      floor: j,
-      max: j,
-      min: j,
-      round: j,
-      trunc: j // ES-Harmony
-
-    },
-    // 21 Text Processing
-    String: {
-      // 21.2
-      fromCharCode: j,
-      raw: j,
-      // ES-Harmony
-      prototype: {
-        charCodeAt: j,
-        endsWith: j,
-        // ES-Harmony
-        indexOf: j,
-        lastIndexOf: j,
-        slice: j,
-        split: j,
-        startsWith: j // ES-Harmony
-
-      }
-    },
-    // 22 Indexed Collections
-    Array: {
-      // 22.1
-      from: j,
-      isArray: j,
-      of: j,
-      // ES-Harmony?
-      prototype: {
-        filter: j,
-        forEach: j,
-        indexOf: j,
-        join: j,
-        lastIndexOf: j,
-        map: j,
-        pop: j,
-        push: j,
-        reduce: j,
-        reduceRight: j,
-        slice: j
-      }
-    },
-    // 23 Keyed Collections          all ES-Harmony
-    Map: {
-      // 23.1
-      prototype: {
-        clear: j,
-        delete: j,
-        entries: j,
-        forEach: j,
-        get: j,
-        has: j,
-        keys: j,
-        set: j,
-        values: j
-      }
-    },
-    Set: {
-      // 23.2
-      prototype: {
-        add: j,
-        clear: j,
-        delete: j,
-        entries: j,
-        forEach: j,
-        has: j,
-        keys: j,
-        values: j
-      }
-    },
-    WeakMap: {
-      // 23.3
-      prototype: {
-        // Note: coordinate this list with maintenance of repairES5.js
-        delete: j,
-        get: j,
-        has: j,
-        set: j
-      }
-    },
-    WeakSet: {
-      // 23.4
-      prototype: {
-        add: j,
-        delete: j,
-        has: j
-      }
-    },
-    // 24.4 TODO: Omitting Atomics for now
-    JSON: {
-      // 24.5
-      parse: j,
-      stringify: j
-    },
-    Promise: {
-      // 25.4
-      all: j,
-      race: j,
-      reject: j,
-      resolve: j,
-      prototype: {
-        catch: j,
-        then: j
-      }
-    }
-  };
-  return {
-    namedIntrinsics: namedIntrinsics,
-    anonIntrinsics: {}
-  };
-}
-},{}],"cE9W":[function(require,module,exports) {
+},{"process":"g5I+"}],"cE9W":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-// DO NOT EDIT - Generated automatically from indent.mjs.ts by tessc
-var indent = insulate(function (template) {
+
+var _jessie = require("@agoric/jessie");
+
+var indent = (0, _jessie.insulate)(function (template) {
   var result = [];
   var newnewline = '\n';
 
@@ -4351,13 +5725,17 @@ var indent = insulate(function (template) {
 });
 var _default = indent;
 exports.default = _default;
-},{}],"QgFk":[function(require,module,exports) {
+},{"@agoric/jessie":"YilW"}],"QgFk":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _jessie = require("@agoric/jessie");
+
+var _slog = require("@michaelfig/slog");
 
 var _indent = _interopRequireDefault(require("./indent.mjs"));
 
@@ -4703,13 +6081,14 @@ function _templateObject() {
 
 function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 
-var indent = insulate(_indent.default);
-var LEFT_RECUR = insulate({
+var slog = (0, _jessie.insulate)(_slog.slog);
+var indent = (0, _jessie.insulate)(_indent.default);
+var LEFT_RECUR = (0, _jessie.insulate)({
   toString: function toString() {
     return 'LEFT_RECUR';
   }
 });
-var RUN = insulate(function (self, ruleOrPatt, pos, name) {
+var RUN = (0, _jessie.insulate)(function (self, ruleOrPatt, pos, name) {
   if (self._debug) {
     slog.info(_templateObject(), pos, name);
   }
@@ -4717,7 +6096,7 @@ var RUN = insulate(function (self, ruleOrPatt, pos, name) {
   var posm = self._memo.get(pos);
 
   if (!posm) {
-    posm = makeMap();
+    posm = (0, _jessie.makeMap)();
 
     self._memo.set(pos, posm);
   }
@@ -4750,7 +6129,7 @@ var RUN = insulate(function (self, ruleOrPatt, pos, name) {
 
   return result;
 });
-var lastFailures = insulate(function (self) {
+var lastFailures = (0, _jessie.insulate)(function (self) {
   var maxPos = 0;
   var fails = [];
   var _iteratorNormalCompletion = true;
@@ -4820,7 +6199,7 @@ var lastFailures = insulate(function (self) {
 
   return [maxPos, fails];
 });
-var ERROR = insulate(function (self, _pos) {
+var ERROR = (0, _jessie.insulate)(function (self, _pos) {
   var _lastFailures = lastFailures(self),
       _lastFailures2 = _slicedToArray(_lastFailures, 2),
       last = _lastFailures2[0],
@@ -4841,7 +6220,7 @@ var ERROR = insulate(function (self, _pos) {
   }, ''), failStr);
   slog.error(_templateObject5(), tokStr);
 });
-var makeTokStr = insulate(function (self, found) {
+var makeTokStr = (0, _jessie.insulate)(function (self, found) {
   if (Array.isArray(found)) {
     var segment = self.template[found[0]];
     return "".concat(JSON.stringify(segment[found[1]]), " #").concat(found[0], ":").concat(found[1]);
@@ -4853,7 +6232,7 @@ var makeTokStr = insulate(function (self, found) {
 
   return undefined;
 });
-var DONE = insulate(function (self) {
+var DONE = (0, _jessie.insulate)(function (self) {
   if (self._debug) {
     var _iteratorNormalCompletion3 = true;
     var _didIteratorError3 = false;
@@ -4929,7 +6308,7 @@ var DONE = insulate(function (self) {
     slog.info(_templateObject6(), self._hits(0), self._misses(0));
   }
 });
-var FIND = insulate(function (template, pos) {
+var FIND = (0, _jessie.insulate)(function (template, pos) {
   var raw = template.raw;
   var numSubs = raw.length - 1;
   var relpos = pos;
@@ -4947,11 +6326,11 @@ var FIND = insulate(function (template, pos) {
     relpos -= seglen + 1; // "+1" for the skipped hole
   }
 });
-var ACCEPT = insulate(function (_self, pos) {
+var ACCEPT = (0, _jessie.insulate)(function (_self, pos) {
   // Not really needed: useful for incremental compilation.
   return [pos, []];
 });
-var EAT = insulate(function (self, pos, str) {
+var EAT = (0, _jessie.insulate)(function (self, pos, str) {
   // if (self._debug) {
   //    slog.warn`Have ${self.template}`;
   // }
@@ -4972,7 +6351,7 @@ var EAT = insulate(function (self, pos, str) {
 
   return [pos, FAIL];
 });
-var HOLE = insulate(function (self, pos) {
+var HOLE = (0, _jessie.insulate)(function (self, pos) {
   var found = FIND(self.template, pos);
 
   if (typeof found === 'number') {
@@ -4981,19 +6360,19 @@ var HOLE = insulate(function (self, pos) {
 
   return [pos, FAIL];
 });
-var FAIL = insulate({
+var FAIL = (0, _jessie.insulate)({
   toString: function toString() {
     return 'FAIL';
   }
 });
-var SKIP = insulate({
+var SKIP = (0, _jessie.insulate)({
   toString: function toString() {
     return 'SKIP';
   }
 });
 var lHexDigits = '0123456789abcdef';
 var uHexDigits = 'ABCDEF';
-var hexDigit = insulate(function (c) {
+var hexDigit = (0, _jessie.insulate)(function (c) {
   var i = lHexDigits.indexOf(c);
 
   if (i < 0) {
@@ -5008,7 +6387,7 @@ var hexDigit = insulate(function (c) {
 
   return i;
 });
-var unescape = insulate(function (cs) {
+var unescape = (0, _jessie.insulate)(function (cs) {
   if (cs[0] !== '\\') {
     return [cs[0], 1];
   } // It's an escape.
@@ -5057,7 +6436,7 @@ var unescape = insulate(function (cs) {
 
   return [q, 2];
 });
-var bootPeg = insulate(function (makePeg, bootPegAst) {
+var bootPeg = (0, _jessie.insulate)(function (makePeg, bootPegAst) {
   function compile(sexp) {
     var numSubs = 0; // # of holes implied by sexp, so far
     // generated names
@@ -5310,7 +6689,7 @@ var bootPeg = insulate(function (makePeg, bootPegAst) {
   }
 
   function quasiMemo(quasiCurry, parserCreator) {
-    var wm = makeWeakMap();
+    var wm = (0, _jessie.makeWeakMap)();
     var debug = false;
 
     var templateTag = function templateTag(templateOrFlag) {
@@ -5388,7 +6767,7 @@ var bootPeg = insulate(function (makePeg, bootPegAst) {
     var baseAST = ['peg'].concat(_toConsumableArray(baseRules));
     var parserTraitMakerSrc = compile(baseAST); // slog.trace`SOURCES: ${parserTraitMakerSrc}\n`;
 
-    var makeParserTrait = confine(parserTraitMakerSrc, {
+    var makeParserTrait = (0, _jessie.confineExpr)(parserTraitMakerSrc, {
       DONE: DONE,
       EAT: EAT,
       ERROR: ERROR,
@@ -5396,6 +6775,7 @@ var bootPeg = insulate(function (makePeg, bootPegAst) {
       FIND: FIND,
       RUN: RUN,
       SKIP: SKIP,
+      makeMap: _jessie.makeMap,
       makeTokStr: makeTokStr
     });
     return function parserTag() {
@@ -5525,7 +6905,7 @@ var bootPeg = insulate(function (makePeg, bootPegAst) {
 });
 var _default = bootPeg;
 exports.default = _default;
-},{"./indent.mjs":"cE9W"}],"joiS":[function(require,module,exports) {
+},{"@agoric/jessie":"YilW","@michaelfig/slog":"Ipmo","./indent.mjs":"cE9W"}],"joiS":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5533,18 +6913,21 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-// DO NOT EDIT - Generated automatically from boot-pegast.mjs.ts by tessc
+var _jessie = require("@agoric/jessie");
+
 // boot-pegast.mjs.ts - AUTOMATICALLY GENERATED by boot-env.mjs.ts
-var _default = insulate([["def", "Grammar", ["act", 0, "_Spacing", ["+", "Definition"], "_EndOfFile"]], ["def", "Definition", ["act", 2, "Identifier", "LEFTARROW", "Expression", "SEMI", ["pred", 1]]], ["def", "Expression", ["act", 3, ["**", "Sequence", "_SLASH"]]], ["def", "Sequence", ["act", 5, ["act", 4, ["*", "Prefix"]], ["?", "HOLE"]]], ["def", "Prefix", ["or", ["act", 6, "AND", "HOLE"], ["act", 7, "AND", "Suffix"], ["act", 8, "NOT", "Suffix"], ["val0", "Suffix"]]], ["def", "Suffix", ["or", ["act", 9, "Primary", ["or", ["val0", "STARSTAR"], ["val0", "PLUSPLUS"]], "Primary"], ["act", 10, "Primary", ["or", ["val0", "QUESTION"], ["val0", "STAR"], ["val0", "PLUS"]]], ["val0", "Primary"]]], ["def", "Primary", ["or", ["val0", "Super"], ["val0", "Identifier", ["peekNot", "LEFTARROW"]], ["act", 11, "OPEN", "Expression", "CLOSE"], ["act", 12, "Literal"], ["act", 13, "Class"], ["act", 14, "DOT"], ["act", 15, "BEGIN"], ["act", 16, "END"]]], ["def", "Super", ["act", 17, ["lit", "super."], "Identifier"]], ["def", "Identifier", ["val0", ["begin"], "IdentStart", ["*", "IdentCont"], ["end"], "_Spacing"]], ["def", "IdentStart", ["val0", ["cls", "a-zA-Z_"]]], ["def", "IdentCont", ["or", ["val0", "IdentStart"], ["val0", ["cls", "0-9"]]]], ["def", "Literal", ["or", ["val0", ["cls", "'"], ["begin"], ["*", ["val0", ["peekNot", ["cls", "'"]], "Char"]], ["end"], ["cls", "'"], "_Spacing"], ["val0", ["cls", "\""], ["begin"], ["*", ["val0", ["peekNot", ["cls", "\""]], "Char"]], ["end"], ["cls", "\""], "_Spacing"]]], ["def", "Class", ["val0", ["lit", "["], ["begin"], ["*", ["val0", ["peekNot", ["lit", "]"]], "Range"]], ["end"], ["lit", "]"], "_Spacing"]], ["def", "Range", ["or", ["val0", "Char", ["lit", "-"], "Char"], ["val0", "Char"]]], ["def", "Char", ["or", ["val0", ["lit", "\\\\"], ["cls", "abefnrtv'\"\\[\\]\\\\\\`\\$"]], ["val0", ["lit", "\\\\x"], ["cls", "0-9a-fA-F"], ["cls", "0-9a-fA-F"]], ["val0", ["lit", "\\\\"], ["lit", "-"]], ["val0", ["peekNot", ["lit", "\\\\"]], ["dot"]]]], ["def", "LEFTARROW", ["val0", ["lit", "<-"], "_Spacing"]], ["def", "_SLASH", ["act", 18, ["lit", "/"], "_Spacing"]], ["def", "SEMI", ["val0", ["lit", ";"], "_Spacing"]], ["def", "AND", ["val0", ["lit", "&"], "_Spacing"]], ["def", "NOT", ["val0", ["lit", "~"], "_Spacing"]], ["def", "QUESTION", ["val0", ["lit", "?"], "_Spacing"]], ["def", "STAR", ["val0", ["lit", "*"], "_Spacing"]], ["def", "PLUS", ["val0", ["lit", "+"], "_Spacing"]], ["def", "OPEN", ["val0", ["lit", "("], "_Spacing"]], ["def", "CLOSE", ["val0", ["lit", ")"], "_Spacing"]], ["def", "DOT", ["val0", ["lit", "."], "_Spacing"]], ["def", "_Spacing", ["act", 19, ["*", ["or", ["val0", "Space"], ["val0", "Comment"]]]]], ["def", "Comment", ["val0", ["lit", "#"], ["*", ["val0", ["peekNot", "EndOfLine"], ["dot"]]], "EndOfLine"]], ["def", "Space", ["or", ["val0", ["lit", " "]], ["val0", ["lit", "\\t"]], ["val0", "EndOfLine"]]], ["def", "EndOfLine", ["or", ["val0", ["lit", "\\r\\n"]], ["val0", ["lit", "\\n"]], ["val0", ["lit", "\\r"]]]], ["def", "_EndOfFile", ["val0", ["peekNot", ["dot"]]]], ["def", "HOLE", ["val0", ["pred", 20], "_Spacing"]], ["def", "BEGIN", ["val0", ["lit", "<"], "_Spacing"]], ["def", "END", ["val0", ["lit", ">"], "_Spacing"]], ["def", "PLUSPLUS", ["val0", ["lit", "++"], "_Spacing"]], ["def", "STARSTAR", ["val0", ["lit", "**"], "_Spacing"]]]);
+var _default = (0, _jessie.insulate)([["def", "Grammar", ["act", 0, "_Spacing", ["+", "Definition"], "_EndOfFile"]], ["def", "Definition", ["act", 2, "Identifier", "LEFTARROW", "Expression", "SEMI", ["pred", 1]]], ["def", "Expression", ["act", 3, ["**", "Sequence", "_SLASH"]]], ["def", "Sequence", ["act", 5, ["act", 4, ["*", "Prefix"]], ["?", "HOLE"]]], ["def", "Prefix", ["or", ["act", 6, "AND", "HOLE"], ["act", 7, "AND", "Suffix"], ["act", 8, "NOT", "Suffix"], ["val0", "Suffix"]]], ["def", "Suffix", ["or", ["act", 9, "Primary", ["or", ["val0", "STARSTAR"], ["val0", "PLUSPLUS"]], "Primary"], ["act", 10, "Primary", ["or", ["val0", "QUESTION"], ["val0", "STAR"], ["val0", "PLUS"]]], ["val0", "Primary"]]], ["def", "Primary", ["or", ["val0", "Super"], ["val0", "Identifier", ["peekNot", "LEFTARROW"]], ["act", 11, "OPEN", "Expression", "CLOSE"], ["act", 12, "Literal"], ["act", 13, "Class"], ["act", 14, "DOT"], ["act", 15, "BEGIN"], ["act", 16, "END"]]], ["def", "Super", ["act", 17, ["lit", "super."], "Identifier"]], ["def", "Identifier", ["val0", ["begin"], "IdentStart", ["*", "IdentCont"], ["end"], "_Spacing"]], ["def", "IdentStart", ["val0", ["cls", "a-zA-Z_"]]], ["def", "IdentCont", ["or", ["val0", "IdentStart"], ["val0", ["cls", "0-9"]]]], ["def", "Literal", ["or", ["val0", ["cls", "'"], ["begin"], ["*", ["val0", ["peekNot", ["cls", "'"]], "Char"]], ["end"], ["cls", "'"], "_Spacing"], ["val0", ["cls", "\""], ["begin"], ["*", ["val0", ["peekNot", ["cls", "\""]], "Char"]], ["end"], ["cls", "\""], "_Spacing"]]], ["def", "Class", ["val0", ["lit", "["], ["begin"], ["*", ["val0", ["peekNot", ["lit", "]"]], "Range"]], ["end"], ["lit", "]"], "_Spacing"]], ["def", "Range", ["or", ["val0", "Char", ["lit", "-"], "Char"], ["val0", "Char"]]], ["def", "Char", ["or", ["val0", ["lit", "\\\\"], ["cls", "abefnrtv'\"\\[\\]\\\\\\`\\$"]], ["val0", ["lit", "\\\\x"], ["cls", "0-9a-fA-F"], ["cls", "0-9a-fA-F"]], ["val0", ["lit", "\\\\"], ["lit", "-"]], ["val0", ["peekNot", ["lit", "\\\\"]], ["dot"]]]], ["def", "LEFTARROW", ["val0", ["lit", "<-"], "_Spacing"]], ["def", "_SLASH", ["act", 18, ["lit", "/"], "_Spacing"]], ["def", "SEMI", ["val0", ["lit", ";"], "_Spacing"]], ["def", "AND", ["val0", ["lit", "&"], "_Spacing"]], ["def", "NOT", ["val0", ["lit", "~"], "_Spacing"]], ["def", "QUESTION", ["val0", ["lit", "?"], "_Spacing"]], ["def", "STAR", ["val0", ["lit", "*"], "_Spacing"]], ["def", "PLUS", ["val0", ["lit", "+"], "_Spacing"]], ["def", "OPEN", ["val0", ["lit", "("], "_Spacing"]], ["def", "CLOSE", ["val0", ["lit", ")"], "_Spacing"]], ["def", "DOT", ["val0", ["lit", "."], "_Spacing"]], ["def", "_Spacing", ["act", 19, ["*", ["or", ["val0", "Space"], ["val0", "Comment"]]]]], ["def", "Comment", ["val0", ["lit", "#"], ["*", ["val0", ["peekNot", "EndOfLine"], ["dot"]]], "EndOfLine"]], ["def", "Space", ["or", ["val0", ["lit", " "]], ["val0", ["lit", "\\t"]], ["val0", "EndOfLine"]]], ["def", "EndOfLine", ["or", ["val0", ["lit", "\\r\\n"]], ["val0", ["lit", "\\n"]], ["val0", ["lit", "\\r"]]]], ["def", "_EndOfFile", ["val0", ["peekNot", ["dot"]]]], ["def", "HOLE", ["val0", ["pred", 20], "_Spacing"]], ["def", "BEGIN", ["val0", ["lit", "<"], "_Spacing"]], ["def", "END", ["val0", ["lit", ">"], "_Spacing"]], ["def", "PLUSPLUS", ["val0", ["lit", "++"], "_Spacing"]], ["def", "STARSTAR", ["val0", ["lit", "**"], "_Spacing"]]]);
 
 exports.default = _default;
-},{}],"3zTw":[function(require,module,exports) {
+},{"@agoric/jessie":"YilW"}],"3zTw":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _jessie = require("@agoric/jessie");
 
 function _templateObject() {
   var data = _taggedTemplateLiteral(["\n# Hierarchical syntax\n\nGrammar      <- _Spacing Definition+ _EndOfFile\n                    ", ";\n\nDefinition   <- Identifier LEFTARROW Expression SEMI &", "\n                    ", ";\nExpression   <- Sequence ** _SLASH\n                    ", ";\nSequence     <- (Prefix*\n                    ", ")\n                 HOLE?\n                    ", ";\nPrefix       <- AND HOLE\n                    ", "\n              / AND Suffix\n                    ", "\n              / NOT Suffix\n                    ", "\n              /     Suffix;\nSuffix       <- Primary (STARSTAR\n                        / PLUSPLUS) Primary\n                    ", "\n              / Primary (QUESTION\n                        / STAR\n                        / PLUS)\n                    ", "\n              / Primary;\nPrimary      <- Super\n              / Identifier ~LEFTARROW\n              / OPEN Expression CLOSE\n                    ", "\n              / Literal\n                    ", "\n              / Class\n                    ", "\n              / DOT\n                    ", "\n              / BEGIN\n                    ", "\n              / END\n                    ", "\n              ;\n\nSuper        <- 'super.' Identifier\n                    ", ";\n\n# Lexical syntax\n\nIdentifier   <- < IdentStart IdentCont* > _Spacing;\nIdentStart   <- [a-zA-Z_];\nIdentCont    <- IdentStart / [0-9];\nLiteral      <- ['] < (~['] Char )* > ['] _Spacing\n              / [\"] < (~[\"] Char )* > [\"] _Spacing;\nClass        <- '[' < (~']' Range)* > ']' _Spacing;\nRange        <- Char '-' Char / Char;\nChar         <- '\\' [abefnrtv'\"[]\\`$]\n              / '\\x' [0-9a-fA-F][0-9a-fA-F]\n              / '\\' '-'\n              / ~'\\' .;\nLEFTARROW    <- '<-' _Spacing;\n_SLASH        <- '/' _Spacing              ", ";\nSEMI         <- ';' _Spacing;\nAND          <- '&' _Spacing;\nNOT          <- '~' _Spacing;\nQUESTION     <- '?' _Spacing;\nSTAR         <- '*' _Spacing;\nPLUS         <- '+' _Spacing;\nOPEN         <- '(' _Spacing;\nCLOSE        <- ')' _Spacing;\nDOT          <- '.' _Spacing;\n_Spacing      <- (Space / Comment)*        ", ";\nComment      <- '#' (~EndOfLine .)* EndOfLine;\nSpace        <- ' ' / '\t' / EndOfLine;\nEndOfLine    <- '\r\n' / '\n' / '\r';\n_EndOfFile    <- ~.;\n\nHOLE         <- &", " _Spacing;\nBEGIN        <- '<' _Spacing;\nEND          <- '>' _Spacing;\nPLUSPLUS     <- '++' _Spacing;\nSTARSTAR     <- '**' _Spacing;\n"], ["\n# Hierarchical syntax\n\nGrammar      <- _Spacing Definition+ _EndOfFile\n                    ", ";\n\nDefinition   <- Identifier LEFTARROW Expression SEMI &", "\n                    ", ";\nExpression   <- Sequence ** _SLASH\n                    ", ";\nSequence     <- (Prefix*\n                    ", ")\n                 HOLE?\n                    ", ";\nPrefix       <- AND HOLE\n                    ", "\n              / AND Suffix\n                    ", "\n              / NOT Suffix\n                    ", "\n              /     Suffix;\nSuffix       <- Primary (STARSTAR\n                        / PLUSPLUS) Primary\n                    ", "\n              / Primary (QUESTION\n                        / STAR\n                        / PLUS)\n                    ", "\n              / Primary;\nPrimary      <- Super\n              / Identifier ~LEFTARROW\n              / OPEN Expression CLOSE\n                    ", "\n              / Literal\n                    ", "\n              / Class\n                    ", "\n              / DOT\n                    ", "\n              / BEGIN\n                    ", "\n              / END\n                    ", "\n              ;\n\nSuper        <- 'super.' Identifier\n                    ", ";\n\n# Lexical syntax\n\nIdentifier   <- < IdentStart IdentCont* > _Spacing;\nIdentStart   <- [a-zA-Z_];\nIdentCont    <- IdentStart / [0-9];\nLiteral      <- ['] < (~['] Char )* > ['] _Spacing\n              / [\"] < (~[\"] Char )* > [\"] _Spacing;\nClass        <- '[' < (~']' Range)* > ']' _Spacing;\nRange        <- Char '-' Char / Char;\nChar         <- '\\\\' [abefnrtv'\"\\[\\]\\\\\\`\\$]\n              / '\\\\x' [0-9a-fA-F][0-9a-fA-F]\n              / '\\\\' '-'\n              / ~'\\\\' .;\nLEFTARROW    <- '<-' _Spacing;\n_SLASH        <- '/' _Spacing              ", ";\nSEMI         <- ';' _Spacing;\nAND          <- '&' _Spacing;\nNOT          <- '~' _Spacing;\nQUESTION     <- '?' _Spacing;\nSTAR         <- '*' _Spacing;\nPLUS         <- '+' _Spacing;\nOPEN         <- '(' _Spacing;\nCLOSE        <- ')' _Spacing;\nDOT          <- '.' _Spacing;\n_Spacing      <- (Space / Comment)*        ", ";\nComment      <- '#' (~EndOfLine .)* EndOfLine;\nSpace        <- ' ' / '\\t' / EndOfLine;\nEndOfLine    <- '\\r\\n' / '\\n' / '\\r';\n_EndOfFile    <- ~.;\n\nHOLE         <- &", " _Spacing;\nBEGIN        <- '<' _Spacing;\nEND          <- '>' _Spacing;\nPLUSPLUS     <- '++' _Spacing;\nSTARSTAR     <- '**' _Spacing;\n"]);
@@ -5572,7 +6955,6 @@ function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
-// DO NOT EDIT - Generated automatically from quasi-peg.mjs.ts by tessc
 // PEG quasi Grammar for PEG quasi Grammars
 // Michael FIG <michael+jessica@fig.org>, 2019-01-05
 //
@@ -5589,7 +6971,7 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 // which are adapted from:
 // https://github.com/erights/quasiParserGenerator
 /// <reference path="peg.d.ts"/>
-var makePeg = insulate(function (pegTag, metaCompile) {
+var makePeg = (0, _jessie.insulate)(function (pegTag, metaCompile) {
   var ACCEPT = pegTag.ACCEPT,
       HOLE = pegTag.HOLE,
       SKIP = pegTag.SKIP;
@@ -5675,13 +7057,15 @@ var makePeg = insulate(function (pegTag, metaCompile) {
 });
 var _default = makePeg;
 exports.default = _default;
-},{}],"xkRL":[function(require,module,exports) {
+},{"@agoric/jessie":"YilW"}],"xkRL":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _jessie = require("@agoric/jessie");
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -5703,11 +7087,10 @@ function _templateObject() {
 
 function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 
-// DO NOT EDIT - Generated automatically from quasi-jessie-module.mjs.ts by tessc
 // An extension of the Jessie grammar to facilitate rewriting
 // imports/exports as AMD.
 /// <reference path="peg.d.ts"/>
-var makeJessieModule = insulate(function (jessiePeg) {
+var makeJessieModule = (0, _jessie.insulate)(function (jessiePeg) {
   return jessiePeg(_templateObject(), function (b) {
     return function () {
       return ['moduleX', b];
@@ -5720,13 +7103,15 @@ var makeJessieModule = insulate(function (jessiePeg) {
 });
 var _default = makeJessieModule;
 exports.default = _default;
-},{}],"NMVp":[function(require,module,exports) {
+},{"@agoric/jessie":"YilW"}],"NMVp":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _jessie = require("@agoric/jessie");
 
 function _templateObject2() {
   var data = _taggedTemplateLiteral(["\n    # Jump to the expr production.\n    start <- _WS expr _EOF              ", ";\n    "]);
@@ -5747,7 +7132,7 @@ function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
 function _templateObject() {
-  var data = _taggedTemplateLiteral(["\n    # Override rather than inherit start production.\n    # Only module syntax is permitted.\n    start <- _WS moduleBody _EOF               ", ";\n\n    # A.1 Lexical Grammar\n\n    # For proposed eventual send expressions\n    LATER <- _NO_NEWLINE \"!\" _WS;\n\n    # A.2 Expressions\n\n    # Jessie primaryExpr does not include \"this\", ClassExpression,\n    # GeneratorExpression, AsyncFunctionExpression,\n    # AsyncGenerarorExpression, or RegularExpressionLiteral.\n    primaryExpr <-\n      super.primaryExpr\n    / functionExpr;\n\n    propDef <-\n      methodDef\n    / super.propDef;\n\n    purePropDef <-\n      methodDef\n    / super.purePropDef;\n\n    # Recognize pre-increment/decrement.\n    prePre <-\n      (PLUSPLUS / MINUSMINUS)                          ", "\n    / super.prePre;\n\n    # Extend to recognize proposed eventual get syntax,\n    # as well as computed indices and postfix increment/decrement.\n    memberPostOp <-\n      super.memberPostOp\n    / LEFT_BRACKET assignExpr RIGHT_BRACKET        ", "\n    / LATER LEFT_BRACKET assignExpr RIGHT_BRACKET  ", "\n    / LATER IDENT_NAME                             ", ";\n\n    # Extend to recognize proposed eventual send syntax.\n    # We distinguish b!foo(x) from calling b!foo by a post-parsing pass\n    callPostOp <-\n      super.callPostOp\n    / LATER args                                           ", ";\n\n    postOp <- (PLUSPLUS / MINUSMINUS) _WS;\n\n    # to be extended\n    assignExpr <-\n      arrowFunc\n    / functionExpr\n    / lValue postOp                                        ", "\n    / lValue (EQUALS / assignOp) assignExpr                ", "\n    / super.assignExpr\n    / primaryExpr;\n\n    # An expression without side-effects.\n    pureExpr <-\n      arrowFunc\n    / super.pureExpr;\n\n    # In Jessie, an lValue is only a variable, a computed index-named\n    # property (an array element), or a statically string-named\n    # property.\n    # We allow assignment to statically string-named fields, since it\n    # is useful during initialization and prevented thereafter by\n    # mandatory tamper-proofing.\n\n    # to be overridden or extended\n    lValue <-\n      primaryExpr LEFT_BRACKET indexExpr RIGHT_BRACKET     ", "\n    / primaryExpr LATER LEFT_BRACKET indexExpr RIGHT_BRACKET ", "\n    / primaryExpr DOT IDENT_NAME                           ", "\n    / primaryExpr LATER IDENT_NAME                         ", "\n    / useVar;\n\n    assignOp <-\n      (\"*=\" / \"/=\" / \"%=\" / \"+=\" / \"-=\"\n    / \"<<=\" / \">>=\" / \">>>=\"\n    / \"&=\" / \"^=\" / \"|=\"\n    / \"**=\") _WS;\n\n\n    # A.3 Statements\n\n    # to be extended.\n    # The exprStatement production must go last, so PEG's prioritized\n    # choice will interpret {} as a block rather than an expression.\n    statement <-\n      block\n    / IF LEFT_PAREN expr RIGHT_PAREN arm ELSE elseArm      ", "\n    / IF LEFT_PAREN expr RIGHT_PAREN arm                   ", "\n    / breakableStatement\n    / terminator\n    / IDENT COLON statement                                ", "\n    / TRY block catcher finalizer                          ", "\n    / TRY block catcher                                    ", "\n    / TRY block finalizer                                  ", "\n    / DEBUGGER SEMI                                        ", "\n    / exprStatement;\n\n    # to be overridden.  In Jessie, only blocks are accepted as arms\n    # of flow-of-control statements.\n    arm <- block;\n\n    # Allows for\n    # if (...) {} else if (...) {} else if (...) {};\n    elseArm <-\n      arm\n    / IF LEFT_PAREN expr RIGHT_PAREN arm ELSE elseArm      ", "\n    / IF LEFT_PAREN expr RIGHT_PAREN arm                   ", ";\n\n    breakableStatement <-\n      FOR LEFT_PAREN declOp forOfBinding OF expr RIGHT_PAREN arm\n            ", "\n    / FOR LEFT_PAREN declaration expr? SEMI expr? RIGHT_PAREN arm ", "\n    / WHILE LEFT_PAREN expr RIGHT_PAREN arm                       ", "\n    / SWITCH LEFT_PAREN expr RIGHT_PAREN LEFT_BRACE clause* RIGHT_BRACE\n            ", ";\n\n    # Each case clause must end in a terminating statement.\n    terminator <-\n      \"continue\" _NO_NEWLINE IDENT SEMI                ", "\n    / \"continue\" _WS SEMI                              ", "\n    / \"break\" _NO_NEWLINE IDENT SEMI                   ", "\n    / \"break\" _WS SEMI                                 ", "\n    / \"return\" _NO_NEWLINE expr SEMI                   ", "\n    / \"return\" _WS SEMI                                ", "\n    / \"throw\" _NO_NEWLINE expr SEMI                    ", ";\n\n    block <- LEFT_BRACE body RIGHT_BRACE              ", ";\n    body <- statementItem*;\n\n    # declaration must come first, so that PEG will prioritize\n    # function declarations over exprStatement.\n    statementItem <-\n      declaration\n    / statement;\n\n    # No \"class\" declaration.\n    # No generator, async, or async iterator function.\n    declaration <-\n      declOp binding ** _COMMA SEMI                    ", "\n    / functionDecl;\n\n    declOp <- (\"const\" / \"let\") _WSN;\n\n    forOfBinding <- bindingPattern / defVar;\n    binding <-\n      bindingPattern EQUALS assignExpr                ", "\n    / defVar EQUALS assignExpr                        ", "\n    / defVar;\n\n    bindingPattern <-\n      LEFT_BRACKET elementParam ** _COMMA RIGHT_BRACKET     ", "\n    / LEFT_BRACE propParam ** _COMMA RIGHT_BRACE            ", ";\n\n    pattern <-\n      bindingPattern\n    / defVar\n    / dataLiteral                                     ", "\n    / HOLE                                            ", ";\n\n    # to be overridden\n    elementParam <- param;\n\n    param <-\n      ELLIPSIS pattern                                ", "\n    / defVar EQUALS assignExpr                        ", "\n    / pattern;\n\n    propParam <-\n      ELLIPSIS pattern                                ", "\n    / propName COLON pattern                          ", "\n    / defVar EQUALS assignExpr                        ", "\n    / defVar                                          ", ";\n\n    # Use PEG prioritized choice.\n    # TODO emit diagnostic for failure cases.\n    exprStatement <-\n      ~cantStartExprStatement expr SEMI               ", ";\n\n    cantStartExprStatement <-\n      (\"{\" / \"function\" / \"async\" _NO_NEWLINE \"function\"\n    / \"class\" / \"let\" / \"[\") _WSN;\n\n    # to be overridden\n    terminatedBody <- ((~terminator statementItem)* terminator)+   ", ";\n    clause <-\n      caseLabel+ LEFT_BRACE terminatedBody RIGHT_BRACE ", ";\n    caseLabel <-\n      CASE expr COLON                                 ", "\n    / DEFAULT _WS COLON                                ", ";\n\n    catcher <- CATCH LEFT_PAREN pattern RIGHT_PAREN block ", ";\n    finalizer <- FINALLY block                        ", ";\n\n\n    # A.4 Functions and Classes\n\n    functionDecl <-\n      FUNCTION defVar LEFT_PAREN param ** _COMMA RIGHT_PAREN block\n                                                      ", ";\n\n    functionExpr <-\n      FUNCTION defVar? LEFT_PAREN param ** _COMMA RIGHT_PAREN block\n                                                      ", ";\n\n    # The assignExpr form must come after the block form, to make proper use\n    # of PEG prioritized choice.\n    arrowFunc <-\n      arrowParams _NO_NEWLINE ARROW block              ", "\n    / arrowParams _NO_NEWLINE ARROW assignExpr         ", ";\n\n    arrowParams <-\n      IDENT                                           ", "\n    / LEFT_PAREN param ** _COMMA RIGHT_PAREN           ", ";\n\n    # to be extended\n    methodDef <-\n      method\n    / GET propName LEFT_PAREN RIGHT_PAREN block            ", "\n    / SET propName LEFT_PAREN param RIGHT_PAREN block      ", ";\n\n    method <-\n      propName LEFT_PAREN param ** _COMMA RIGHT_PAREN block ", ";\n\n\n    # A.5 Scripts and Modules\n\n    moduleBody <- moduleItem*;\n    moduleItem <-\n      SEMI                                               ", "\n    / importDecl\n    / exportDecl\n    / moduleDeclaration;\n\n    useImport <- IMPORT_PFX IDENT                 ", ";\n    defImport <- IMPORT_PFX IDENT                 ", ";\n\n    moduleDeclaration <-\n      \"const\" _WSN moduleBinding ** _COMMA SEMI       ", ";\n\n    # An insulated expression without side-effects.\n    insulatedExpr <-\n      dataLiteral                                     ", "\n    / \"insulate\" _WS LEFT_PAREN (pureExpr / useImport) RIGHT_PAREN  ", "\n    / useVar;\n\n    # Jessie modules only allow insulated module-level bindings.\n    moduleBinding <-\n      bindingPattern EQUALS insulatedExpr       ", "\n    / defVar EQUALS insulatedExpr               ", "\n    / defVar;\n\n    importClause <-\n      STAR AS defImport                         ", "\n    / namedImports                              ", "\n    / defImport _COMMA STAR AS defImport        ", "\n    / defImport _COMMA namedImports             ", "\n    / defImport                                 ", ";\n\n    importSpecifier <-\n      defImport                                 ", "\n    / IDENT_NAME AS defImport                   ", ";\n\n    namedImports <-\n      LEFT_BRACE importSpecifier ** _COMMA _COMMA? RIGHT_BRACE ", ";\n\n    importDecl <- IMPORT importClause FROM STRING SEMI  ", ";\n    exportDecl <-\n      EXPORT DEFAULT exportableExpr SEMI        ", "\n    / EXPORT moduleDeclaration                  ", ";\n\n    # to be extended\n    exportableExpr <- insulatedExpr;\n\n    # Lexical syntax\n    ARROW <- \"=>\" _WS;\n    AS <- \"as\" _WSN;\n    DEBUGGER <- \"debugger\" _WSN;\n    PLUSPLUS <- \"++\" _WSN;\n    MINUSMINUS <- \"--\" _WSN;\n    CASE <- \"case\" _WSN;\n    IF <- \"if\" _WSN;\n    ELSE <- \"else\" _WSN;\n    FOR <- \"for\" _WSN;\n    OF <- \"of\" _WSN;\n    WHILE <- \"while\" _WSN;\n    BREAK <- \"break\" _WSN;\n    CONTINUE <- \"continue\" _WSN;\n    SWITCH <- \"switch\" _WSN;\n    TRY <- \"try\" _WSN;\n    CATCH <- \"catch\" _WSN;\n    FINALLY <- \"finally\" _WSN;\n    GET <- \"get\" _WSN;\n    SET <- \"set\" _WSN;\n    IMPORT <- \"import\" _WSN;\n    EXPORT <- \"export\" _WSN;\n    FROM <- \"from\" _WSN;\n    FUNCTION <- \"function\" _WSN;\n    DEFAULT <- \"default\" _WSN;\n    EQUALS <- \"=\" _WS;\n    SEMI <- \";\" _WS;\n    STAR <- \"*\" _WS;\n    "]);
+  var data = _taggedTemplateLiteral(["\n    # Override rather than inherit start production.\n    # Only module syntax is permitted.\n    start <- _WS moduleBody _EOF               ", ";\n\n    # A.1 Lexical Grammar\n\n    # For proposed eventual send expressions\n    LATER <- _NO_NEWLINE \"!\" _WS;\n\n    # A.2 Expressions\n\n    # Jessie primaryExpr does not include \"this\", ClassExpression,\n    # GeneratorExpression, AsyncFunctionExpression,\n    # AsyncGenerarorExpression, or RegularExpressionLiteral.\n    primaryExpr <-\n      super.primaryExpr\n    / functionExpr;\n\n    propDef <-\n      methodDef\n    / super.propDef;\n\n    purePropDef <-\n      methodDef\n    / super.purePropDef;\n\n    # Recognize pre-increment/decrement.\n    prePre <-\n      (PLUSPLUS / MINUSMINUS)                          ", "\n    / super.prePre;\n\n    # Extend to recognize proposed eventual get syntax,\n    # as well as computed indices and postfix increment/decrement.\n    memberPostOp <-\n      super.memberPostOp\n    / LEFT_BRACKET assignExpr RIGHT_BRACKET        ", "\n    / LATER LEFT_BRACKET assignExpr RIGHT_BRACKET  ", "\n    / LATER IDENT_NAME                             ", ";\n\n    # Extend to recognize proposed eventual send syntax.\n    # We distinguish b!foo(x) from calling b!foo by a post-parsing pass\n    callPostOp <-\n      super.callPostOp\n    / LATER args                                           ", ";\n\n    postOp <- (PLUSPLUS / MINUSMINUS) _WS;\n\n    # to be extended\n    assignExpr <-\n      arrowFunc\n    / functionExpr\n    / lValue postOp                                        ", "\n    / lValue (EQUALS / assignOp) assignExpr                ", "\n    / super.assignExpr\n    / primaryExpr;\n\n    # An expression without side-effects.\n    pureExpr <-\n      arrowFunc\n    / super.pureExpr;\n\n    # In Jessie, an lValue is only a variable, a computed index-named\n    # property (an array element), or a statically string-named\n    # property.\n    # We allow assignment to statically string-named fields, since it\n    # is useful during initialization and prevented thereafter by\n    # mandatory tamper-proofing.\n\n    # to be overridden or extended\n    lValue <-\n      primaryExpr LEFT_BRACKET indexExpr RIGHT_BRACKET     ", "\n    / primaryExpr LATER LEFT_BRACKET indexExpr RIGHT_BRACKET ", "\n    / primaryExpr DOT IDENT_NAME                           ", "\n    / primaryExpr LATER IDENT_NAME                         ", "\n    / useVar;\n\n    assignOp <-\n      (\"*=\" / \"/=\" / \"%=\" / \"+=\" / \"-=\"\n    / \"<<=\" / \">>=\" / \">>>=\"\n    / \"&=\" / \"^=\" / \"|=\"\n    / \"**=\") _WS;\n\n\n    # A.3 Statements\n\n    # to be extended.\n    # The exprStatement production must go last, so PEG's prioritized\n    # choice will interpret {} as a block rather than an expression.\n    statement <-\n      block\n    / IF LEFT_PAREN expr RIGHT_PAREN arm ELSE elseArm      ", "\n    / IF LEFT_PAREN expr RIGHT_PAREN arm                   ", "\n    / breakableStatement\n    / terminator\n    / IDENT COLON statement                                ", "\n    / TRY block catcher finalizer                          ", "\n    / TRY block catcher                                    ", "\n    / TRY block finalizer                                  ", "\n    / DEBUGGER SEMI                                        ", "\n    / exprStatement;\n\n    # to be overridden.  In Jessie, only blocks are accepted as arms\n    # of flow-of-control statements.\n    arm <- block;\n\n    # Allows for\n    # if (...) {} else if (...) {} else if (...) {};\n    elseArm <-\n      arm\n    / IF LEFT_PAREN expr RIGHT_PAREN arm ELSE elseArm      ", "\n    / IF LEFT_PAREN expr RIGHT_PAREN arm                   ", ";\n\n    breakableStatement <-\n      FOR LEFT_PAREN declOp forOfBinding OF expr RIGHT_PAREN arm\n            ", "\n    / FOR LEFT_PAREN declaration expr? SEMI expr? RIGHT_PAREN arm ", "\n    / WHILE LEFT_PAREN expr RIGHT_PAREN arm                       ", "\n    / SWITCH LEFT_PAREN expr RIGHT_PAREN LEFT_BRACE clause* RIGHT_BRACE\n            ", ";\n\n    # Each case clause must end in a terminating statement.\n    terminator <-\n      \"continue\" _NO_NEWLINE IDENT SEMI                ", "\n    / \"continue\" _WS SEMI                              ", "\n    / \"break\" _NO_NEWLINE IDENT SEMI                   ", "\n    / \"break\" _WS SEMI                                 ", "\n    / \"return\" _NO_NEWLINE expr SEMI                   ", "\n    / \"return\" _WS SEMI                                ", "\n    / \"throw\" _NO_NEWLINE expr SEMI                    ", ";\n\n    block <- LEFT_BRACE body RIGHT_BRACE              ", ";\n    body <- statementItem*;\n\n    # declaration must come first, so that PEG will prioritize\n    # function declarations over exprStatement.\n    statementItem <-\n      declaration\n    / statement;\n\n    # No \"class\" declaration.\n    # No generator, async, or async iterator function.\n    declaration <-\n      declOp binding ** _COMMA SEMI                    ", "\n    / functionDecl;\n\n    declOp <- (\"const\" / \"let\") _WSN;\n\n    forOfBinding <- bindingPattern / defVar;\n    binding <-\n      bindingPattern EQUALS assignExpr                ", "\n    / defVar EQUALS assignExpr                        ", "\n    / defVar;\n\n    bindingPattern <-\n      LEFT_BRACKET elementParam ** _COMMA RIGHT_BRACKET     ", "\n    / LEFT_BRACE propParam ** _COMMA RIGHT_BRACE            ", ";\n\n    pattern <-\n      bindingPattern\n    / defVar\n    / dataLiteral                                     ", "\n    / HOLE                                            ", ";\n\n    # to be overridden\n    elementParam <- param;\n\n    param <-\n      ELLIPSIS pattern                                ", "\n    / defVar EQUALS assignExpr                        ", "\n    / pattern;\n\n    propParam <-\n      ELLIPSIS pattern                                ", "\n    / propName COLON pattern                          ", "\n    / defVar EQUALS assignExpr                        ", "\n    / defVar                                          ", ";\n\n    # Use PEG prioritized choice.\n    # TODO emit diagnostic for failure cases.\n    exprStatement <-\n      ~cantStartExprStatement expr SEMI               ", ";\n\n    cantStartExprStatement <-\n      (\"{\" / \"function\" / \"async\" _NO_NEWLINE \"function\"\n    / \"class\" / \"let\" / \"[\") _WSN;\n\n    # to be overridden\n    terminatedBody <- ((~terminator statementItem)* terminator)+   ", ";\n    clause <-\n      caseLabel+ LEFT_BRACE terminatedBody RIGHT_BRACE ", ";\n    caseLabel <-\n      CASE expr COLON                                 ", "\n    / DEFAULT _WS COLON                                ", ";\n\n    catcher <- CATCH LEFT_PAREN pattern RIGHT_PAREN block ", ";\n    finalizer <- FINALLY block                        ", ";\n\n\n    # A.4 Functions and Classes\n\n    functionDecl <-\n      FUNCTION defVar LEFT_PAREN param ** _COMMA RIGHT_PAREN block\n                                                      ", ";\n\n    functionExpr <-\n      FUNCTION defVar? LEFT_PAREN param ** _COMMA RIGHT_PAREN block\n                                                      ", ";\n\n    # The assignExpr form must come after the block form, to make proper use\n    # of PEG prioritized choice.\n    arrowFunc <-\n      arrowParams _NO_NEWLINE ARROW block              ", "\n    / arrowParams _NO_NEWLINE ARROW assignExpr         ", ";\n\n    arrowParams <-\n      IDENT                                           ", "\n    / LEFT_PAREN param ** _COMMA RIGHT_PAREN           ", ";\n\n    # to be extended\n    methodDef <-\n      method\n    / GET propName LEFT_PAREN RIGHT_PAREN block            ", "\n    / SET propName LEFT_PAREN param RIGHT_PAREN block      ", ";\n\n    method <-\n      propName LEFT_PAREN param ** _COMMA RIGHT_PAREN block ", ";\n\n\n    # A.5 Scripts and Modules\n\n    moduleBody <- moduleItem*;\n    moduleItem <-\n      SEMI                                               ", "\n    / importDecl\n    / exportDecl\n    / moduleDeclaration;\n\n    useImport <- IMPORT_PFX IDENT                 ", ";\n    defImport <- IMPORT_PFX IDENT                 ", ";\n\n    moduleDeclaration <-\n      \"const\" _WSN moduleBinding ** _COMMA SEMI       ", ";\n\n    # An insulated expression without side-effects.\n    insulatedExpr <-\n      dataLiteral                                     ", "\n    / \"insulate\" _WS LEFT_PAREN (pureExpr / useImport) RIGHT_PAREN  ", "\n    / useVar;\n\n    # Jessie modules only allow insulated module-level bindings.\n    moduleBinding <-\n      bindingPattern EQUALS insulatedExpr       ", "\n    / defVar EQUALS insulatedExpr               ", "\n    / defVar;\n\n    importClause <-\n      STAR AS defImport                         ", "\n    / namedImports                              ", "\n    / defImport _COMMA STAR AS defImport        ", "\n    / defImport _COMMA namedImports             ", "\n    / defImport                                 ", ";\n\n    safeImportClause <-\n      safeNamedImports                          ", ";\n\n    importSpecifier <-\n      defImport                                 ", "\n    / IDENT_NAME AS defImport                   ", ";\n\n    # No renaming of safe imports.\n    safeImportSpecifier <-\n      defVar                               ", "\n    / \"insulate\" _WSN                      ", ";\n\n    namedImports <-\n      LEFT_BRACE importSpecifier ** _COMMA _COMMA? RIGHT_BRACE ", ";\n\n    safeNamedImports <-\n      LEFT_BRACE safeImportSpecifier ** _COMMA _COMMA? RIGHT_BRACE ", ";\n\n    safeModule <-\n      STRING ", ";\n\n    importDecl <-\n      IMPORT importClause FROM STRING SEMI  ", "\n    / IMPORT safeImportClause FROM safeModule SEMI   ", ";\n\n    exportDecl <-\n      EXPORT DEFAULT exportableExpr SEMI        ", "\n    / EXPORT moduleDeclaration                  ", ";\n\n    # to be extended\n    exportableExpr <- insulatedExpr;\n\n    # Lexical syntax\n    ARROW <- \"=>\" _WS;\n    AS <- \"as\" _WSN;\n    DEBUGGER <- \"debugger\" _WSN;\n    PLUSPLUS <- \"++\" _WSN;\n    MINUSMINUS <- \"--\" _WSN;\n    CASE <- \"case\" _WSN;\n    IF <- \"if\" _WSN;\n    ELSE <- \"else\" _WSN;\n    FOR <- \"for\" _WSN;\n    OF <- \"of\" _WSN;\n    WHILE <- \"while\" _WSN;\n    BREAK <- \"break\" _WSN;\n    CONTINUE <- \"continue\" _WSN;\n    SWITCH <- \"switch\" _WSN;\n    TRY <- \"try\" _WSN;\n    CATCH <- \"catch\" _WSN;\n    FINALLY <- \"finally\" _WSN;\n    GET <- \"get\" _WSN;\n    SET <- \"set\" _WSN;\n    IMPORT <- \"import\" _WSN;\n    EXPORT <- \"export\" _WSN;\n    FROM <- \"from\" _WSN;\n    FUNCTION <- \"function\" _WSN;\n    DEFAULT <- \"default\" _WSN;\n    EQUALS <- \"=\" _WS;\n    SEMI <- \";\" _WS;\n    STAR <- \"*\" _WS;\n    "]);
 
   _templateObject = function _templateObject() {
     return data;
@@ -5766,13 +7151,27 @@ function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = 
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
-// DO NOT EDIT - Generated automatically from quasi-jessie.mjs.ts by tessc
 // Subsets of JavaScript, starting from the grammar as defined at
 // http://www.ecma-international.org/ecma-262/9.0/#sec-grammar-summary
 // See https://github.com/Agoric/Jessie/blob/master/README.md
 // for documentation of the Jessie grammar defined here.
 /// <reference path="peg.d.ts"/>
-var terminatedBlock = insulate(function (manyBodies) {
+// Safe Modules are ones that can be imported without
+// insulating their symbols.
+var isSafeModule = (0, _jessie.insulate)(function (moduleName) {
+  switch (moduleName) {
+    case '@agoric/jessie':
+      {
+        return true;
+      }
+
+    default:
+      {
+        return false;
+      }
+  }
+});
+var terminatedBlock = (0, _jessie.insulate)(function (manyBodies) {
   var stmts = manyBodies.reduce(function (prior, body) {
     var _body = _slicedToArray(body, 2),
         bs = _body[0],
@@ -5786,8 +7185,9 @@ var terminatedBlock = insulate(function (manyBodies) {
   }, []);
   return ['block', stmts];
 });
-var makeJessie = insulate(function (peg, justinPeg) {
-  var SKIP = justinPeg.SKIP;
+var makeJessie = (0, _jessie.insulate)(function (peg, justinPeg) {
+  var FAIL = justinPeg.FAIL,
+      SKIP = justinPeg.SKIP;
   var jessieTag = justinPeg(_templateObject(), function (b) {
     return function () {
       return ['module', b];
@@ -5940,14 +7340,27 @@ var makeJessie = insulate(function (peg, justinPeg) {
     return ['importBind', [['as', 'default', d[1]]].concat(_toConsumableArray(n))];
   }, function (d) {
     return ['importBind', [['as', 'default', d[1]]]];
+  }, function (n) {
+    return ['importBind', n];
   }, function (d) {
     return ['as', d[1], d[1]];
   }, function (i, _, d) {
     return ['as', i, d[1]];
+  }, function (d) {
+    return ['as', d[1], d[1]];
+  }, function (w) {
+    return ['as', w, w];
   }, function (_, s, _2) {
     return s;
+  }, function (_, s, _2) {
+    return s;
+  }, function (s) {
+    var mod = JSON.parse(s);
+    return isSafeModule(mod) ? mod : FAIL;
   }, function (_, v, _2, s, _3) {
     return ['import', v, JSON.parse(s)];
+  }, function (_, v, _2, s, _3) {
+    return ['import', v, s];
   }, function (_, _2, e, _3) {
     return ['exportDefault', e];
   }, function (_, d) {
@@ -5962,13 +7375,15 @@ var makeJessie = insulate(function (peg, justinPeg) {
 });
 var _default = makeJessie;
 exports.default = _default;
-},{}],"My9u":[function(require,module,exports) {
+},{"@agoric/jessie":"YilW"}],"My9u":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _jessie = require("@agoric/jessie");
 
 function _templateObject() {
   var data = _taggedTemplateLiteral(["\n# to be overridden or inherited\nstart <- _WS assignExpr _EOF                ", ";\n\n# to be extended\nprimaryExpr <- dataStructure;\n\ndataStructure <-\n  dataLiteral                             ", "\n/ array\n/ record\n/ HOLE                                    ", ";\n\n# An expression without side-effects.\n# to be extended\npureExpr <-\n  dataLiteral                             ", "\n/ pureArray\n/ pureRecord\n/ HOLE                                    ", ";\n\ndataLiteral <- ((\"null\" / \"false\" / \"true\") _WSN / NUMBER / STRING) _WS;\n\npureArray <-\n  LEFT_BRACKET pureExpr ** _COMMA _COMMA? RIGHT_BRACKET ", ";\n\narray <-\n  LEFT_BRACKET element ** _COMMA _COMMA? RIGHT_BRACKET ", ";\n\n# to be extended\nelement <- assignExpr;\n\n# The JavaScript and JSON grammars calls records \"objects\"\n\npureRecord <-\n  LEFT_BRACE purePropDef ** _COMMA _COMMA? RIGHT_BRACE  ", ";\n\nrecord <-\n  LEFT_BRACE propDef ** _COMMA _COMMA? RIGHT_BRACE  ", ";\n\n# to be extended\npurePropDef <- propName COLON pureExpr     ", ";\n\n# to be extended\npropDef <- propName COLON assignExpr       ", ";\n\n# to be extended\npropName <- STRING                     ", ";\n\n# to be overridden\nassignExpr <- primaryExpr;\n\n# Lexical syntax\n\n_EOF <- ~.;\nLEFT_BRACKET <- \"[\" _WS;\nRIGHT_BRACKET <- \"]\" _WS;\nLEFT_BRACE <- \"{\" _WS;\nRIGHT_BRACE <- \"}\" _WS;\n_COMMA <- \",\" _WS                     ", ";\nCOLON <- \":\" _WS;\nMINUS <- \"-\" _WS;\nHOLE <- &", " _WS;\n\nSTRING <- < '\"' (~'\"' character)* '\"' > _WS;\n\nutf8 <-\n  [\xC2-\xDF] utf8cont\n/ [\xE0-\xEF] utf8cont utf8cont\n/ [\xF0-\xF4] utf8cont utf8cont utf8cont;\n\nutf8cont <- [\x80-\xBF];\n\ncharacter <-\n  escape\n/ '\\u' hex hex hex hex\n/ ~'\\' ([ -\x7F] / utf8);\n\nescape <- '\\' ['\"\\bfnrt];\nhex <- digit / [a-fA-F];\n\nNUMBER <- < int frac? exp? > _WSN;\n\nint <- [1-9] digit+\n/ digit\n/ MINUS digit\n/ MINUS [1-9] digit+;\n\ndigit <- [0-9];\n\nfrac <- '.' digit+;\nexp <- [Ee] [+-]? digit+;\n\n# _WSN is whitespace or a non-ident character.\n_WSN <- ~[$A-Za-z_] _WS    ", ";\n_WS <- [\t\n\r ]*          ", ";\n"], ["\n# to be overridden or inherited\nstart <- _WS assignExpr _EOF                ", ";\n\n# to be extended\nprimaryExpr <- dataStructure;\n\ndataStructure <-\n  dataLiteral                             ", "\n/ array\n/ record\n/ HOLE                                    ", ";\n\n# An expression without side-effects.\n# to be extended\npureExpr <-\n  dataLiteral                             ", "\n/ pureArray\n/ pureRecord\n/ HOLE                                    ", ";\n\ndataLiteral <- ((\"null\" / \"false\" / \"true\") _WSN / NUMBER / STRING) _WS;\n\npureArray <-\n  LEFT_BRACKET pureExpr ** _COMMA _COMMA? RIGHT_BRACKET ", ";\n\narray <-\n  LEFT_BRACKET element ** _COMMA _COMMA? RIGHT_BRACKET ", ";\n\n# to be extended\nelement <- assignExpr;\n\n# The JavaScript and JSON grammars calls records \"objects\"\n\npureRecord <-\n  LEFT_BRACE purePropDef ** _COMMA _COMMA? RIGHT_BRACE  ", ";\n\nrecord <-\n  LEFT_BRACE propDef ** _COMMA _COMMA? RIGHT_BRACE  ", ";\n\n# to be extended\npurePropDef <- propName COLON pureExpr     ", ";\n\n# to be extended\npropDef <- propName COLON assignExpr       ", ";\n\n# to be extended\npropName <- STRING                     ", ";\n\n# to be overridden\nassignExpr <- primaryExpr;\n\n# Lexical syntax\n\n_EOF <- ~.;\nLEFT_BRACKET <- \"[\" _WS;\nRIGHT_BRACKET <- \"]\" _WS;\nLEFT_BRACE <- \"{\" _WS;\nRIGHT_BRACE <- \"}\" _WS;\n_COMMA <- \",\" _WS                     ", ";\nCOLON <- \":\" _WS;\nMINUS <- \"-\" _WS;\nHOLE <- &", " _WS;\n\nSTRING <- < '\"' (~'\"' character)* '\"' > _WS;\n\nutf8 <-\n  [\\xc2-\\xdf] utf8cont\n/ [\\xe0-\\xef] utf8cont utf8cont\n/ [\\xf0-\\xf4] utf8cont utf8cont utf8cont;\n\nutf8cont <- [\\x80-\\xbf];\n\ncharacter <-\n  escape\n/ '\\\\u' hex hex hex hex\n/ ~'\\\\' ([\\x20-\\x7f] / utf8);\n\nescape <- '\\\\' ['\"\\\\bfnrt];\nhex <- digit / [a-fA-F];\n\nNUMBER <- < int frac? exp? > _WSN;\n\nint <- [1-9] digit+\n/ digit\n/ MINUS digit\n/ MINUS [1-9] digit+;\n\ndigit <- [0-9];\n\nfrac <- '.' digit+;\nexp <- [Ee] [+\\-]? digit+;\n\n# _WSN is whitespace or a non-ident character.\n_WSN <- ~[$A-Za-z_] _WS    ", ";\n_WS <- [\\t\\n\\r ]*          ", ";\n"]);
@@ -5982,7 +7397,6 @@ function _templateObject() {
 
 function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 
-// DO NOT EDIT - Generated automatically from quasi-json.mjs.ts by tessc
 // Subsets of JavaScript, starting from the grammar as defined at
 // http://www.ecma-international.org/ecma-262/9.0/#sec-grammar-summary
 // Defined to be extended into the Jessie grammar.
@@ -5990,7 +7404,7 @@ function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(
 // for documentation of the Jessie grammar.
 // See also json.org
 /// <reference path="peg.d.ts"/>
-var makeJSON = insulate(function (peg) {
+var makeJSON = (0, _jessie.insulate)(function (peg) {
   var FAIL = peg.FAIL,
       HOLE = peg.HOLE,
       SKIP = peg.SKIP;
@@ -6037,13 +7451,15 @@ var makeJSON = insulate(function (peg) {
 });
 var _default = makeJSON;
 exports.default = _default;
-},{}],"fln+":[function(require,module,exports) {
+},{"@agoric/jessie":"YilW"}],"fln+":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.qrepack = exports.qunpack = void 0;
+
+var _jessie = require("@agoric/jessie");
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -6053,12 +7469,11 @@ function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
-// DO NOT EDIT - Generated automatically from quasi-utils.mjs.ts by tessc
-var qunpack = insulate(function (h, ms, t) {
+var qunpack = (0, _jessie.insulate)(function (h, ms, t) {
   return [h].concat(_toConsumableArray(ms), [t]);
 });
 exports.qunpack = qunpack;
-var qrepack = insulate(function (parts) {
+var qrepack = (0, _jessie.insulate)(function (parts) {
   // TODO bug: We only provide the raw form at this time. I
   // apologize once again for allowing a cooked form into the
   // standard.
@@ -6076,7 +7491,7 @@ var qrepack = insulate(function (parts) {
   return [['data', template]].concat(argExprs);
 });
 exports.qrepack = qrepack;
-},{}],"X5zO":[function(require,module,exports) {
+},{"@agoric/jessie":"YilW"}],"X5zO":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -6084,10 +7499,12 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _jessie = require("@agoric/jessie");
+
 var _quasiUtils = require("./quasi-utils.mjs");
 
 function _templateObject() {
-  var data = _taggedTemplateLiteral(["\n    # to be overridden or inherited\n    start <- _WS assignExpr _EOF                       ", ";\n\n    # A.1 Lexical Grammar\n\n    DOT <- \".\" _WS;\n    ELLIPSIS <- \"...\" _WS;\n    LEFT_PAREN <- \"(\" _WS;\n    PLUS <- \"+\" _WS;\n    QUESTION <- \"?\" _WS;\n    RIGHT_PAREN <- \")\" _WS;\n    STARSTAR <- \"**\" _WS;\n\n    # Define Javascript-style comments.\n    _WS <- super._WS (EOL_COMMENT / MULTILINE_COMMENT)?   ", ";\n    EOL_COMMENT <- \"//\" (~[\n\r] .)* _WS;\n    MULTILINE_COMMENT <- \"/*\" (~\"*/\" .)* \"*/\" _WS;\n\n    # Add single-quoted strings.\n    STRING <-\n      super.STRING\n    / \"'\" < (~\"'\" character)* > \"'\" _WS  ", ";\n\n    # Only match if whitespace doesn't contain newline\n    _NO_NEWLINE <- ~IDENT [ \t]*     ", ";\n\n    IDENT_NAME <- ~(HIDDEN_PFX / \"__proto__\") (IDENT / RESERVED_WORD);\n\n    IDENT <- ~(HIDDEN_PFX / IMPORT_PFX) < [$A-Za-z_] [$A-Za-z0-9_]* > _WS;\n    HIDDEN_PFX <- \"$h_\";\n    IMPORT_PFX <- \"$i_\";\n\n    # Omit \"async\", \"arguments\", \"eval\", \"get\", and \"set\" from IDENT\n    # in Justin even though ES2017 considers them in IDENT.\n    RESERVED_WORD <-\n      (KEYWORD / RESERVED_KEYWORD / FUTURE_RESERVED_WORD\n    / \"null\" / \"false\" / \"true\"\n    / \"async\" / \"arguments\" / \"eval\" / \"get\" / \"set\") _WSN;\n\n    KEYWORD <-\n      (\"break\"\n    / \"case\" / \"catch\" / \"const\" / \"continue\"\n    / \"debugger\" / \"default\"\n    / \"else\" / \"export\"\n    / \"finally\" / \"for\" / \"function\"\n    / \"if\" / \"import\"\n    / \"return\"\n    / \"switch\"\n    / \"throw\" / \"try\" / \"typeof\"\n    / \"void\"\n    / \"while\") _WSN;\n\n    # Unused by Justin but enumerated here, in order to omit them\n    # from the IDENT token.\n    RESERVED_KEYWORD <-\n      (\"class\"\n    / \"delete\" / \"do\"\n    / \"extends\"\n    / \"in\" / \"instanceof\"\n    / \"new\"\n    / \"super\"\n    / \"this\"\n    / \"var\"\n    / \"with\"\n    / \"yield\") _WSN;\n\n    FUTURE_RESERVED_WORD <-\n      (\"await\" / \"enum\"\n    / \"implements\" / \"package\" / \"protected\"\n    / \"interface\" / \"private\" / \"public\") _WSN;\n\n    # Quasiliterals aka template literals\n    QUASI_CHAR <- \"\\\" . / ~\"`\" .;\n    QUASI_ALL <- \"`\" < (~\"${\" QUASI_CHAR)* > \"`\" _WS;\n    QUASI_HEAD <- \"`\" < (~\"${\" QUASI_CHAR)* > \"${\" _WS;\n    QUASI_MID <- \"}\" < (~\"${\" QUASI_CHAR)* > \"${\" _WS;\n    QUASI_TAIL <- \"}\" < (~\"${\" QUASI_CHAR)* > \"`\" _WS;\n\n\n    # A.2 Expressions\n\n    dataStructure <-\n      \"undefined\" _WSN     ", "\n    / super.dataStructure;\n\n    # Optional trailing commas.\n    record <-\n      super.record\n    / LEFT_BRACE propDef ** _COMMA _COMMA? RIGHT_BRACE      ", ";\n\n    array <-\n      super.array\n    / LEFT_BRACKET element ** _COMMA _COMMA? RIGHT_BRACKET  ", ";\n\n    useVar <- IDENT                                       ", ";\n\n    # Justin does not contain variable definitions, only uses. However,\n    # multiple languages that extend Justin will contain defining\n    # occurrences of variable names, so we put the defVar production\n    # here.\n    defVar <- IDENT                                       ", ";\n\n\n    primaryExpr <-\n      super.primaryExpr\n    / quasiExpr\n    / LEFT_PAREN expr RIGHT_PAREN                         ", "\n    / useVar;\n\n    pureExpr <-\n      super.pureExpr\n    / LEFT_PAREN pureExpr RIGHT_PAREN                     ", "\n    / useVar;\n\n    element <-\n      super.element\n    / ELLIPSIS assignExpr                                 ", ";\n\n    propDef <-\n      super.propDef\n    / useVar                                              ", "\n    / ELLIPSIS assignExpr                                 ", ";\n\n    purePropDef <-\n      super.purePropDef\n    / useVar                                              ", "\n    / ELLIPSIS assignExpr                                 ", ";\n\n    # No computed property name\n    propName <-\n      super.propName\n    / IDENT_NAME\n    / NUMBER;\n\n    quasiExpr <-\n      QUASI_ALL                                            ", "\n    / QUASI_HEAD expr ** QUASI_MID QUASI_TAIL              ", ";\n\n    # to be extended\n    memberPostOp <-\n      LEFT_BRACKET indexExpr RIGHT_BRACKET                 ", "\n    / DOT IDENT_NAME                                       ", "\n    / quasiExpr                                            ", ";\n\n    # to be extended\n    callPostOp <-\n      memberPostOp\n    / args                                                 ", ";\n\n    # Because Justin and Jessie have no \"new\" or \"super\", they don't need\n    # to distinguish callExpr from memberExpr. So justin omits memberExpr\n    # and newExpr. Instead, in Justin, callExpr jumps directly to\n    # primaryExpr and updateExpr jumps directly to callExpr.\n\n    # to be overridden.\n    callExpr <- primaryExpr callPostOp*                   ", ";\n\n    # To be overridden rather than inherited.\n    # Introduced to impose a non-JS restriction\n    # Restrict index access to number-names, including\n    # floating point, NaN, Infinity, and -Infinity.\n    indexExpr <-\n      NUMBER                                               ", "\n    / PLUS unaryExpr                                       ", ";\n\n    args <- LEFT_PAREN arg ** _COMMA RIGHT_PAREN            ", ";\n\n    arg <-\n      assignExpr\n    / ELLIPSIS assignExpr                                  ", ";\n\n    # to be overridden\n    updateExpr <- callExpr;\n\n    unaryExpr <-\n      preOp unaryExpr                                      ", "\n    / updateExpr;\n\n    # to be extended\n    # No prefix or postfix \"++\" or \"--\".\n    # No \"delete\".\n    preOp <- ((\"void\" / \"typeof\") _WSN / prePre);\n    prePre <- (\"+\" / \"-\" / \"~\" / \"!\") _WS                 ", ";\n\n    # Different communities will think -x**y parses in different ways,\n    # so the EcmaScript grammar forces parens to disambiguate.\n    powExpr <-\n      updateExpr STARSTAR powExpr                          ", "\n    / unaryExpr;\n\n    multExpr <- powExpr (multOp powExpr)*                  ", ";\n    addExpr <- multExpr (addOp multExpr)*                  ", ";\n    shiftExpr <- addExpr (shiftOp addExpr)*                ", ";\n\n    # Non-standard, to be overridden\n    # In C-like languages, the precedence and associativity of the\n    # relational, equality, and bitwise operators is surprising, and\n    # therefore hazardous. Here, none of these associate with the\n    # others, forcing parens to disambiguate.\n    eagerExpr <- shiftExpr (eagerOp shiftExpr)?            ", ";\n\n    andThenExpr <- eagerExpr (andThenOp eagerExpr)*       ", ";\n    orElseExpr <- andThenExpr (orElseOp andThenExpr)*     ", ";\n\n    multOp <- (\"*\" / \"/\" / \"%\") _WS;\n    addOp <- (\"+\" / \"-\") _WS;\n    shiftOp <- (\"<<\" / \">>>\" / \">>\") _WS;\n    relOp <- (\"<=\" / \"<\" / \">=\" / \">\") _WS;\n    eqOp <- (\"===\" / \"!==\") _WS;\n    bitOp <- (\"&\" / \"^\" / \"|\") _WS;\n\n    eagerOp <- relOp / eqOp / bitOp;\n\n    andThenOp <- \"&&\" _WS;\n    orElseOp <- \"||\" _WS;\n\n    condExpr <-\n      orElseExpr QUESTION assignExpr COLON assignExpr   ", "\n    / orElseExpr;\n\n    # override, to be extended\n    assignExpr <- condExpr;\n\n    # The comma expression is not in Jessie because we\n    # opt to pass only insulated expressions as the this-binding.\n    expr <- assignExpr;\n  "], ["\n    # to be overridden or inherited\n    start <- _WS assignExpr _EOF                       ", ";\n\n    # A.1 Lexical Grammar\n\n    DOT <- \".\" _WS;\n    ELLIPSIS <- \"...\" _WS;\n    LEFT_PAREN <- \"(\" _WS;\n    PLUS <- \"+\" _WS;\n    QUESTION <- \"?\" _WS;\n    RIGHT_PAREN <- \")\" _WS;\n    STARSTAR <- \"**\" _WS;\n\n    # Define Javascript-style comments.\n    _WS <- super._WS (EOL_COMMENT / MULTILINE_COMMENT)?   ", ";\n    EOL_COMMENT <- \"//\" (~[\\n\\r] .)* _WS;\n    MULTILINE_COMMENT <- \"/*\" (~\"*/\" .)* \"*/\" _WS;\n\n    # Add single-quoted strings.\n    STRING <-\n      super.STRING\n    / \"'\" < (~\"'\" character)* > \"'\" _WS  ", ";\n\n    # Only match if whitespace doesn't contain newline\n    _NO_NEWLINE <- ~IDENT [ \\t]*     ", ";\n\n    IDENT_NAME <- ~(HIDDEN_PFX / \"__proto__\") (IDENT / RESERVED_WORD);\n\n    IDENT <- ~(HIDDEN_PFX / IMPORT_PFX) < [$A-Za-z_] [$A-Za-z0-9_]* > _WS;\n    HIDDEN_PFX <- \"$h_\";\n    IMPORT_PFX <- \"$i_\";\n\n    # Omit \"async\", \"arguments\", \"eval\", \"get\", and \"set\" from IDENT\n    # in Justin even though ES2017 considers them in IDENT.\n    RESERVED_WORD <-\n      (KEYWORD / RESERVED_KEYWORD / FUTURE_RESERVED_WORD\n    / \"null\" / \"false\" / \"true\"\n    / \"async\" / \"arguments\" / \"eval\" / \"get\" / \"set\") _WSN;\n\n    KEYWORD <-\n      (\"break\"\n    / \"case\" / \"catch\" / \"const\" / \"continue\"\n    / \"debugger\" / \"default\"\n    / \"else\" / \"export\"\n    / \"finally\" / \"for\" / \"function\"\n    / \"if\" / \"import\"\n    / \"return\"\n    / \"switch\"\n    / \"throw\" / \"try\" / \"typeof\"\n    / \"void\"\n    / \"while\") _WSN;\n\n    # Unused by Justin but enumerated here, in order to omit them\n    # from the IDENT token.\n    RESERVED_KEYWORD <-\n      (\"class\"\n    / \"delete\" / \"do\"\n    / \"extends\"\n    / \"in\" / \"instanceof\"\n    / \"new\"\n    / \"super\"\n    / \"this\"\n    / \"var\"\n    / \"with\"\n    / \"yield\") _WSN;\n\n    FUTURE_RESERVED_WORD <-\n      (\"await\" / \"enum\"\n    / \"implements\" / \"package\" / \"protected\"\n    / \"interface\" / \"private\" / \"public\") _WSN;\n\n    # Quasiliterals aka template literals\n    QUASI_CHAR <- \"\\\\\" . / ~\"\\`\" .;\n    QUASI_ALL <- \"\\`\" < (~\"\\${\" QUASI_CHAR)* > \"\\`\" _WS;\n    QUASI_HEAD <- \"\\`\" < (~\"\\${\" QUASI_CHAR)* > \"\\${\" _WS;\n    QUASI_MID <- \"}\" < (~\"\\${\" QUASI_CHAR)* > \"\\${\" _WS;\n    QUASI_TAIL <- \"}\" < (~\"\\${\" QUASI_CHAR)* > \"\\`\" _WS;\n\n\n    # A.2 Expressions\n\n    dataStructure <-\n      \"undefined\" _WSN     ", "\n    / super.dataStructure;\n\n    # Optional trailing commas.\n    record <-\n      super.record\n    / LEFT_BRACE propDef ** _COMMA _COMMA? RIGHT_BRACE      ", ";\n\n    array <-\n      super.array\n    / LEFT_BRACKET element ** _COMMA _COMMA? RIGHT_BRACKET  ", ";\n\n    useVar <- IDENT                                       ", ";\n\n    # Justin does not contain variable definitions, only uses. However,\n    # multiple languages that extend Justin will contain defining\n    # occurrences of variable names, so we put the defVar production\n    # here.\n    defVar <- IDENT                                       ", ";\n\n\n    primaryExpr <-\n      super.primaryExpr\n    / quasiExpr\n    / LEFT_PAREN expr RIGHT_PAREN                         ", "\n    / useVar;\n\n    pureExpr <-\n      super.pureExpr\n    / LEFT_PAREN pureExpr RIGHT_PAREN                     ", "\n    / useVar;\n\n    element <-\n      super.element\n    / ELLIPSIS assignExpr                                 ", ";\n\n    propDef <-\n      super.propDef\n    / useVar                                              ", "\n    / ELLIPSIS assignExpr                                 ", ";\n\n    purePropDef <-\n      super.purePropDef\n    / useVar                                              ", "\n    / ELLIPSIS assignExpr                                 ", ";\n\n    # No computed property name\n    propName <-\n      super.propName\n    / IDENT_NAME\n    / NUMBER;\n\n    quasiExpr <-\n      QUASI_ALL                                            ", "\n    / QUASI_HEAD expr ** QUASI_MID QUASI_TAIL              ", ";\n\n    # to be extended\n    memberPostOp <-\n      LEFT_BRACKET indexExpr RIGHT_BRACKET                 ", "\n    / DOT IDENT_NAME                                       ", "\n    / quasiExpr                                            ", ";\n\n    # to be extended\n    callPostOp <-\n      memberPostOp\n    / args                                                 ", ";\n\n    # Because Justin and Jessie have no \"new\" or \"super\", they don't need\n    # to distinguish callExpr from memberExpr. So justin omits memberExpr\n    # and newExpr. Instead, in Justin, callExpr jumps directly to\n    # primaryExpr and updateExpr jumps directly to callExpr.\n\n    # to be overridden.\n    callExpr <- primaryExpr callPostOp*                   ", ";\n\n    # To be overridden rather than inherited.\n    # Introduced to impose a non-JS restriction\n    # Restrict index access to number-names, including\n    # floating point, NaN, Infinity, and -Infinity.\n    indexExpr <-\n      NUMBER                                               ", "\n    / PLUS unaryExpr                                       ", ";\n\n    args <- LEFT_PAREN arg ** _COMMA RIGHT_PAREN            ", ";\n\n    arg <-\n      assignExpr\n    / ELLIPSIS assignExpr                                  ", ";\n\n    # to be overridden\n    updateExpr <- callExpr;\n\n    unaryExpr <-\n      preOp unaryExpr                                      ", "\n    / updateExpr;\n\n    # to be extended\n    # No prefix or postfix \"++\" or \"--\".\n    # No \"delete\".\n    preOp <- ((\"void\" / \"typeof\") _WSN / prePre);\n    prePre <- (\"+\" / \"-\" / \"~\" / \"!\") _WS                 ", ";\n\n    # Different communities will think -x**y parses in different ways,\n    # so the EcmaScript grammar forces parens to disambiguate.\n    powExpr <-\n      updateExpr STARSTAR powExpr                          ", "\n    / unaryExpr;\n\n    multExpr <- powExpr (multOp powExpr)*                  ", ";\n    addExpr <- multExpr (addOp multExpr)*                  ", ";\n    shiftExpr <- addExpr (shiftOp addExpr)*                ", ";\n\n    # Non-standard, to be overridden\n    # In C-like languages, the precedence and associativity of the\n    # relational, equality, and bitwise operators is surprising, and\n    # therefore hazardous. Here, none of these associate with the\n    # others, forcing parens to disambiguate.\n    eagerExpr <- shiftExpr (eagerOp shiftExpr)?            ", ";\n\n    andThenExpr <- eagerExpr (andThenOp eagerExpr)*       ", ";\n    orElseExpr <- andThenExpr (orElseOp andThenExpr)*     ", ";\n\n    multOp <- (\"*\" / \"/\" / \"%\") _WS;\n    addOp <- (\"+\" / \"-\") _WS;\n    shiftOp <- (\"<<\" / \">>>\" / \">>\") _WS;\n    relOp <- (\"<=\" / \"<\" / \">=\" / \">\") _WS;\n    eqOp <- (\"===\" / \"!==\") _WS;\n    bitOp <- (\"&\" / \"^\" / \"|\") _WS;\n\n    eagerOp <- relOp / eqOp / bitOp;\n\n    andThenOp <- \"&&\" _WS;\n    orElseOp <- \"||\" _WS;\n\n    condExpr <-\n      orElseExpr QUESTION assignExpr COLON assignExpr   ", "\n    / orElseExpr;\n\n    # override, to be extended\n    assignExpr <- condExpr;\n\n    # The comma expression is not in Jessie because we\n    # opt to pass only insulated expressions as the this-binding.\n    expr <- assignExpr;\n  "]);
+  var data = _taggedTemplateLiteral(["\n    # to be overridden or inherited\n    start <- _WS assignExpr _EOF                       ", ";\n\n    # A.1 Lexical Grammar\n\n    DOT <- \".\" _WS;\n    ELLIPSIS <- \"...\" _WS;\n    LEFT_PAREN <- \"(\" _WS;\n    PLUS <- \"+\" _WS;\n    QUESTION <- \"?\" _WS;\n    RIGHT_PAREN <- \")\" _WS;\n    STARSTAR <- \"**\" _WS;\n\n    # Define Javascript-style comments.\n    _WS <- super._WS (EOL_COMMENT / MULTILINE_COMMENT)?   ", ";\n    EOL_COMMENT <- \"//\" (~[\n\r] .)* _WS;\n    MULTILINE_COMMENT <- \"/*\" (~\"*/\" .)* \"*/\" _WS;\n\n    # Add single-quoted strings.\n    STRING <-\n      super.STRING\n    / \"'\" < (~\"'\" character)* > \"'\" _WS  ", ";\n\n    # Only match if whitespace doesn't contain newline\n    _NO_NEWLINE <- ~IDENT [ \t]*     ", ";\n\n    IDENT_NAME <- ~(HIDDEN_PFX / \"__proto__\") (IDENT / RESERVED_WORD);\n\n    IDENT <-\n      ~(HIDDEN_PFX / IMPORT_PFX / \"insulate\" / RESERVED_WORD)\n      < [$A-Za-z_] [$A-Za-z0-9_]* > _WSN;\n    HIDDEN_PFX <- \"$h_\";\n    IMPORT_PFX <- \"$i_\";\n\n    # Omit \"async\", \"arguments\", \"eval\", \"get\", and \"set\" from IDENT\n    # in Justin even though ES2017 considers them in IDENT.\n    RESERVED_WORD <-\n      (KEYWORD / RESERVED_KEYWORD / FUTURE_RESERVED_WORD\n    / \"null\" / \"false\" / \"true\"\n    / \"async\" / \"arguments\" / \"eval\" / \"get\" / \"set\") _WSN;\n\n    KEYWORD <-\n      (\"break\"\n    / \"case\" / \"catch\" / \"const\" / \"continue\"\n    / \"debugger\" / \"default\"\n    / \"else\" / \"export\"\n    / \"finally\" / \"for\" / \"function\"\n    / \"if\" / \"import\"\n    / \"return\"\n    / \"switch\"\n    / \"throw\" / \"try\" / \"typeof\"\n    / \"void\"\n    / \"while\") _WSN;\n\n    # Unused by Justin but enumerated here, in order to omit them\n    # from the IDENT token.\n    RESERVED_KEYWORD <-\n      (\"class\"\n    / \"delete\" / \"do\"\n    / \"extends\"\n    / \"instanceof\"\n    / \"in\"\n    / \"new\"\n    / \"super\"\n    / \"this\"\n    / \"var\"\n    / \"with\"\n    / \"yield\") _WSN;\n\n    FUTURE_RESERVED_WORD <-\n      (\"await\" / \"enum\"\n    / \"implements\" / \"package\" / \"protected\"\n    / \"interface\" / \"private\" / \"public\") _WSN;\n\n    # Quasiliterals aka template literals\n    QUASI_CHAR <- \"\\\" . / ~\"`\" .;\n    QUASI_ALL <- \"`\" < (~\"${\" QUASI_CHAR)* > \"`\" _WS;\n    QUASI_HEAD <- \"`\" < (~\"${\" QUASI_CHAR)* > \"${\" _WS;\n    QUASI_MID <- \"}\" < (~\"${\" QUASI_CHAR)* > \"${\" _WS;\n    QUASI_TAIL <- \"}\" < (~\"${\" QUASI_CHAR)* > \"`\" _WS;\n\n\n    # A.2 Expressions\n\n    dataStructure <-\n      \"undefined\" _WSN     ", "\n    / super.dataStructure;\n\n    # Optional trailing commas.\n    record <-\n      super.record\n    / LEFT_BRACE propDef ** _COMMA _COMMA? RIGHT_BRACE      ", ";\n\n    array <-\n      super.array\n    / LEFT_BRACKET element ** _COMMA _COMMA? RIGHT_BRACKET  ", ";\n\n    useVar <- IDENT                                       ", ";\n\n    # Justin does not contain variable definitions, only uses. However,\n    # multiple languages that extend Justin will contain defining\n    # occurrences of variable names, so we put the defVar production\n    # here.\n    defVar <- IDENT                                       ", ";\n\n\n    primaryExpr <-\n      super.primaryExpr\n    / quasiExpr\n    / LEFT_PAREN expr RIGHT_PAREN                         ", "\n    / useVar;\n\n    pureExpr <-\n      super.pureExpr\n    / LEFT_PAREN pureExpr RIGHT_PAREN                     ", "\n    / useVar;\n\n    element <-\n      super.element\n    / ELLIPSIS assignExpr                                 ", ";\n\n    propDef <-\n      super.propDef\n    / useVar                                              ", "\n    / ELLIPSIS assignExpr                                 ", ";\n\n    purePropDef <-\n      super.purePropDef\n    / useVar                                              ", "\n    / ELLIPSIS assignExpr                                 ", ";\n\n    # No computed property name\n    propName <-\n      super.propName\n    / IDENT_NAME\n    / NUMBER;\n\n    quasiExpr <-\n      QUASI_ALL                                            ", "\n    / QUASI_HEAD expr ** QUASI_MID QUASI_TAIL              ", ";\n\n    # to be extended\n    memberPostOp <-\n      LEFT_BRACKET indexExpr RIGHT_BRACKET                 ", "\n    / DOT IDENT_NAME                                       ", "\n    / quasiExpr                                            ", ";\n\n    # to be extended\n    callPostOp <-\n      memberPostOp\n    / args                                                 ", ";\n\n    # Because Justin and Jessie have no \"new\" or \"super\", they don't need\n    # to distinguish callExpr from memberExpr. So justin omits memberExpr\n    # and newExpr. Instead, in Justin, callExpr jumps directly to\n    # primaryExpr and updateExpr jumps directly to callExpr.\n\n    # to be overridden.\n    callExpr <- primaryExpr callPostOp*                   ", ";\n\n    # To be overridden rather than inherited.\n    # Introduced to impose a non-JS restriction\n    # Restrict index access to number-names, including\n    # floating point, NaN, Infinity, and -Infinity.\n    indexExpr <-\n      NUMBER                                               ", "\n    / PLUS unaryExpr                                       ", ";\n\n    args <- LEFT_PAREN arg ** _COMMA RIGHT_PAREN            ", ";\n\n    arg <-\n      assignExpr\n    / ELLIPSIS assignExpr                                  ", ";\n\n    # to be overridden\n    updateExpr <- callExpr;\n\n    unaryExpr <-\n      preOp unaryExpr                                      ", "\n    / updateExpr;\n\n    # to be extended\n    # No prefix or postfix \"++\" or \"--\".\n    # No \"delete\".\n    preOp <- ((\"void\" / \"typeof\") _WSN / prePre);\n    prePre <- (\"+\" / \"-\" / \"~\" / \"!\") _WS                 ", ";\n\n    # Different communities will think -x**y parses in different ways,\n    # so the EcmaScript grammar forces parens to disambiguate.\n    powExpr <-\n      updateExpr STARSTAR powExpr                          ", "\n    / unaryExpr;\n\n    multExpr <- powExpr (multOp powExpr)*                  ", ";\n    addExpr <- multExpr (addOp multExpr)*                  ", ";\n    shiftExpr <- addExpr (shiftOp addExpr)*                ", ";\n\n    # Non-standard, to be overridden\n    # In C-like languages, the precedence and associativity of the\n    # relational, equality, and bitwise operators is surprising, and\n    # therefore hazardous. Here, none of these associate with the\n    # others, forcing parens to disambiguate.\n    eagerExpr <- shiftExpr (eagerOp shiftExpr)?            ", ";\n\n    andThenExpr <- eagerExpr (andThenOp eagerExpr)*       ", ";\n    orElseExpr <- andThenExpr (orElseOp andThenExpr)*     ", ";\n\n    multOp <- (\"*\" / \"/\" / \"%\") _WS;\n    addOp <- (\"+\" / \"-\") _WS;\n    shiftOp <- (\"<<\" / \">>>\" / \">>\") _WS;\n    relOp <- (\"<=\" / \"<\" / \">=\" / \">\") _WS;\n    eqOp <- (\"===\" / \"!==\") _WS;\n    bitOp <- (\"&\" / \"^\" / \"|\") _WS;\n\n    eagerOp <- relOp / eqOp / bitOp;\n\n    andThenOp <- \"&&\" _WS;\n    orElseOp <- \"||\" _WS;\n\n    condExpr <-\n      orElseExpr QUESTION assignExpr COLON assignExpr   ", "\n    / orElseExpr;\n\n    # override, to be extended\n    assignExpr <- condExpr;\n\n    # The comma expression is not in Jessie because we\n    # opt to pass only insulated expressions as the this-binding.\n    expr <- assignExpr;\n  "], ["\n    # to be overridden or inherited\n    start <- _WS assignExpr _EOF                       ", ";\n\n    # A.1 Lexical Grammar\n\n    DOT <- \".\" _WS;\n    ELLIPSIS <- \"...\" _WS;\n    LEFT_PAREN <- \"(\" _WS;\n    PLUS <- \"+\" _WS;\n    QUESTION <- \"?\" _WS;\n    RIGHT_PAREN <- \")\" _WS;\n    STARSTAR <- \"**\" _WS;\n\n    # Define Javascript-style comments.\n    _WS <- super._WS (EOL_COMMENT / MULTILINE_COMMENT)?   ", ";\n    EOL_COMMENT <- \"//\" (~[\\n\\r] .)* _WS;\n    MULTILINE_COMMENT <- \"/*\" (~\"*/\" .)* \"*/\" _WS;\n\n    # Add single-quoted strings.\n    STRING <-\n      super.STRING\n    / \"'\" < (~\"'\" character)* > \"'\" _WS  ", ";\n\n    # Only match if whitespace doesn't contain newline\n    _NO_NEWLINE <- ~IDENT [ \\t]*     ", ";\n\n    IDENT_NAME <- ~(HIDDEN_PFX / \"__proto__\") (IDENT / RESERVED_WORD);\n\n    IDENT <-\n      ~(HIDDEN_PFX / IMPORT_PFX / \"insulate\" / RESERVED_WORD)\n      < [$A-Za-z_] [$A-Za-z0-9_]* > _WSN;\n    HIDDEN_PFX <- \"$h_\";\n    IMPORT_PFX <- \"$i_\";\n\n    # Omit \"async\", \"arguments\", \"eval\", \"get\", and \"set\" from IDENT\n    # in Justin even though ES2017 considers them in IDENT.\n    RESERVED_WORD <-\n      (KEYWORD / RESERVED_KEYWORD / FUTURE_RESERVED_WORD\n    / \"null\" / \"false\" / \"true\"\n    / \"async\" / \"arguments\" / \"eval\" / \"get\" / \"set\") _WSN;\n\n    KEYWORD <-\n      (\"break\"\n    / \"case\" / \"catch\" / \"const\" / \"continue\"\n    / \"debugger\" / \"default\"\n    / \"else\" / \"export\"\n    / \"finally\" / \"for\" / \"function\"\n    / \"if\" / \"import\"\n    / \"return\"\n    / \"switch\"\n    / \"throw\" / \"try\" / \"typeof\"\n    / \"void\"\n    / \"while\") _WSN;\n\n    # Unused by Justin but enumerated here, in order to omit them\n    # from the IDENT token.\n    RESERVED_KEYWORD <-\n      (\"class\"\n    / \"delete\" / \"do\"\n    / \"extends\"\n    / \"instanceof\"\n    / \"in\"\n    / \"new\"\n    / \"super\"\n    / \"this\"\n    / \"var\"\n    / \"with\"\n    / \"yield\") _WSN;\n\n    FUTURE_RESERVED_WORD <-\n      (\"await\" / \"enum\"\n    / \"implements\" / \"package\" / \"protected\"\n    / \"interface\" / \"private\" / \"public\") _WSN;\n\n    # Quasiliterals aka template literals\n    QUASI_CHAR <- \"\\\\\" . / ~\"\\`\" .;\n    QUASI_ALL <- \"\\`\" < (~\"\\${\" QUASI_CHAR)* > \"\\`\" _WS;\n    QUASI_HEAD <- \"\\`\" < (~\"\\${\" QUASI_CHAR)* > \"\\${\" _WS;\n    QUASI_MID <- \"}\" < (~\"\\${\" QUASI_CHAR)* > \"\\${\" _WS;\n    QUASI_TAIL <- \"}\" < (~\"\\${\" QUASI_CHAR)* > \"\\`\" _WS;\n\n\n    # A.2 Expressions\n\n    dataStructure <-\n      \"undefined\" _WSN     ", "\n    / super.dataStructure;\n\n    # Optional trailing commas.\n    record <-\n      super.record\n    / LEFT_BRACE propDef ** _COMMA _COMMA? RIGHT_BRACE      ", ";\n\n    array <-\n      super.array\n    / LEFT_BRACKET element ** _COMMA _COMMA? RIGHT_BRACKET  ", ";\n\n    useVar <- IDENT                                       ", ";\n\n    # Justin does not contain variable definitions, only uses. However,\n    # multiple languages that extend Justin will contain defining\n    # occurrences of variable names, so we put the defVar production\n    # here.\n    defVar <- IDENT                                       ", ";\n\n\n    primaryExpr <-\n      super.primaryExpr\n    / quasiExpr\n    / LEFT_PAREN expr RIGHT_PAREN                         ", "\n    / useVar;\n\n    pureExpr <-\n      super.pureExpr\n    / LEFT_PAREN pureExpr RIGHT_PAREN                     ", "\n    / useVar;\n\n    element <-\n      super.element\n    / ELLIPSIS assignExpr                                 ", ";\n\n    propDef <-\n      super.propDef\n    / useVar                                              ", "\n    / ELLIPSIS assignExpr                                 ", ";\n\n    purePropDef <-\n      super.purePropDef\n    / useVar                                              ", "\n    / ELLIPSIS assignExpr                                 ", ";\n\n    # No computed property name\n    propName <-\n      super.propName\n    / IDENT_NAME\n    / NUMBER;\n\n    quasiExpr <-\n      QUASI_ALL                                            ", "\n    / QUASI_HEAD expr ** QUASI_MID QUASI_TAIL              ", ";\n\n    # to be extended\n    memberPostOp <-\n      LEFT_BRACKET indexExpr RIGHT_BRACKET                 ", "\n    / DOT IDENT_NAME                                       ", "\n    / quasiExpr                                            ", ";\n\n    # to be extended\n    callPostOp <-\n      memberPostOp\n    / args                                                 ", ";\n\n    # Because Justin and Jessie have no \"new\" or \"super\", they don't need\n    # to distinguish callExpr from memberExpr. So justin omits memberExpr\n    # and newExpr. Instead, in Justin, callExpr jumps directly to\n    # primaryExpr and updateExpr jumps directly to callExpr.\n\n    # to be overridden.\n    callExpr <- primaryExpr callPostOp*                   ", ";\n\n    # To be overridden rather than inherited.\n    # Introduced to impose a non-JS restriction\n    # Restrict index access to number-names, including\n    # floating point, NaN, Infinity, and -Infinity.\n    indexExpr <-\n      NUMBER                                               ", "\n    / PLUS unaryExpr                                       ", ";\n\n    args <- LEFT_PAREN arg ** _COMMA RIGHT_PAREN            ", ";\n\n    arg <-\n      assignExpr\n    / ELLIPSIS assignExpr                                  ", ";\n\n    # to be overridden\n    updateExpr <- callExpr;\n\n    unaryExpr <-\n      preOp unaryExpr                                      ", "\n    / updateExpr;\n\n    # to be extended\n    # No prefix or postfix \"++\" or \"--\".\n    # No \"delete\".\n    preOp <- ((\"void\" / \"typeof\") _WSN / prePre);\n    prePre <- (\"+\" / \"-\" / \"~\" / \"!\") _WS                 ", ";\n\n    # Different communities will think -x**y parses in different ways,\n    # so the EcmaScript grammar forces parens to disambiguate.\n    powExpr <-\n      updateExpr STARSTAR powExpr                          ", "\n    / unaryExpr;\n\n    multExpr <- powExpr (multOp powExpr)*                  ", ";\n    addExpr <- multExpr (addOp multExpr)*                  ", ";\n    shiftExpr <- addExpr (shiftOp addExpr)*                ", ";\n\n    # Non-standard, to be overridden\n    # In C-like languages, the precedence and associativity of the\n    # relational, equality, and bitwise operators is surprising, and\n    # therefore hazardous. Here, none of these associate with the\n    # others, forcing parens to disambiguate.\n    eagerExpr <- shiftExpr (eagerOp shiftExpr)?            ", ";\n\n    andThenExpr <- eagerExpr (andThenOp eagerExpr)*       ", ";\n    orElseExpr <- andThenExpr (orElseOp andThenExpr)*     ", ";\n\n    multOp <- (\"*\" / \"/\" / \"%\") _WS;\n    addOp <- (\"+\" / \"-\") _WS;\n    shiftOp <- (\"<<\" / \">>>\" / \">>\") _WS;\n    relOp <- (\"<=\" / \"<\" / \">=\" / \">\") _WS;\n    eqOp <- (\"===\" / \"!==\") _WS;\n    bitOp <- (\"&\" / \"^\" / \"|\") _WS;\n\n    eagerOp <- relOp / eqOp / bitOp;\n\n    andThenOp <- \"&&\" _WS;\n    orElseOp <- \"||\" _WS;\n\n    condExpr <-\n      orElseExpr QUESTION assignExpr COLON assignExpr   ", "\n    / orElseExpr;\n\n    # override, to be extended\n    assignExpr <- condExpr;\n\n    # The comma expression is not in Jessie because we\n    # opt to pass only insulated expressions as the this-binding.\n    expr <- assignExpr;\n  "]);
 
   _templateObject = function _templateObject() {
     return data;
@@ -6106,8 +7523,8 @@ function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = 
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
-var qunpack = insulate(_quasiUtils.qunpack);
-var binary = insulate(function (left, rights) {
+var qunpack = (0, _jessie.insulate)(_quasiUtils.qunpack);
+var binary = (0, _jessie.insulate)(function (left, rights) {
   return rights.reduce(function (prev, _ref) {
     var _ref2 = _slicedToArray(_ref, 2),
         op = _ref2[0],
@@ -6116,7 +7533,7 @@ var binary = insulate(function (left, rights) {
     return [op, prev, right];
   }, left);
 });
-var transformSingleQuote = insulate(function (s) {
+var transformSingleQuote = (0, _jessie.insulate)(function (s) {
   var i = 0,
       qs = '';
 
@@ -6140,7 +7557,7 @@ var transformSingleQuote = insulate(function (s) {
 
   return "\"".concat(qs, "\"");
 });
-var makeJustin = insulate(function (peg) {
+var makeJustin = (0, _jessie.insulate)(function (peg) {
   var SKIP = peg.SKIP;
   return peg(_templateObject(), function (v) {
     return function () {
@@ -6208,13 +7625,17 @@ var makeJustin = insulate(function (peg) {
 });
 var _default = makeJustin;
 exports.default = _default;
-},{"./quasi-utils.mjs":"fln+"}],"SAPa":[function(require,module,exports) {
+},{"@agoric/jessie":"YilW","./quasi-utils.mjs":"fln+"}],"SAPa":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _jessie = require("@agoric/jessie");
+
+var _slog = require("@michaelfig/slog");
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -6246,12 +7667,12 @@ function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = 
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
-// DO NOT EDIT - Generated automatically from rewrite-define.mjs.ts by tessc
-var hide = insulate(function (vname) {
+var slog = (0, _jessie.insulate)(_slog.slog);
+var hide = (0, _jessie.insulate)(function (vname) {
   return "$h_".concat(vname);
 }); // Return a string separated by separators.
 
-var separate = insulate(function (strs, sep) {
+var separate = (0, _jessie.insulate)(function (strs, sep) {
   var ret = '';
   var actualSep = '';
   var _iteratorNormalCompletion = true;
@@ -6284,11 +7705,11 @@ var separate = insulate(function (strs, sep) {
 
   return ret;
 });
-var moduleRewriteDefine = insulate(function (moduleAST) {
+var moduleRewriteDefine = (0, _jessie.insulate)(function (moduleAST) {
   var DEFINE = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : hide('define');
   var EXPORTS = hide('exports');
-  var imports = makeMap();
-  var exportVars = makeSet();
+  var imports = (0, _jessie.makeMap)();
+  var exportVars = (0, _jessie.makeSet)();
   var starName;
   var nImport = 0;
   var rewriters = {
@@ -6446,16 +7867,18 @@ var moduleRewriteDefine = insulate(function (moduleAST) {
 });
 var _default = moduleRewriteDefine;
 exports.default = _default;
-},{}],"ZHvC":[function(require,module,exports) {
+},{"@agoric/jessie":"YilW","@michaelfig/slog":"Ipmo"}],"ZHvC":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-// DO NOT EDIT - Generated automatically from tag-string.mjs.ts by tessc
+
+var _jessie = require("@agoric/jessie");
+
 /// <reference path="./peg.d.ts"/>
-var tagString = insulate(function (tag, uri) {
+var tagString = (0, _jessie.insulate)(function (tag, uri) {
   function tagged(templateOrFlag) {
     for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
       args[_key - 1] = arguments[_key];
@@ -6494,13 +7917,17 @@ var tagString = insulate(function (tag, uri) {
 });
 var _default = tagString;
 exports.default = _default;
-},{}],"bRI1":[function(require,module,exports) {
+},{"@agoric/jessie":"YilW"}],"bRI1":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.translate = void 0;
+
+var _jessie = require("@agoric/jessie");
+
+var _slog = require("@michaelfig/slog");
 
 var _bootPeg = _interopRequireDefault(require("./boot-peg.mjs"));
 
@@ -6586,26 +8013,27 @@ function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = 
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
-var bootPeg = insulate(_bootPeg.default);
-var bootPegAst = insulate(_bootPegast.default);
-var makePeg = insulate(_quasiPeg.default);
-var makeJessieModule = insulate(_quasiJessieModule.default);
-var makeJessie = insulate(_quasiJessie.default);
-var makeJSON = insulate(_quasiJson.default);
-var makeJustin = insulate(_quasiJustin.default);
-var rewriteModuleDefine = insulate(_rewriteDefine.default);
-var tagString = insulate(_tagString.default);
-var pegTag = insulate(bootPeg(makePeg, bootPegAst));
-var jsonTag = insulate(makeJSON(pegTag));
-var justinTag = insulate(makeJustin(pegTag.extends(jsonTag)));
+var slog = (0, _jessie.insulate)(_slog.slog);
+var bootPeg = (0, _jessie.insulate)(_bootPeg.default);
+var bootPegAst = (0, _jessie.insulate)(_bootPegast.default);
+var makePeg = (0, _jessie.insulate)(_quasiPeg.default);
+var makeJessieModule = (0, _jessie.insulate)(_quasiJessieModule.default);
+var makeJessie = (0, _jessie.insulate)(_quasiJessie.default);
+var makeJSON = (0, _jessie.insulate)(_quasiJson.default);
+var makeJustin = (0, _jessie.insulate)(_quasiJustin.default);
+var rewriteModuleDefine = (0, _jessie.insulate)(_rewriteDefine.default);
+var tagString = (0, _jessie.insulate)(_tagString.default);
+var pegTag = (0, _jessie.insulate)(bootPeg(makePeg, bootPegAst));
+var jsonTag = (0, _jessie.insulate)(makeJSON(pegTag));
+var justinTag = (0, _jessie.insulate)(makeJustin(pegTag.extends(jsonTag)));
 
-var _insulate = insulate(makeJessie(pegTag, pegTag.extends(justinTag))),
+var _insulate = (0, _jessie.insulate)(makeJessie(pegTag, pegTag.extends(justinTag))),
     _insulate2 = _slicedToArray(_insulate, 1),
     jessieTag = _insulate2[0];
 
-var jessieModuleTag = insulate(makeJessieModule(pegTag.extends(jessieTag)));
-var translate = insulate(function (sourceText, parameters) {
-  return makePromise(function (resolve) {
+var jessieModuleTag = (0, _jessie.insulate)(makeJessieModule(pegTag.extends(jessieTag)));
+var translate = (0, _jessie.insulate)(function (sourceText, parameters) {
+  return (0, _jessie.makePromise)(function (resolve) {
     var sourceType = parameters.sourceType,
         target = parameters.target,
         targetType = parameters.targetType;
@@ -6663,11 +8091,23 @@ var translate = insulate(function (sourceText, parameters) {
   });
 });
 exports.translate = translate;
-},{"./boot-peg.mjs":"QgFk","./boot-pegast.mjs":"joiS","./quasi-peg.mjs":"3zTw","./quasi-jessie-module.mjs":"xkRL","./quasi-jessie.mjs":"NMVp","./quasi-json.mjs":"My9u","./quasi-justin.mjs":"X5zO","./rewrite-define.mjs":"SAPa","./tag-string.mjs":"ZHvC"}],"lr5t":[function(require,module,exports) {
+},{"@agoric/jessie":"YilW","@michaelfig/slog":"Ipmo","./boot-peg.mjs":"QgFk","./boot-pegast.mjs":"joiS","./quasi-peg.mjs":"3zTw","./quasi-jessie-module.mjs":"xkRL","./quasi-jessie.mjs":"NMVp","./quasi-json.mjs":"My9u","./quasi-justin.mjs":"X5zO","./rewrite-define.mjs":"SAPa","./tag-string.mjs":"ZHvC"}],"lr5t":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
+});
+var _exportNames = {
+  whitelist: true,
+  SES: true,
+  translate: true,
+  slog: true
+};
+Object.defineProperty(exports, "SES", {
+  enumerable: true,
+  get: function () {
+    return _sesEsm.default;
+  }
 });
 Object.defineProperty(exports, "translate", {
   enumerable: true,
@@ -6675,30 +8115,38 @@ Object.defineProperty(exports, "translate", {
     return _translate.translate;
   }
 });
-exports.whitelist = exports.SES = exports.globals = void 0;
+Object.defineProperty(exports, "slog", {
+  enumerable: true,
+  get: function () {
+    return _slog.slog;
+  }
+});
+exports.whitelist = void 0;
 
 var _sesEsm = _interopRequireDefault(require("./node_modules/ses/dist/ses.esm.js"));
-
-var _globalEnv = _interopRequireDefault(require("../nodejs/globalEnv.mjs"));
 
 var _whitelist = require("./whitelist.js");
 
 var _translate = require("../../lib/translate.mjs");
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _jessie = require("@agoric/jessie");
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-var globals = _objectSpread({}, _globalEnv.default, {
-  insulate: _globalEnv.insulate
+Object.keys(_jessie).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _jessie[key];
+    }
+  });
 });
 
-exports.globals = globals;
-var SES = _sesEsm.default;
-exports.SES = SES;
+var _slog = require("@michaelfig/slog");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 var whitelist = (0, _whitelist.buildWhitelist)();
 exports.whitelist = whitelist;
-},{"./node_modules/ses/dist/ses.esm.js":"iDNi","../nodejs/globalEnv.mjs":"fc7A","./whitelist.js":"4nUr","../../lib/translate.mjs":"bRI1"}]},{},["lr5t"], "jessica")
-//# sourceMappingURL=jessica.630e00b5.js.map
+},{"./node_modules/ses/dist/ses.esm.js":"iDNi","./whitelist.js":"4nUr","../../lib/translate.mjs":"bRI1","@agoric/jessie":"YilW","@michaelfig/slog":"Ipmo"}]},{},["lr5t"], "jessica")
+//# sourceMappingURL=jessica.44060a04.js.map

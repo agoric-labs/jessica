@@ -1,21 +1,11 @@
-import bootEnv from './boot-env.mjs';
+import { makeSet } from '@agoric/jessie';
+import { slog } from '@michaelfig/slog';
+
+import bootJessica from './boot-jessica.mjs';
 import makeReadInput from './readInput.mjs';
 import repl from './repl.mjs';
 
 const jesspipe = (deps: IMainDependencies, argv: string[]) => {
-    const globalEnv = {
-        confine,
-        confineExpr,
-        eval,
-        insulate,
-        makeMap,
-        makePromise,
-        makeSet,
-        makeWeakMap,
-        makeWeakSet,
-        slog,
-    };
-
     // Read and evaluate the specified module,
     if (argv.length < 3) {
         slog.panic`You must specify a MODULE`;
@@ -40,11 +30,10 @@ const jesspipe = (deps: IMainDependencies, argv: string[]) => {
         return deps.writeOutput('-', str);
     };
 
-    // Create a Jessie bootstrap environment for the endowments.
-    const jessie = bootEnv(globalEnv, deps.applyMethod, readInput, deps.setComputedIndex);
+    const jessica = bootJessica(deps.applyMethod, readInput, deps.setComputedIndex);
 
     const doEval = (src: string, uri?: string) =>
-        jessie.confine(src, jessie, {scriptName: uri});
+        jessica.runModule(src, {}, {scriptName: uri});
     const newDeps = {
         applyMethod: deps.applyMethod,
         readInput,

@@ -2,7 +2,6 @@
   "name": "jessica",
   "version": "0.0.2",
   "description": "Jessica - the Jessie Compiler Architecture",
-  "main": "lang/nodejs/jesspipe.mjs",
   "scripts": {
     "build": "build.bat",
     "check-types": "tsc",
@@ -10,10 +9,16 @@
   },
   "author": "Michael FIG <michael@fig.org>",
   "license": "Apache-2.0",
-  "dependencies": {},
+  "dependencies": {
+    "@agoric/jessie": "file:unpublished/agoric-jessie-0.1.0.tgz",
+    "@michaelfig/slog": "0.0.1",
+    "@types/agoric__harden": "file:unpublished/types-agoric__harden-1.0.0.tgz",
+    "@types/agoric__jessie": "file:unpublished/types-agoric__jessie-1.0.0.tgz",
+    "@types/michaelfig__slog": "file:unpublished/types-michaelfig__slog-1.0.0.tgz"
+  },
   "devDependencies": {
     "tslint": "^5.13.0",
-    "typescript": "^3.3.0"
+    "typescript": "^3.4.5"
   },
   "repository": {
     "type": "git",

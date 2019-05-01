@@ -1,3 +1,6 @@
+import { makeMap } from '@agoric/jessie';
+import { slog } from '@michaelfig/slog';
+
 export interface IEvalOptions {
     [key: string]: any;
     scriptName?: string;

@@ -5,8 +5,6 @@ jobs:
       - image: circleci/buildpack-deps:stretch
     steps:
       - checkout
-      - run: git submodule sync
-      - run: git submodule update --init
       - run:
           name: Check that all the languages interlock
           command: ./check.bat
@@ -15,8 +13,6 @@ jobs:
       - image: circleci/node
     steps:
       - checkout
-      - run: git submodule sync
-      - run: git submodule update --init
       - run:
           name: Check that all the languages interlock
           command: ./check.bat

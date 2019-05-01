@@ -1,7 +1,5 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
 /// <reference path="../../../lib/peg.d.ts"/>
-import '../globalEnv.mjs';
-
 import bootPeg from '../../../lib/boot-peg.mjs';
 import bootPegAst from '../../../lib/boot-pegast.mjs';
 import makePeg from '../../../lib/quasi-peg.mjs';

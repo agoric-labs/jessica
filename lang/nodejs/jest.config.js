@@ -1,17 +1,15 @@
 module.exports = {
-  preset: 'ts-jest',
   testEnvironment: 'node',
-  moduleNameMapper: {
-      '^(\..*\.mjs)$': '$1.ts',
-  },
   testPathIgnorePatterns: [
-    "/node_modules/",
+    // "/node_modules/",
     "/skip-",
-    "parser-utils.ts$",
+    "parser-utils\\.ts$",
   ],
-  globals: {
-      'ts-jest': {
-          tsConfig: './tsconfig.test.json',
-      },
+  transform: {
+    '\\.mjs$': 'babel-jest',
+    '\\.ts$': 'babel-jest',
   },
+  transformIgnorePatterns: [
+    "/node_modules/(?!(@agoric/jessie|@michaelfig/slog))"
+  ],
 };

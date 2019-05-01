@@ -1,3 +1,6 @@
+import { makePromise } from '@agoric/jessie';
+import { slog } from '@michaelfig/slog';
+
 import bootPeg from './boot-peg.mjs';
 import bootPegAst from './boot-pegast.mjs';
 import makePeg from './quasi-peg.mjs';

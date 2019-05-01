@@ -2,6 +2,8 @@
 // https://github.com/erights/quasiParserGenerator/tree/master/src/bootbnf.js
 
 /// <reference path="peg.d.ts"/>
+import { confineExpr, makeMap, makeWeakMap } from '@agoric/jessie';
+import { slog } from '@michaelfig/slog';
 
 import indent from './indent.mjs';
 
@@ -603,7 +605,7 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
         const parserTraitMakerSrc = compile(baseAST);
         // slog.trace`SOURCES: ${parserTraitMakerSrc}\n`;
         type ParserTrait = (base: PegParserCreator) => PegParserCreator;
-        const makeParserTrait = confine<(...actions: any[]) => ParserTrait>(parserTraitMakerSrc, {
+        const makeParserTrait = confineExpr<(...actions: any[]) => ParserTrait>(parserTraitMakerSrc, {
             DONE,
             EAT,
             ERROR,
@@ -611,6 +613,7 @@ const bootPeg = <T extends IPegTag<any>>(makePeg: MakePeg, bootPegAst: PegDef[])
             FIND,
             RUN,
             SKIP,
+            makeMap,
             makeTokStr,
         });
 

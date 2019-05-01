@@ -1,3 +1,6 @@
+import { makeMap, makeSet } from '@agoric/jessie';
+import { slog } from '@michaelfig/slog';
+
 type Rewriter = (...args: any) => string;
 type Node = any[] | string;
 const hide = (vname: string) => `\$h_${vname}`;

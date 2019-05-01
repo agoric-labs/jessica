@@ -1,3 +1,5 @@
+import { slog } from '@michaelfig/slog';
+
 const makeReadInput = (CAN_LOAD_FILES: Set<string>, readInput: (file: string) => string) => {
     const loader = (file: string) => {
         if (!CAN_LOAD_FILES.has(file)) {

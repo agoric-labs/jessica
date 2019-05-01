@@ -41,14 +41,13 @@ and limitations under the License.
 declare const Infinity: number;
 declare const NaN: number;
 
-// TODO: Don't export Symbols.
-interface Symbol {}
-
 type Record<K extends string | number, T> = {
   [P in K]: T;
 };
 
+interface Symbol {}
 interface SymbolConstructor {
+    readonly toStringTag: symbol;
     readonly iterator: symbol;
 }
 declare const Symbol: SymbolConstructor;

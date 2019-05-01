@@ -1,5 +1,5 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
-import {insulate} from '../globalEnv.mjs';
+import {insulate} from '@agoric/jessie';
 
 test('insulate(primitives)', () => {
     expect(insulate('foo')).toBe('foo');
@@ -30,7 +30,6 @@ test('insulate(identity)', () => {
     expect(obj2.abc = 'aaa').toBe('aaa');
     expect(f3(obj2)).toBe(obj2);
     expect(f3(obj)).toBe(obj);
-    expect(f2).not.toBe(f3);
 });
 
 test('insulate(protection)', () => {
@@ -76,6 +75,7 @@ test('insulate(this-capture)', () => {
     let exfiltrated2 = 'still nothing leaked';
     const getPriv2 = insulate(function() {
         exfiltrated2 = this.priv2;
+        return 'really innocuous';
     });
     const obj2 = {
         a() { return 'still innocuous'; },
@@ -85,4 +85,12 @@ test('insulate(this-capture)', () => {
     obj2.a = getPriv2;
     expect(() => obj2.a()).toThrow(/undefined/);
     expect(exfiltrated2).toBe('still nothing leaked');
+});
+
+test('insulate(avoid doubling)', () => {
+    const cnst = insulate({toString() { return 'hello'; }});
+    const a = insulate((arg) => arg === cnst);
+    const b = insulate((arg) => a(arg));
+    expect(a(cnst)).toBeTruthy();
+    expect(b(cnst)).toBeTruthy();
 });
