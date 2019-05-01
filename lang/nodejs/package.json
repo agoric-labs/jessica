@@ -5,8 +5,9 @@
   "main": "jesspipe.js",
   "dependencies": {
     "@agoric/jessie": "file:../../../../Jessie",
-    "@michaelfig/slog": "file:../../../slog",
+    "@michaelfig/slog": "0.0.1",
     "@types/agoric__jessie": "file:../../../../agoric__jessie",
+    "esm": "^3.2.22",
     "ses": "^0.4.0"
   },
   "devDependencies": {
