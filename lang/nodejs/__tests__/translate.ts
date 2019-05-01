@@ -1,6 +1,4 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
-import '../globalEnv.mjs';
-
 import {IJessicaResourceParameters, translate} from '../../../lib/translate.mjs';
 
 const params: IJessicaResourceParameters = {

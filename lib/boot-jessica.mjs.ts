@@ -1,5 +1,6 @@
 // These are exported explicitly below.
-import { harden, insulate, makeMap, makePromise,
+/// <reference path="../typings/jessie-proposed.d.ts"/>
+import { harden, insulate as rawInsulate, makeMap, makePromise,
     makeSet, makeWeakMap, makeWeakSet } from '@agoric/jessie';
 import { slog } from '@michaelfig/slog';
 
@@ -40,7 +41,7 @@ const bootJessica = (
             // Don't inherit any endowments.
             return jessica.runExpr(src, {});
         },
-        runExpr: (src: string, env: Record<string, any>, options: ConfineOptions = {}) => {
+        runExpr: (src: string, env: Record<string, any> = {}, options: ConfineOptions = {}) => {
             let tag = tagString<any[]>(jessieExprTag, options.scriptName);
             if (options.debug) {
                 tag = tag('DEBUG');
@@ -49,7 +50,7 @@ const bootJessica = (
             const evalenv = {eval: jessica.eval, ...env};
             return interpJessie(ast, evalenv, options || {});
         },
-        runModule: (src: string, env: Record<string, any>, options: ConfineOptions = {}) => {
+        runModule: (src: string, env: Record<string, any> = {}, options: ConfineOptions = {}) => {
             let tag = tagString<any[]>(jessieTag, options.scriptName);
             if (options.debug) {
                 tag = tag('DEBUG');
@@ -70,17 +71,24 @@ const bootJessica = (
         },
         confineExpr: jessica.runExpr,
         harden,
-        insulate,
+        insulate<T>(warmTarget: T) {
+            // Don't insulate our existing targets.
+            if (jessieTargets.has(warmTarget)) {
+                return warmTarget;
+            }
+            return rawInsulate(warmTarget);
+        },
         makeMap,
         makePromise,
         makeSet,
         makeWeakMap,
         makeWeakSet,
     });
+    const jessieTargets = makeSet(Object.values(jessie));
     importCache.set('@agoric/jessie', harden(jessie));
 
     // The default slog is also allowed.
-    importCache.set('@michaelfig/slog', harden({slog}));
+    importCache.set('@michaelfig/slog', Object.freeze({slog}));
     return jessica;
 };
 

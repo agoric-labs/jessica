@@ -30,7 +30,6 @@ test('insulate(identity)', () => {
     expect(obj2.abc = 'aaa').toBe('aaa');
     expect(f3(obj2)).toBe(obj2);
     expect(f3(obj)).toBe(obj);
-    expect(f2).not.toBe(f3);
 });
 
 test('insulate(protection)', () => {
@@ -86,4 +85,12 @@ test('insulate(this-capture)', () => {
     obj2.a = getPriv2;
     expect(() => obj2.a()).toThrow(/undefined/);
     expect(exfiltrated2).toBe('still nothing leaked');
+});
+
+test('insulate(avoid doubling)', () => {
+    const cnst = insulate({toString() { return 'hello'; }});
+    const a = insulate((arg) => arg === cnst);
+    const b = insulate((arg) => a(arg));
+    expect(a(cnst)).toBeTruthy();
+    expect(b(cnst)).toBeTruthy();
 });

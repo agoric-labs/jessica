@@ -1,7 +1,7 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
-import globalEnv, {applyMethod,  setComputedIndex} from '../globalEnv.mjs';
+import {applyMethod, setComputedIndex} from '../jessieDefaults.mjs';
 
-import bootEnv from '../../../lib/boot-env.mjs';
+import bootJessica from '../../../lib/boot-jessica.mjs';
 import repl from '../../../lib/repl.mjs';
 
 import * as fs from 'fs';
@@ -19,23 +19,23 @@ function dontRead(file: string): never {
     throw Error(`Refusing to read ${file}`);
 }
 
-function defaultEnv(reader: (file: string) => string) {
-    const jessie = bootEnv(globalEnv, applyMethod, reader, setComputedIndex);
-    return jessie;
+function defaultJessica(reader: (file: string) => string) {
+    const jessica = bootJessica(applyMethod, reader, setComputedIndex);
+    return jessica;
 }
 
 function defaultRunModule(reader: (file: string) => string, writer: (file: string, data: string) => void) {
-    const jessie = defaultEnv(doRead);
+    const jessica = defaultJessica(doRead);
     const doEval = (src: string, uri?: string) =>
-        jessie.confine(src, jessie, {scriptName: uri});
+        jessica.runModule(src, {}, {scriptName: uri});
     const deps = {applyMethod, readInput: reader, setComputedIndex, writeOutput: writer};
     return (module: string, argv: string[]) =>
         repl(deps, doEval, module, argv);
 }
 
 test('sanity', () => {
-    const jessie = defaultEnv(dontRead);
-    expect(jessie.confine('export default 123;', globalEnv)).toBe(123);
+    const jessica = defaultJessica(dontRead);
+    expect(jessica.runModule('export default 123;')).toBe(123);
 });
 
 test('repl', () => {
@@ -52,20 +52,20 @@ test('repl', () => {
 });
 
 test('quasi', () => {
-    const jessie = defaultEnv(dontRead);
+    const jessica = defaultJessica(dontRead);
     const tag = (template: TemplateStringsArray, ...args: any[]) =>
         args.reduce((prior, arg, i) => prior + String(arg) + template[i + 1], template[0]);
 
-    expect(jessie.confine('export default insulate(() => `abc 123`);', jessie)())
+    expect(jessica.runModule('export default insulate(() => `abc 123`);')())
         .toBe('abc 123');
 
-    expect(jessie.confine('export default insulate((arg) => `abc ${arg} 456`);', jessie)(123))
+    expect(jessica.runModule('export default insulate((arg) => `abc ${arg} 456`);')(123))
         .toBe('abc 123 456');
 
-    expect(jessie.confine('export default insulate((tag) => tag`My string`);', jessie)(tag))
+    expect(jessica.runModule('export default insulate((tag) => tag`My string`);')(tag))
         .toBe('My string');
 
-    expect(jessie.confine('export default insulate((tag, arg) => tag`My template ${arg}`);', jessie)(tag, 'hello'))
+    expect(jessica.runModule('export default insulate((tag, arg) => tag`My template ${arg}`);')(tag, 'hello'))
         .toBe('My template hello');
 
 });
