@@ -1,13 +1,8 @@
-#! /usr/bin/env ts-node
 // jesspipe.ts - Evaluate a Jessie script as part of a pipeline
-// Usage is:
-// $ ts-node jesspipe.ts \
-//    MODULE [OPTIONS...] [-- [INFILE...]]
 
 /// <reference path="../../typings/jessie-proposed.d.ts"/>
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 
-import { insulate } from '@agoric/jessie';
 import { slog } from '@michaelfig/slog';
 import { applyMethod, setComputedIndex } from './jessieDefaults.mjs';
 
