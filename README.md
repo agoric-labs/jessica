@@ -75,7 +75,7 @@ $ ./check.bat NEWLANG
 This is how to bootstrap Jessica for a compiled language
 implementation from a related language (or itself):
 
-1. Create a new `./lib/emit-NEWLANG.js` file, based off of an existing similar `./lib/emit-OLDLANG.js`.
+1. Create a new `./lib/emit-NEWLANG.js.ts` file, based off of an existing similar `./lib/emit-OLDLANG.js.ts`.  If you really don't want to use Typescript, you can just create `./lib/emit-NEWLANG.js` directly.
 
 2. Run your existing `jesspipe` to execute your emitter to translate the Jessica `./lib` master sources into a library in your new language's syntax, where `SRC` is the source file suffix for your language:
 
