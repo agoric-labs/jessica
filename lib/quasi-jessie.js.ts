@@ -42,6 +42,9 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     # For proposed eventual send expressions
     LATER <- _NO_NEWLINE "!" _WS;
 
+    # insulate is reserved by Jessica.
+    RESERVED_WORD <- super.RESERVED_WORD / ( "insulate" _WSN );
+
     # A.2 Expressions
 
     # Jessie primaryExpr does not include "this", ClassExpression,
@@ -301,12 +304,13 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
       safeNamedImports                          ${(n) => ['importBind', n]};
 
     importSpecifier <-
-      defImport                                 ${(d) => ['as', d[1], d[1]]}
-    / IDENT_NAME AS defImport                   ${(i, _, d) => ['as', i, d[1]]};
+      IDENT_NAME AS defImport                   ${(i, _, d) => ['as', i, d[1]]}
+    / defImport                                 ${(d) => ['as', d[1], d[1]]};
 
-    # No renaming of safe imports.
+    # Safe imports don't need to be prefixed.
     safeImportSpecifier <-
-      defVar                               ${(d) => ['as', d[1], d[1]]}
+      IDENT_NAME AS defVar                 ${(i, _, d) => ['as', i, d[1]]}
+    / defVar                               ${(d) => ['as', d[1], d[1]]}
     / "insulate" _WSN                      ${(w) => ['as', w, w]};
 
     namedImports <-
