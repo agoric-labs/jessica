@@ -13,7 +13,10 @@ export const setComputedIndex = harden((obj, index, val) => {
 // Don't insulate the arguments to setComputedIndex.
 import insulate, { $h_already, $h_debug } from '@agoric/jessie/lib/insulate.js';
 $h_already.add(setComputedIndex);
-$h_debug(harden((caller, definer) => slog.debug `${caller} ${definer}`));
+$h_debug(harden((caller, definer) => {
+    slog.debug `Insulate error: ${caller}`;
+    slog.debug `In insulate definer: ${definer}`;
+}));
 for (const j of Object.values(jessie)) {
     $h_already.add(j);
 }
