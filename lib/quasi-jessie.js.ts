@@ -1,4 +1,4 @@
-import { insulate } from '@agoric/jessie'; // Subsets of JavaScript, starting from the grammar as defined at
+// Subsets of JavaScript, starting from the grammar as defined at
 // http://www.ecma-international.org/ecma-262/9.0/#sec-grammar-summary
 
 // See https://github.com/Agoric/Jessie/blob/master/README.md
@@ -8,39 +8,42 @@ import { insulate } from '@agoric/jessie'; // Subsets of JavaScript, starting fr
 
 // Safe Modules are ones that can be imported without
 // insulating their symbols.
-const isSafeModule = insulate(moduleName => {
+const isSafeModule = (moduleName: string) => {
   switch (moduleName) {
-    case '@agoric/jessie':{
-        return true;
-      }
-    default:{
-        return false;
-      }}
+    case '@agoric/jessie': {
+      return true;
+    }
+    default: {
+      return false;
+    }
+  }
+};
 
-});
-
-
-const terminatedBlock = insulate(manyBodies => {
-  const stmts = manyBodies.reduce((prior, body) => {
+type TerminatedBody = [any[][], any[]];
+const terminatedBlock = (manyBodies: TerminatedBody[]) => {
+  const stmts = manyBodies.reduce<any[][]>((prior, body) => {
     const [bs, t] = body;
     bs.forEach(b => prior.push(b));
     prior.push(t);
     return prior;
   }, []);
   return ['block', stmts];
-});
+};
 
-const makeJessie = insulate((peg, justinPeg) => {
-  const { FAIL, SKIP } = justinPeg;
-  const jessieTag = justinPeg`
+const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag<any>>) => {
+    const {FAIL, SKIP} = justinPeg;
+    const jessieTag = justinPeg`
     # Override rather than inherit start production.
     # Only module syntax is permitted.
-    start <- _WS moduleBody _EOF               ${b => (..._a) => ['module', b]};
+    start <- _WS moduleBody _EOF               ${b => (..._a: any[]) => ['module', b]};
 
     # A.1 Lexical Grammar
 
     # For proposed eventual send expressions
     LATER <- _NO_NEWLINE "!" _WS;
+
+    # insulate is reserved by Jessica.
+    RESERVED_WORD <- super.RESERVED_WORD / ( "insulate" _WSN );
 
     # A.2 Expressions
 
@@ -220,7 +223,7 @@ const makeJessie = insulate((peg, justinPeg) => {
     / "class" / "let" / "[") _WSN;
 
     # to be overridden
-    terminatedBody <- ((~terminator statementItem)* terminator)+   ${tb => terminatedBlock(tb)};
+    terminatedBody <- ((~terminator statementItem)* terminator)+   ${(tb) => terminatedBlock(tb)};
     clause <-
       caseLabel+ LEFT_BRACE terminatedBody RIGHT_BRACE ${(cs, _, b, _2) => ['clause', cs, b]};
     caseLabel <-
@@ -280,7 +283,7 @@ const makeJessie = insulate((peg, justinPeg) => {
     insulatedExpr <-
       dataLiteral                                     ${d => ['data', JSON.parse(d)]}
     / "insulate" _WS LEFT_PAREN (pureExpr / useImport) RIGHT_PAREN  ${(fname, _2, expr, _3) =>
-  ['call', ['use', fname], [expr]]}
+                                                          ['call', ['use', fname], [expr]]}
     / useVar;
 
     # Jessie modules only allow insulated module-level bindings.
@@ -291,23 +294,24 @@ const makeJessie = insulate((peg, justinPeg) => {
 
     importClause <-
       STAR AS defImport                         ${(_, _2, d) => ['importBind', [['as', '*', d[1]]]]}
-    / namedImports                              ${n => ['importBind', n]}
+    / namedImports                              ${(n) => ['importBind', n]}
     / defImport _COMMA STAR AS defImport        ${(d, _, _2, d2) => ['importBind', [['as', 'default', d[1]],
-  ['as', '*', d2[1]]]]}
+                                                  ['as', '*', d2[1]]]]}
     / defImport _COMMA namedImports             ${(d, n) => ['importBind', [['as', 'default', d[1]], ...n]]}
-    / defImport                                 ${d => ['importBind', [['as', 'default', d[1]]]]};
+    / defImport                                 ${(d) => ['importBind', [['as', 'default', d[1]]]]};
 
     safeImportClause <-
-      safeNamedImports                          ${n => ['importBind', n]};
+      safeNamedImports                          ${(n) => ['importBind', n]};
 
     importSpecifier <-
-      defImport                                 ${d => ['as', d[1], d[1]]}
-    / IDENT_NAME AS defImport                   ${(i, _, d) => ['as', i, d[1]]};
+      IDENT_NAME AS defImport                   ${(i, _, d) => ['as', i, d[1]]}
+    / defImport                                 ${(d) => ['as', d[1], d[1]]};
 
-    # No renaming of safe imports.
+    # Safe imports don't need to be prefixed.
     safeImportSpecifier <-
-      defVar                               ${d => ['as', d[1], d[1]]}
-    / "insulate" _WSN                      ${w => ['as', w, w]};
+      IDENT_NAME AS defVar                 ${(i, _, d) => ['as', i, d[1]]}
+    / defVar                               ${(d) => ['as', d[1], d[1]]}
+    / "insulate" _WSN                      ${(w) => ['as', w, w]};
 
     namedImports <-
       LEFT_BRACE importSpecifier ** _COMMA _COMMA? RIGHT_BRACE ${(_, s, _2) => s};
@@ -316,7 +320,7 @@ const makeJessie = insulate((peg, justinPeg) => {
       LEFT_BRACE safeImportSpecifier ** _COMMA _COMMA? RIGHT_BRACE ${(_, s, _2) => s};
 
     safeModule <-
-      STRING ${s => {const mod = JSON.parse(s);return isSafeModule(mod) ? mod : FAIL;}};
+      STRING ${(s) => { const mod = JSON.parse(s); return isSafeModule(mod) ? mod : FAIL; }};
 
     importDecl <-
       IMPORT importClause FROM STRING SEMI  ${(_, v, _2, s, _3) => ['import', v, JSON.parse(s)]}
@@ -359,12 +363,12 @@ const makeJessie = insulate((peg, justinPeg) => {
     STAR <- "*" _WS;
     `;
 
-  const jessieExprTag = peg.extends(jessieTag)`
+    const jessieExprTag = peg.extends(jessieTag)`
     # Jump to the expr production.
-    start <- _WS expr _EOF              ${e => (..._a) => e};
+    start <- _WS expr _EOF              ${e => (..._a: any[]) => e};
     `;
 
-  return [jessieTag, jessieExprTag];
-});
+    return [jessieTag, jessieExprTag];
+};
 
 export default makeJessie;

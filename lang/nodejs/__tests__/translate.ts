@@ -1,10 +1,10 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
-import {IJessicaResourceParameters, translate} from '../../../lib/translate.mjs';
+import {IJessicaResourceParameters, translate} from '../../../lib/translate.js';
 
 const params: IJessicaResourceParameters = {
-    remoteURL: 'http://usercontent.example.org/hash-1234/myscript.mjs',
+    remoteURL: 'http://usercontent.example.org/hash-1234/myscript.js',
     sourceType: 'jessie',
-    sourceURL: 'http://example.org/myscript.mjs',
+    sourceURL: 'http://example.org/myscript.js',
     target: 'jessie-frame',
     targetType: 'function',
 };

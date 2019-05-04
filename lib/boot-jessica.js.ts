@@ -4,19 +4,19 @@ import { harden, insulate as rawInsulate, makeMap, makePromise,
     makeSet, makeWeakMap, makeWeakSet } from '@agoric/jessie';
 import { slog } from '@michaelfig/slog';
 
-import bootPeg from './boot-peg.mjs';
-import bootPegAst from './boot-pegast.mjs';
-import makeJessie from './quasi-jessie.mjs';
-import makeJSON from './quasi-json.mjs';
-import makeJustin from './quasi-justin.mjs';
-import makePeg from './quasi-peg.mjs';
+import bootPeg from './boot-peg.js';
+import bootPegAst from './boot-pegast.js';
+import makeJessie from './quasi-jessie.js';
+import makeJSON from './quasi-json.js';
+import makeJustin from './quasi-justin.js';
+import makePeg from './quasi-peg.js';
 
-import makeImporter from './importer.mjs';
-import jessieEvaluators from './interp-jessie.mjs';
-import makeInterp from './interp-utils.mjs';
-import tagString from './tag-string.mjs';
+import makeImporter from './importer.js';
+import jessieEvaluators from './interp-jessie.js';
+import makeInterp from './interp-utils.js';
+import tagString from './tag-string.js';
 
-import { ConfineOptions } from '@agoric/jessie/lib/confine.mjs';
+import { ConfineOptions } from '@agoric/jessie/lib/confine.js';
 
 const bootJessica = (
     applyMethod: IMainDependencies['applyMethod'],

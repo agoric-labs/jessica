@@ -4,7 +4,7 @@
 /// <reference path="node_modules/@types/node/ts3.1/index.d.ts"/>
 
 import { slog } from '@michaelfig/slog';
-import { applyMethod, setComputedIndex } from './jessieDefaults.mjs';
+import { applyMethod, setComputedIndex } from './jessieDefaults.js';
 
 // Read and evaluate the specified module,
 if (process.argv.length < 3) {
@@ -21,7 +21,7 @@ if (dashdash >= 0) {
 }
 
 import * as fs from 'fs';
-import makeReadInput from '../../lib/readInput.mjs';
+import makeReadInput from '../../lib/readInput.js';
 const rawReadInput = (path: string) => fs.readFileSync(path, {encoding: 'latin1'});
 
 const readInput = makeReadInput(CAN_LOAD_ASSETS, rawReadInput);
@@ -37,11 +37,11 @@ const writeOutput = (fname: string, str: string) => {
 };
 
 // Create a Jessica bootstrap interpreter.
-import bootJessica from '../../lib/boot-jessica.mjs';
+import bootJessica from '../../lib/boot-jessica.js';
 const jessica = bootJessica(applyMethod, readInput, setComputedIndex);
 
 // Read, eval, print loop.
-import repl from '../../lib/repl.mjs';
+import repl from '../../lib/repl.js';
 const runModule = (src: string, uri?: string) =>
     jessica.runModule(src, {eval: jessica.eval}, {scriptName: uri});
 const deps = {applyMethod, readInput, setComputedIndex, writeOutput};

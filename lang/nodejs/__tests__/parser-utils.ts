@@ -1,7 +1,7 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
 /// <reference path="../../../lib/peg.d.ts"/>
 import * as util from 'util';
-import tagString from '../../../lib/tag-string.mjs';
+import tagString from '../../../lib/tag-string.js';
 
 let curSrc = '';
 

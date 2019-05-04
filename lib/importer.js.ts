@@ -1,5 +1,5 @@
 import { slog } from '@michaelfig/slog';
-import tagString from './tag-string.mjs';
+import tagString from './tag-string.js';
 
 const makeImporter = (
     importCache: Map<string, any>,

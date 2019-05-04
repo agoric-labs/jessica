@@ -6,7 +6,7 @@ module.exports = {
     "parser-utils\\.ts$",
   ],
   transform: {
-    '\\.mjs$': 'babel-jest',
+    '\\.js$': 'babel-jest',
     '\\.ts$': 'babel-jest',
   },
   transformIgnorePatterns: [

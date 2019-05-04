@@ -1,12 +1,12 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
 /// <reference path="../../../lib/peg.d.ts"/>
-import bootPeg from '../../../lib/boot-peg.mjs';
-import bootPegAst from '../../../lib/boot-pegast.mjs';
-import makePeg from '../../../lib/quasi-peg.mjs';
+import bootPeg from '../../../lib/boot-peg.js';
+import bootPegAst from '../../../lib/boot-pegast.js';
+import makePeg from '../../../lib/quasi-peg.js';
 
-import makeJessie from '../../../lib/quasi-jessie.mjs';
-import makeJSON from '../../../lib/quasi-json.mjs';
-import makeJustin from '../../../lib/quasi-justin.mjs';
+import makeJessie from '../../../lib/quasi-jessie.js';
+import makeJSON from '../../../lib/quasi-json.js';
+import makeJustin from '../../../lib/quasi-justin.js';
 import {ast, makeParser} from './parser-utils';
 
 function defaultJessieExprParser() {

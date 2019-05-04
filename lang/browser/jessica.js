@@ -1,7 +1,7 @@
 import SES from './node_modules/ses/dist/ses.esm.js';
 import {buildWhitelist} from './whitelist.js';
 
-export {translate} from '../../lib/translate.mjs';
+export {translate} from '../../lib/translate.js';
 
 export { SES };
 export * from '@agoric/jessie';

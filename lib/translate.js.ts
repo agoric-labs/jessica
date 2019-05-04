@@ -1,16 +1,16 @@
 import { makePromise } from '@agoric/jessie';
 import { slog } from '@michaelfig/slog';
 
-import bootPeg from './boot-peg.mjs';
-import bootPegAst from './boot-pegast.mjs';
-import makePeg from './quasi-peg.mjs';
+import bootPeg from './boot-peg.js';
+import bootPegAst from './boot-pegast.js';
+import makePeg from './quasi-peg.js';
 
-import makeJessieModule from './quasi-jessie-module.mjs';
-import makeJessie from './quasi-jessie.mjs';
-import makeJSON from './quasi-json.mjs';
-import makeJustin from './quasi-justin.mjs';
-import rewriteModuleDefine from './rewrite-define.mjs';
-import tagString from './tag-string.mjs';
+import makeJessieModule from './quasi-jessie-module.js';
+import makeJessie from './quasi-jessie.js';
+import makeJSON from './quasi-json.js';
+import makeJustin from './quasi-justin.js';
+import rewriteModuleDefine from './rewrite-define.js';
+import tagString from './tag-string.js';
 
 const pegTag = bootPeg(makePeg, bootPegAst);
 const jsonTag = makeJSON(pegTag);

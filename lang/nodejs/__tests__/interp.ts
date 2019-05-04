@@ -1,9 +1,9 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
 import {insulate} from '@agoric/jessie';
-import {applyMethod, setComputedIndex} from '../jessieDefaults.mjs';
+import {applyMethod, setComputedIndex} from '../jessieDefaults.js';
 
-import bootJessica from '../../../lib/boot-jessica.mjs';
-import repl from '../../../lib/repl.mjs';
+import bootJessica from '../../../lib/boot-jessica.js';
+import repl from '../../../lib/repl.js';
 
 import * as fs from 'fs';
 
@@ -42,12 +42,12 @@ test('sanity', () => {
 test('repl', () => {
     const runModule = defaultRunModule(doRead, captureWrite);
     capturedData = '';
-    expect(runModule('../../lib/emit-c.mjs', [])).toBe(undefined);
+    expect(runModule('../../lib/emit-c.js', [])).toBe(undefined);
     expect(capturedData).toBe('/* FIXME: Stub */\n');
 
     if (false) {
         capturedData = '';
-        expect(runModule('../../lib/main-jesspipe.mjs', ['--', '../../lib/emit-c.mjs'])).toBe(undefined);
+        expect(runModule('../../lib/main-jesspipe.js', ['--', '../../lib/emit-c.js'])).toBe(undefined);
         expect(capturedData).toBe('/* FIXME: Stub */\n');
     }
 });

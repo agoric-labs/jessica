@@ -25,8 +25,8 @@ const compile = async (srcs) => {
   const compiled = {};
   for (const src of srcs) {
     // console.log(`Compiling ${src}`);
-    const mjs = src.replace(/\.mjs\.ts$/, '.mjs');
-    const dst = mjs === src ? src + '.js' : mjs;
+    const js = src.replace(/\.js\.ts$/, '.js');
+    const dst = js === src ? src + '.js' : js;
     const base = src.substr(src.lastIndexOf('/') + 1);
     const {ast, code: out} = await babel.transformFileAsync(src, opts);
     compiled[dst] = `import { insulate } from '@agoric/jessie'; ${out}`
@@ -48,7 +48,7 @@ const files = process.argv.slice(2);
 if (files.length > 0) {
   compile(files);
 } else {
-  console.error('You must specify the *.mjs.ts files to compile.');
+  console.error('You must specify the *.js.ts files to compile.');
   process.exit(1);
   const dir = './lib';
   fs.readdir(dir, async (err, files) => {

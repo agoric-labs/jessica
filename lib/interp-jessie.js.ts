@@ -1,9 +1,9 @@
 // TODO: Hoisting of functionDecls.
 
 import { makeMap } from '@agoric/jessie';
-import justinEvaluators from './interp-justin.mjs';
+import justinEvaluators from './interp-justin.js';
 import {addBinding, BINDING_GET, doEval, err,
-    Evaluator, getRef, IBinding, IEvalContext, SCOPE_GET, SCOPE_SET} from './interp-utils.mjs';
+    Evaluator, getRef, IBinding, IEvalContext, SCOPE_GET, SCOPE_SET} from './interp-utils.js';
 const MAGIC_EXIT = {toString: () => 'MAGIC_EXIT'};
 
 const matchPropPattern = (self: IEvalContext, pattern: any[], remaining: Map<any, any>): Array<[string, any]> => {

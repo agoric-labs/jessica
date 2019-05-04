@@ -1,10 +1,10 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
 /// <reference path="../../../lib/peg.d.ts"/>
-import bootPeg from '../../../lib/boot-peg.mjs';
-import bootPegAst from '../../../lib/boot-pegast.mjs';
-import makePeg from '../../../lib/quasi-peg.mjs';
+import bootPeg from '../../../lib/boot-peg.js';
+import bootPegAst from '../../../lib/boot-pegast.js';
+import makePeg from '../../../lib/quasi-peg.js';
 
-import makeJSON from '../../../lib/quasi-json.mjs';
+import makeJSON from '../../../lib/quasi-json.js';
 import {ast, makeParser} from './parser-utils';
 
 function defaultJsonParser() {

@@ -1,4 +1,4 @@
-import { insulate } from '@agoric/jessie'; // Subsets of JavaScript, starting from the grammar as defined at
+// Subsets of JavaScript, starting from the grammar as defined at
 // http://www.ecma-international.org/ecma-262/9.0/#sec-grammar-summary
 
 // Justin is the safe JavaScript expression language, a potentially
@@ -28,14 +28,14 @@ import { insulate } from '@agoric/jessie'; // Subsets of JavaScript, starting fr
 
 /// <reference path="peg.d.ts"/>
 
-import { qunpack as $i_qunpack } from './quasi-utils.mjs';const qunpack = insulate($i_qunpack);
+import {qunpack} from './quasi-utils.js';
 
-const binary = insulate((left, rights) => {
-  return rights.reduce((prev, [op, right]) => [op, prev, right], left);
-});
+const binary = (left: PegExpr, rights: any[]) => {
+    return rights.reduce<PegExpr>((prev, [op, right]) => [op, prev, right], left);
+};
 
-const transformSingleQuote = insulate(s => {
-  let i = 0,qs = '';
+const transformSingleQuote = (s: string) => {
+  let i = 0, qs = '';
   while (i < s.length) {
     const c = s.slice(i, i + 1);
     if (c === '\\') {
@@ -45,21 +45,21 @@ const transformSingleQuote = insulate(s => {
     } else if (c === '"') {
       // Quote it.
       qs += '\\"';
-      i++;
+      i ++;
     } else {
       // Add it directly.
       qs += c;
-      i++;
+      i ++;
     }
   }
   return `"${qs}"`;
-});
+};
 
-const makeJustin = insulate(peg => {
-  const { SKIP } = peg;
-  return peg`
+const makeJustin = (peg: IPegTag<IParserTag<any>>) => {
+    const {SKIP} = peg;
+    return peg`
     # to be overridden or inherited
-    start <- _WS assignExpr _EOF                       ${v => (..._a) => v};
+    start <- _WS assignExpr _EOF                       ${v => (..._a: any[]) => v};
 
     # A.1 Lexical Grammar
 
@@ -87,7 +87,7 @@ const makeJustin = insulate(peg => {
     IDENT_NAME <- ~(HIDDEN_PFX / "__proto__") (IDENT / RESERVED_WORD);
 
     IDENT <-
-      ~(HIDDEN_PFX / IMPORT_PFX / "insulate" / RESERVED_WORD)
+      ~(HIDDEN_PFX / IMPORT_PFX / RESERVED_WORD)
       < [$A-Za-z_] [$A-Za-z0-9_]* > _WSN;
     HIDDEN_PFX <- "$h_";
     IMPORT_PFX <- "$i_";
@@ -288,6 +288,6 @@ const makeJustin = insulate(peg => {
     # opt to pass only insulated expressions as the this-binding.
     expr <- assignExpr;
   `;
-});
+};
 
 export default makeJustin;
