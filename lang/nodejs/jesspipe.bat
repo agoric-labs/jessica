@@ -8,4 +8,4 @@
 @echo off
 set thisdir=%~dp0
 set arguments=%*
-node --require esm "%thisdir%\jesspipe.mjs" %arguments%
+node --require esm "%thisdir%\jesspipe.js" %arguments%

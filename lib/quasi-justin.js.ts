@@ -28,7 +28,7 @@
 
 /// <reference path="peg.d.ts"/>
 
-import {qunpack} from './quasi-utils.mjs';
+import {qunpack} from './quasi-utils.js';
 
 const binary = (left: PegExpr, rights: any[]) => {
     return rights.reduce<PegExpr>((prev, [op, right]) => [op, prev, right], left);

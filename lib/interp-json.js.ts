@@ -1,4 +1,4 @@
-import {doEval, Evaluators, IEvalContext} from './interp-utils.mjs';
+import {doEval, Evaluators, IEvalContext} from './interp-utils.js';
 
 const jsonEvaluators: Evaluators = {
     array(self: IEvalContext, elems: any[][]) {

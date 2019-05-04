@@ -11,12 +11,12 @@ export const setComputedIndex = harden((obj, index, val) => {
     return obj[index] = val;
 });
 // Don't insulate the arguments to setComputedIndex.
-import insulate, { $h_already } from '@agoric/jessie/lib/insulate.mjs';
+import insulate, { $h_already } from '@agoric/jessie/lib/insulate.js';
 $h_already.add(setComputedIndex);
 for (const j of Object.values(jessie)) {
     $h_already.add(j);
 }
 export { insulate };
 // Truncate sourceURL.
-import { $h_sourceURLLength } from '@agoric/jessie/lib/confine.mjs';
+import { $h_sourceURLLength } from '@agoric/jessie/lib/confine.js';
 $h_sourceURLLength(40);

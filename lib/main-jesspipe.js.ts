@@ -1,9 +1,9 @@
 import { makeSet } from '@agoric/jessie';
 import { slog } from '@michaelfig/slog';
 
-import bootJessica from './boot-jessica.mjs';
-import makeReadInput from './readInput.mjs';
-import repl from './repl.mjs';
+import bootJessica from './boot-jessica.js';
+import makeReadInput from './readInput.js';
+import repl from './repl.js';
 
 const jesspipe = (deps: IMainDependencies, argv: string[]) => {
     // Read and evaluate the specified module,

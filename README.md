@@ -22,7 +22,7 @@ Here are notes for how to use the Jessica API for a given language platform, inc
 
 Node.js 8.5 and above can use Jessica directly as ES Modules (since Jessie is a subset of Javascript, with some additional endowed modules).
 
-Until Node.js API documents are completed, you can read `lang/nodejs/jesspipe.mjs` for an example of how to use the Jessie API.
+Until Node.js API documents are completed, you can read `lang/nodejs/jesspipe.js` for an example of how to use the Jessie API.
 
 To run a `jesspipe` module, do:
 
@@ -75,13 +75,13 @@ $ ./check.bat NEWLANG
 This is how to bootstrap Jessica for a compiled language
 implementation from a related language (or itself):
 
-1. Create a new `./lib/emit-NEWLANG.mjs` file, based off of an existing similar `./lib/emit-OLDLANG.mjs`.
+1. Create a new `./lib/emit-NEWLANG.js` file, based off of an existing similar `./lib/emit-OLDLANG.js`.
 
 2. Run your existing `jesspipe` to execute your emitter to translate the Jessica `./lib` master sources into a library in your new language's syntax, where `SRC` is the source file suffix for your language:
 
 ```sh
 $ mkdir ./lang/NEWLANG
-$ ./lang/OLDLANG/jesspipe.bat ./lib/emit-NEWLANG.mjs -- ./lib/*.mjs > ./lang/NEWLANG/jessica.SRC
+$ ./lang/OLDLANG/jesspipe.bat ./lib/emit-NEWLANG.js -- ./lib/*.js > ./lang/NEWLANG/jessica.SRC
 ```
 
 3. Write a `./lang/NEWLANG/jesspipe.SRC` main program, along with any support files in `./lang/NEWLANG` designed for linking against `./lang/NEWLANG/jessica.SRC`.

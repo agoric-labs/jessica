@@ -1,7 +1,7 @@
-import jsonEvaluators from './interp-json.mjs';
+import jsonEvaluators from './interp-json.js';
 import {BINDING_GET, doEval, err, Evaluator,
-    getRef, IEvalContext, SCOPE_GET} from './interp-utils.mjs';
-import {qrepack} from './quasi-utils.mjs';
+    getRef, IEvalContext, SCOPE_GET} from './interp-utils.js';
+import {qrepack} from './quasi-utils.js';
 
 const justinEvaluators: Record<string, Evaluator> = {
     ...jsonEvaluators,
