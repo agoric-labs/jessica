@@ -4,7 +4,7 @@
   "description": "Jessica implementation for the browser",
   "main": "dist/jessica.js",
   "devDependencies": {
-    "parcel-bundler": "^1.12.3",
+    "parcel-bundler": "^1.12.4",
     "ses": "^0.6.3"
   },
   "scripts": {
