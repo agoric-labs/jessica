@@ -1,5 +1,5 @@
 /// <reference path="../node_modules/@types/jest/index.d.ts"/>
-import {insulate} from '@agoric/jessie';
+import insulate from '@agoric/jessie/lib/insulate.js';
 
 test('insulate(primitives)', () => {
     expect(insulate('foo')).toBe('foo');
