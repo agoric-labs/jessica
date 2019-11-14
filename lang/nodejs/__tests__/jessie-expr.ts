@@ -4,6 +4,7 @@ import bootPeg from '../../../lib/boot-peg.js';
 import bootPegAst from '../../../lib/boot-pegast.js';
 import makePeg from '../../../lib/quasi-peg.js';
 
+import makeInsulatedJessie from '../../../lib/quasi-insulate.js';
 import makeJessie from '../../../lib/quasi-jessie.js';
 import makeJSON from '../../../lib/quasi-json.js';
 import makeJustin from '../../../lib/quasi-justin.js';
@@ -13,7 +14,8 @@ function defaultJessieExprParser() {
   const pegTag = bootPeg(makePeg, bootPegAst);
   const jsonTag = makeJSON(pegTag);
   const justinTag = makeJustin(pegTag.extends(jsonTag));
-  const jessieTag = makeJessie(pegTag, pegTag.extends(justinTag));
+  const [rawJessieTag] = makeJessie(pegTag, pegTag.extends(justinTag));
+  const jessieTag = makeInsulatedJessie(pegTag, pegTag.extends(rawJessieTag));
   return makeParser(jessieTag[1]);
 }
 

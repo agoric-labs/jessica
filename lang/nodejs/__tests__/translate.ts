@@ -33,7 +33,7 @@ return $h_exports;
     });
 });
 
-test('imports', async () => {
+test.skip('imports', async () => {
     const translatedText = `$h_define(
 ["./foo"],
 ($h_star0) => {

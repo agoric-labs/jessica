@@ -6,6 +6,7 @@ import bootPegAst from './boot-pegast.js';
 import makePeg from './quasi-peg.js';
 
 import makeJessieModule from './quasi-jessie-module.js';
+import makeInsulatedJessie from './quasi-insulate.js';
 import makeJessie from './quasi-jessie.js';
 import makeJSON from './quasi-json.js';
 import makeJustin from './quasi-justin.js';
@@ -15,7 +16,8 @@ import tagString from './tag-string.js';
 const pegTag = bootPeg(makePeg, bootPegAst);
 const jsonTag = makeJSON(pegTag);
 const justinTag = makeJustin(pegTag.extends(jsonTag));
-const [jessieTag] = makeJessie(pegTag, pegTag.extends(justinTag));
+const [rawJessieTag] = makeJessie(pegTag, pegTag.extends(justinTag));
+const [jessieTag] = makeInsulatedJessie(pegTag, pegTag.extends(rawJessieTag));
 const jessieModuleTag = makeJessieModule(pegTag.extends(jessieTag));
 
 export type Targets = 'jessie-frame';

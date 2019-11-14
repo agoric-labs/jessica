@@ -6,6 +6,7 @@ import { slog } from '@michaelfig/slog';
 
 import bootPeg from './boot-peg.js';
 import bootPegAst from './boot-pegast.js';
+import makeInsulatedJessie from './quasi-insulate.js';
 import makeJessie from './quasi-jessie.js';
 import makeJSON from './quasi-json.js';
 import makeJustin from './quasi-justin.js';
@@ -28,7 +29,10 @@ const bootJessica = (
     // Stack up the parser.
     const jsonTag = makeJSON(pegTag);
     const justinTag = makeJustin(pegTag.extends(jsonTag));
-    const [jessieTag, jessieExprTag] = makeJessie(pegTag, pegTag.extends(justinTag));
+    const [rawJessieTag] = makeJessie(pegTag, pegTag.extends(justinTag));
+
+    // FIXME: The insulated Jessie tag.
+    const [jessieTag, jessieExprTag] = makeInsulatedJessie(pegTag, pegTag.extends(rawJessieTag));
 
     // No, this isn't an empty Map.
     // (It's initialized after jessica.runExpr is defined.)
