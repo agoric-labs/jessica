@@ -19,6 +19,25 @@ function defaultJessieExprParser() {
   return makeParser(jessieTag[1]);
 }
 
+test('tildot', () => {
+  const parse = defaultJessieExprParser();
+  expect(parse(`abc~.a1`)).toEqual(
+    ast(0, 'getLater', ast(0, 'use', 'abc'), 'a1')
+  );
+
+  expect(parse(`abc~.(a, 1)`)).toEqual(
+    ast(0, 'callLater', ast(0, 'use', 'abc'), ast(5, ast(6, 'use', 'a'), ast(9, 'data', 1)))
+  );
+
+  const oldError = console.error;
+  try {
+    console.error = (): any => undefined;
+    expect(() => parse(`abc~.1`)).toThrowError('Syntax error at 3 "~" #0:3');
+  } finally {
+    console.error = oldError;
+  }
+});
+
 test('get/set', () => {
     const parse = defaultJessieExprParser();
     expect(parse(`function doit() { return bar.abcd; }`)).toEqual(

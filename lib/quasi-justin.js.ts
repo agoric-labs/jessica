@@ -142,8 +142,11 @@ const makeJustin = (peg: IPegTag<IParserTag<any>>) => {
 
     # A.2 Expressions
 
+    undefined <-
+      "undefined" _WSN     ${_ => ['undefined']};
+    
     dataStructure <-
-      "undefined" _WSN     ${_ => ['data', undefined]}
+      undefined
     / super.dataStructure;
 
     # Optional trailing commas.

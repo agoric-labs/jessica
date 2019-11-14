@@ -40,7 +40,8 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     # A.1 Lexical Grammar
 
     # For proposed eventual send expressions
-    LATER <- _NO_NEWLINE "!" _WS;
+    # Tildot followed by non-digit.
+    LATER <- "~." ~[0-9] _WS;
 
     # insulate is reserved by Jessica.
     RESERVED_WORD <- super.RESERVED_WORD / ( "insulate" _WSN );
@@ -76,7 +77,7 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     / LATER IDENT_NAME                             ${(_, id) => ['getLater', id]};
 
     # Extend to recognize proposed eventual send syntax.
-    # We distinguish b!foo(x) from calling b!foo by a post-parsing pass
+    # We distinguish b~.foo(x) from calling b~.foo by a post-parsing pass
     callPostOp <-
       super.callPostOp
     / LATER args                                           ${(_, args) => ['callLater', args]};
@@ -196,6 +197,7 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     pattern <-
       bindingPattern
     / defVar
+    / undefined                                       ${n => ['matchUndefined']}
     / dataLiteral                                     ${n => ['matchData', JSON.parse(n)]}
     / HOLE                                            ${h => ['patternHole', h]};
 
@@ -279,9 +281,12 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     moduleDeclaration <-
       "const" _WSN moduleBinding ** _COMMA SEMI       ${(op, decls) => [op, decls]};
 
-    # An properly hardened expression without side-effects.
+    # A properly hardened expression without side-effects.
     hardenedExpr <-
       dataLiteral                                     ${d => ['data', JSON.parse(d)]}
+    / undefined
+    / "harden" _WS LEFT_PAREN (pureExpr / useImport) RIGHT_PAREN  ${(fname, _2, expr, _3) =>
+        ['call', ['use', fname], [expr]]}
     / useVar;
 
     # Jessie modules only allow hardened module-level bindings.
