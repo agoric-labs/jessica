@@ -38,13 +38,6 @@ export function buildWhitelist() {
   };
 
   const namedIntrinsics = {
-    cajaVM: {                        // Caja support
-      Nat: j,
-      def: j,
-
-      confine: j,
-    },
-
     // In order according to
     // http://www.ecma-international.org/ecma-262/ with chapter
     // numbers where applicable
@@ -54,6 +47,8 @@ export function buildWhitelist() {
     Infinity: j,
     NaN: j,
     undefined: j,
+
+    eval: j, // realms-shim depends on having indirect eval in the globals
 
     // 19 Fundamental Objects
 
@@ -66,7 +61,9 @@ export function buildWhitelist() {
       keys: j,
       values: j,
       prototype: {
-        __proto__: necessary,
+        // We need to prefix __proto__ with ESCAPE so that it doesn't
+        // just change the prototype of this object.
+        ESCAPE__proto__: 'maybeAccessor',
       },
     },
 
@@ -196,7 +193,7 @@ export function buildWhitelist() {
         catch: j,
         then: j,
       }
-    }
+    },
   };
 
   return {namedIntrinsics, anonIntrinsics};
