@@ -4006,8 +4006,6 @@ function buildWhitelist() {
   "use strict";
 
   var j = true; // included in the Jessie runtime
-
-  var necessary = true; // Not included, but needed for operation
   // These are necessary for most Javascript environments.
 
   var anonIntrinsics = {
@@ -7598,108 +7596,6 @@ var makeJessieModule = (0, _jessie.insulate)(function (jessiePeg) {
 });
 var _default = makeJessieModule;
 exports.default = _default;
-},{"@agoric/jessie":"GTnL"}],"rdiP":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _jessie = require("@agoric/jessie");
-
-function _templateObject2() {
-  var data = _taggedTemplateLiteral(["\n    # Jump to the expr production.\n    start <- _WS expr _EOF              ", ";\n    "]);
-
-  _templateObject2 = function _templateObject2() {
-    return data;
-  };
-
-  return data;
-}
-
-function _templateObject() {
-  var data = _taggedTemplateLiteral(["\n    # Inherit start production.\n    start <- super.start;\n\n    # A.1 Lexical Grammar\n\n    # insulate is reserved by Jessica.\n    RESERVED_WORD <- super.RESERVED_WORD / ( \"insulate\" _WSN );\n\n    # A.5 Scripts and Modules\n\n    useImport <- IMPORT_PFX IDENT                 ", ";\n    defImport <- IMPORT_PFX IDENT                 ", ";\n\n    # A properly hardened expression without side-effects.\n    hardenedExpr <-\n      \"insulate\" _WS LEFT_PAREN (pureExpr / useImport) RIGHT_PAREN  ", "\n    / super.hardenedExpr;\n\n    # Safe imports don't need to be prefixed.\n    safeImportSpecifier <-\n      IDENT_NAME AS defVar                 ", "\n    / defVar                               ", "\n    / \"insulate\" _WSN                      ", ";\n\n    safeModule <-\n      STRING ", ";\n    "]);
-
-  _templateObject = function _templateObject() {
-    return data;
-  };
-
-  return data;
-}
-
-function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
-
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
-
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
-
-function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
-
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
-// Subsets of JavaScript, starting from the grammar as defined at
-// http://www.ecma-international.org/ecma-262/9.0/#sec-grammar-summary
-// See https://github.com/Agoric/Jessie/blob/master/README.md
-// for documentation of the Jessie grammar defined here.
-/// <reference path="peg.d.ts"/>
-// Safe Modules are ones that can be imported without
-// insulating their symbols.
-var isSafeModule = (0, _jessie.insulate)(function (moduleName) {
-  switch (moduleName) {
-    case '@agoric/jessie':
-      {
-        return true;
-      }
-
-    default:
-      {
-        return false;
-      }
-  }
-});
-var terminatedBlock = (0, _jessie.insulate)(function (manyBodies) {
-  var stmts = manyBodies.reduce(function (prior, body) {
-    var _body = _slicedToArray(body, 2),
-        bs = _body[0],
-        t = _body[1];
-
-    bs.forEach(function (b) {
-      return prior.push(b);
-    });
-    prior.push(t);
-    return prior;
-  }, []);
-  return ['block', stmts];
-});
-var makeInsulatedJessie = (0, _jessie.insulate)(function (peg, jessiePeg) {
-  var FAIL = jessiePeg.FAIL,
-      SKIP = jessiePeg.SKIP;
-  var insulatedTag = jessiePeg(_templateObject(), function (pfx, id) {
-    return ['use', pfx + id];
-  }, function (pfx, id) {
-    return ['def', pfx + id];
-  }, function (fname, _2, expr, _3) {
-    return ['call', ['use', fname], [expr]];
-  }, function (i, _, d) {
-    return ['as', i, d[1]];
-  }, function (d) {
-    return ['as', d[1], d[1]];
-  }, function (w) {
-    return ['as', w, w];
-  }, function (s) {
-    var mod = JSON.parse(s);
-    return isSafeModule(mod) ? mod : FAIL;
-  });
-  var insulatedExprTag = peg.extends(insulatedTag)(_templateObject2(), function (e) {
-    return function () {
-      return e;
-    };
-  });
-  return [insulatedTag, insulatedExprTag];
-});
-var _default = makeInsulatedJessie;
-exports.default = _default;
 },{"@agoric/jessie":"GTnL"}],"b5GZ":[function(require,module,exports) {
 "use strict";
 
@@ -8521,7 +8417,7 @@ exports.default = _default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.translate = void 0;
+exports.translate = exports.parse = void 0;
 
 var _jessie = require("@agoric/jessie");
 
@@ -8535,8 +8431,6 @@ var _quasiPeg = _interopRequireDefault(require("./quasi-peg.js"));
 
 var _quasiJessieModule = _interopRequireDefault(require("./quasi-jessie-module.js"));
 
-var _quasiInsulate = _interopRequireDefault(require("./quasi-insulate.js"));
-
 var _quasiJessie = _interopRequireDefault(require("./quasi-jessie.js"));
 
 var _quasiJson = _interopRequireDefault(require("./quasi-json.js"));
@@ -8549,20 +8443,20 @@ var _tagString = _interopRequireDefault(require("./tag-string.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _templateObject5() {
+function _templateObject6() {
   var data = _taggedTemplateLiteral(["Unrecognized targetType: ", ""]);
 
-  _templateObject5 = function _templateObject5() {
+  _templateObject6 = function _templateObject6() {
     return data;
   };
 
   return data;
 }
 
-function _templateObject4() {
+function _templateObject5() {
   var data = _taggedTemplateLiteral(["", ""]);
 
-  _templateObject4 = function _templateObject4() {
+  _templateObject5 = function _templateObject5() {
     return data;
   };
 
@@ -8575,8 +8469,18 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-function _templateObject3() {
+function _templateObject4() {
   var data = _taggedTemplateLiteral(["", ""]);
+
+  _templateObject4 = function _templateObject4() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject3() {
+  var data = _taggedTemplateLiteral(["Unrecognized target: ", ""]);
 
   _templateObject3 = function _templateObject3() {
     return data;
@@ -8586,7 +8490,7 @@ function _templateObject3() {
 }
 
 function _templateObject2() {
-  var data = _taggedTemplateLiteral(["Unrecognized target: ", ""]);
+  var data = _taggedTemplateLiteral(["Unrecognized sourceType: ", ""]);
 
   _templateObject2 = function _templateObject2() {
     return data;
@@ -8596,7 +8500,7 @@ function _templateObject2() {
 }
 
 function _templateObject() {
-  var data = _taggedTemplateLiteral(["Unrecognized sourceType: ", ""]);
+  var data = _taggedTemplateLiteral(["", ""]);
 
   _templateObject = function _templateObject() {
     return data;
@@ -8620,7 +8524,6 @@ var bootPeg = (0, _jessie.insulate)(_bootPeg.default);
 var bootPegAst = (0, _jessie.insulate)(_bootPegast.default);
 var makePeg = (0, _jessie.insulate)(_quasiPeg.default);
 var makeJessieModule = (0, _jessie.insulate)(_quasiJessieModule.default);
-var makeInsulatedJessie = (0, _jessie.insulate)(_quasiInsulate.default);
 var makeJessie = (0, _jessie.insulate)(_quasiJessie.default);
 var makeJSON = (0, _jessie.insulate)(_quasiJson.default);
 var makeJustin = (0, _jessie.insulate)(_quasiJustin.default);
@@ -8632,13 +8535,17 @@ var justinTag = (0, _jessie.insulate)(makeJustin(pegTag.extends(jsonTag)));
 
 var _insulate = (0, _jessie.insulate)(makeJessie(pegTag, pegTag.extends(justinTag))),
     _insulate2 = _slicedToArray(_insulate, 1),
-    rawJessieTag = _insulate2[0];
-
-var _insulate3 = (0, _jessie.insulate)(makeInsulatedJessie(pegTag, pegTag.extends(rawJessieTag))),
-    _insulate4 = _slicedToArray(_insulate3, 1),
-    jessieTag = _insulate4[0];
+    jessieTag = _insulate2[0];
 
 var jessieModuleTag = (0, _jessie.insulate)(makeJessieModule(pegTag.extends(jessieTag)));
+var parse = (0, _jessie.insulate)(function (sourceText, parameters) {
+  return (0, _jessie.makePromise)(function (resolve) {
+    var tag = tagString(jessieTag, parameters.sourceURL);
+    var moduleAst = tag(_templateObject(), sourceText);
+    resolve(moduleAst);
+  });
+});
+exports.parse = parse;
 var translate = (0, _jessie.insulate)(function (sourceText, parameters) {
   return (0, _jessie.makePromise)(function (resolve) {
     var sourceType = parameters.sourceType,
@@ -8646,13 +8553,13 @@ var translate = (0, _jessie.insulate)(function (sourceText, parameters) {
         targetType = parameters.targetType;
 
     if (sourceType !== 'jessie') {
-      throw slog.error(_templateObject(), {
+      throw slog.error(_templateObject2(), {
         sourceType: sourceType
       });
     }
 
     if (target !== 'jessie-frame') {
-      throw slog.error(_templateObject2(), {
+      throw slog.error(_templateObject3(), {
         target: target
       });
     }
@@ -8662,7 +8569,7 @@ var translate = (0, _jessie.insulate)(function (sourceText, parameters) {
         {
           var tag = tagString(jessieModuleTag, parameters.sourceURL); // Throw an exception if the sourceText doesn't parse.
 
-          var moduleAst = tag(_templateObject3(), sourceText); // Rewrite the ESM imports/exports into an SES-honouring AMD form.
+          var moduleAst = tag(_templateObject4(), sourceText); // Rewrite the ESM imports/exports into an SES-honouring AMD form.
 
           var translatedText = rewriteModuleDefine(moduleAst, '$h_define');
 
@@ -8678,7 +8585,7 @@ var translate = (0, _jessie.insulate)(function (sourceText, parameters) {
           var _tag = tagString(jessieTag, parameters.sourceURL); // Throw an exception if the sourceText doesn't parse.
 
 
-          _tag(_templateObject4(), sourceText); // Return the sourceText verbatim.
+          _tag(_templateObject5(), sourceText); // Return the sourceText verbatim.
 
 
           var _result = _objectSpread({}, parameters, {
@@ -8690,7 +8597,7 @@ var translate = (0, _jessie.insulate)(function (sourceText, parameters) {
 
       default:
         {
-          throw slog.error(_templateObject5(), {
+          throw slog.error(_templateObject6(), {
             targetType: targetType
           });
         }
@@ -8698,7 +8605,7 @@ var translate = (0, _jessie.insulate)(function (sourceText, parameters) {
   });
 });
 exports.translate = translate;
-},{"@agoric/jessie":"GTnL","@michaelfig/slog":"Ipmo","./boot-peg.js":"E71q","./boot-pegast.js":"oVyE","./quasi-peg.js":"GjQL","./quasi-jessie-module.js":"hwm9","./quasi-insulate.js":"rdiP","./quasi-jessie.js":"b5GZ","./quasi-json.js":"xON8","./quasi-justin.js":"Hx9y","./rewrite-define.js":"FDmF","./tag-string.js":"QjUU"}],"at9i":[function(require,module,exports) {
+},{"@agoric/jessie":"GTnL","@michaelfig/slog":"Ipmo","./boot-peg.js":"E71q","./boot-pegast.js":"oVyE","./quasi-peg.js":"GjQL","./quasi-jessie-module.js":"hwm9","./quasi-jessie.js":"b5GZ","./quasi-json.js":"xON8","./quasi-justin.js":"Hx9y","./rewrite-define.js":"FDmF","./tag-string.js":"QjUU"}],"at9i":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8708,6 +8615,7 @@ var _exportNames = {
   whitelist: true,
   SES: true,
   translate: true,
+  parse: true,
   slog: true
 };
 Object.defineProperty(exports, "SES", {
@@ -8720,6 +8628,12 @@ Object.defineProperty(exports, "translate", {
   enumerable: true,
   get: function () {
     return _translate.translate;
+  }
+});
+Object.defineProperty(exports, "parse", {
+  enumerable: true,
+  get: function () {
+    return _translate.parse;
   }
 });
 Object.defineProperty(exports, "slog", {
@@ -8756,4 +8670,4 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var whitelist = (0, _whitelist.buildWhitelist)();
 exports.whitelist = whitelist;
 },{"./node_modules/ses/dist/ses.esm.js":"iDNi","./whitelist.js":"nUr5","../../lib/translate.js":"aBJe","@agoric/jessie":"GTnL","@michaelfig/slog":"Ipmo"}]},{},["at9i"], "jessica")
-//# sourceMappingURL=jessica.cb3be5e5.js.map
+//# sourceMappingURL=jessica.98dcfa48.js.map

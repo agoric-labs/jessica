@@ -6,7 +6,6 @@ import bootPegAst from './boot-pegast.js';
 import makePeg from './quasi-peg.js';
 
 import makeJessieModule from './quasi-jessie-module.js';
-import makeInsulatedJessie from './quasi-insulate.js';
 import makeJessie from './quasi-jessie.js';
 import makeJSON from './quasi-json.js';
 import makeJustin from './quasi-justin.js';
@@ -16,8 +15,7 @@ import tagString from './tag-string.js';
 const pegTag = bootPeg(makePeg, bootPegAst);
 const jsonTag = makeJSON(pegTag);
 const justinTag = makeJustin(pegTag.extends(jsonTag));
-const [rawJessieTag] = makeJessie(pegTag, pegTag.extends(justinTag));
-const [jessieTag] = makeInsulatedJessie(pegTag, pegTag.extends(rawJessieTag));
+const [jessieTag] = makeJessie(pegTag, pegTag.extends(justinTag));
 const jessieModuleTag = makeJessieModule(pegTag.extends(jessieTag));
 
 export type Targets = 'jessie-frame';
@@ -53,6 +51,13 @@ interface IJessicaTranslationResult extends IJessicaResourceParameters {
     // These are the compiler outputs:
     translatedText: Readable;
 }
+
+export const parse = (sourceText: Readable, parameters: IJessicaResourceParameters): Promise<any> =>
+  makePromise(resolve => {
+    const tag = tagString(jessieTag, parameters.sourceURL);
+    const moduleAst = tag`${sourceText}`;
+    resolve(moduleAst);
+  });
 
 export const translate = (sourceText: Readable, parameters: IJessicaResourceParameters):
     Promise<IJessicaTranslationResult> =>

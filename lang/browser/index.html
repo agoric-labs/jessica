@@ -14,14 +14,14 @@
 
         <p>Write your Jessie code below:</p>
         <textarea id="sourceText" rows="20">
-import {insulate} from '@agoric/jessie';
+import { harden } from '@agoric/jessie';
 // Use Jessie's main deps to run the program.
-const main = insulate((deps) => {
+const main = harden((deps) => {
     const say = (s) => deps.writeOutput('-', s + '\n');
     say('Hello, world!');
 });
 export default main;</textarea>
-        <button id="btnRun">Run</button>
+        <button id="btnRun">Run</button> <button id="btnParse">Parse</button>
 
 <label for="whitelist">
             <input type="checkbox" id="whitelist" />
@@ -50,7 +50,22 @@ setEvaluator(whitelist.checked);
         </pre>
 
 <script type="text/javascript">
+btnParse.addEventListener('click', () => doParse(sourceText.value, outputPre));
 btnRun.addEventListener('click', () => doRun(sourceText.value, outputPre));
+const doParse = (sourceText, output) => {
+  output.textContent = '';
+    // Make a confined file writer.
+    const writeOutput = (fname, str) => {
+        if (fname !== '-') {
+            slog.error`Cannot write to ${{fname}}: must be -`;
+        }
+        output.textContent += str;
+    };
+  writeOutput('-', '[Parsing...]\n');
+  jessica.parse(sourceText, {})
+    .then(ast => writeOutput('-', JSON.stringify(ast, undefined, 2)))
+    .catch(e => writeOutput('-', e));
+};
 const doRun = (sourceText, output) => {
     output.textContent = '';
     const parameters = {
@@ -93,8 +108,10 @@ const doRun = (sourceText, output) => {
 const loadingMap = new Map();
 // Expose some builtin modules.
 const jessie = {};
-['harden', 'insulate', 'makeMap', 'makePromise', 'makeSet',
+['insulate', 'makeMap', 'makePromise', 'makeSet',
  'makeWeakMap', 'makeWeakSet'].forEach(s => jessie[s] = jessica[s]);
+// FIXME: We need to synchronize this with the evaluator's harden.
+jessie.harden = Object.freeze;
 loadingMap.set('@agoric/jessie', Promise.resolve(jessie));
 loadingMap.set('@michaelfig/slog', Promise.resolve({slog: jessica.slog}));
 const $h_define = (imports, factory) => {

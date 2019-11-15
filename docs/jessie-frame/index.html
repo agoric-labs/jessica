@@ -7,19 +7,19 @@
         <style>#sourceText {
             width: 100%;
         }</style>
-        <script type="text/javascript" src="jessica.cb3be5e5.js"></script>
+        <script type="text/javascript" src="jessica.98dcfa48.js"></script>
         <h1>Browser-Based Jessica</h1>
 
         <p>Write your Jessie code below:</p>
         <textarea id="sourceText" rows="20">
-import {insulate} from '@agoric/jessie';
+import { harden } from '@agoric/jessie';
 // Use Jessie's main deps to run the program.
-const main = insulate((deps) => {
+const main = harden((deps) => {
     const say = (s) => deps.writeOutput('-', s + '\n');
     say('Hello, world!');
 });
 export default main;</textarea>
-        <button id="btnRun">Run</button>
+        <button id="btnRun">Run</button> <button id="btnParse">Parse</button>
 
 <label for="whitelist">
             <input type="checkbox" id="whitelist">
@@ -54,7 +54,17 @@ setEvaluator(whitelist.checked);</script>
         <pre id="outputPre">
         </pre>
 
-<script>function _templateObject() {
+<script>function _templateObject2() {
+  var data = _taggedTemplateLiteral(["Cannot write to ", ": must be -"]);
+
+  _templateObject2 = function _templateObject2() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject() {
   var data = _taggedTemplateLiteral(["Cannot write to ", ": must be -"]);
 
   _templateObject = function _templateObject() {
@@ -66,9 +76,33 @@ setEvaluator(whitelist.checked);</script>
 
 function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 
+btnParse.addEventListener('click', function () {
+  return doParse(sourceText.value, outputPre);
+});
 btnRun.addEventListener('click', function () {
   return doRun(sourceText.value, outputPre);
 });
+
+var doParse = function doParse(sourceText, output) {
+  output.textContent = ''; // Make a confined file writer.
+
+  var writeOutput = function writeOutput(fname, str) {
+    if (fname !== '-') {
+      slog.error(_templateObject(), {
+        fname: fname
+      });
+    }
+
+    output.textContent += str;
+  };
+
+  writeOutput('-', '[Parsing...]\n');
+  jessica.parse(sourceText, {}).then(function (ast) {
+    return writeOutput('-', JSON.stringify(ast, undefined, 2));
+  }).catch(function (e) {
+    return writeOutput('-', e);
+  });
+};
 
 var doRun = function doRun(sourceText, output) {
   output.textContent = '';
@@ -80,7 +114,7 @@ var doRun = function doRun(sourceText, output) {
 
   var writeOutput = function writeOutput(fname, str) {
     if (fname !== '-') {
-      slog.error(_templateObject(), {
+      slog.error(_templateObject2(), {
         fname: fname
       });
     }
@@ -111,9 +145,11 @@ var doRun = function doRun(sourceText, output) {
 var loadingMap = new Map(); // Expose some builtin modules.
 
 var jessie = {};
-['harden', 'insulate', 'makeMap', 'makePromise', 'makeSet', 'makeWeakMap', 'makeWeakSet'].forEach(function (s) {
+['insulate', 'makeMap', 'makePromise', 'makeSet', 'makeWeakMap', 'makeWeakSet'].forEach(function (s) {
   return jessie[s] = jessica[s];
-});
+}); // FIXME: We need to synchronize this with the evaluator's harden.
+
+jessie.harden = Object.freeze;
 loadingMap.set('@agoric/jessie', Promise.resolve(jessie));
 loadingMap.set('@michaelfig/slog', Promise.resolve({
   slog: jessica.slog

@@ -22,8 +22,7 @@ export function buildWhitelist() {
   "use strict";
 
   var j = true;  // included in the Jessie runtime
-  var necessary = true; // Not included, but needed for operation
-
+  
   // These are necessary for most Javascript environments.
   const anonIntrinsics = {
     ThrowTypeError: {},
