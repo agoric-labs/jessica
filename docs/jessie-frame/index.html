@@ -7,7 +7,7 @@
         <style>#sourceText {
             width: 100%;
         }</style>
-        <script type="text/javascript" src="jessica.98dcfa48.js"></script>
+        <script type="text/javascript" src="jessica.36eee4dc.js"></script>
         <h1>Browser-Based Jessica</h1>
 
         <p>Write your Jessie code below:</p>
@@ -22,37 +22,45 @@ export default main;</textarea>
         <button id="btnRun">Run</button> <button id="btnParse">Parse</button>
 
 <label for="whitelist">
-            <input type="checkbox" id="whitelist">
+            <input type="checkbox" id="whitelist" checked="">
             Use the Jessie whitelist to limit the SES realm
         </label>
+
+        <pre id="outputPre">
+        </pre>
+
 <script>var evaluator;
+var SES = jessica.SES.makeSESRootRealm();
 
 var setEvaluator = function setEvaluator(withWhitelist) {
   try {
-    var opts = withWhitelist ? {
-      whitelist: jessica.whitelist
-    } : {};
-    var r = jessica.SES.makeSESRootRealm(opts);
+    if (withWhitelist) {
+      throw Error("not implemented");
+    }
+
+    var c = SES.global.Realm.makeCompartment();
 
     evaluator = function evaluator(src) {
-      return r.evaluate(src, {
+      return c.evaluate(src, {
         $h_define: $h_define
       });
     };
   } catch (e) {
     console.log(e);
-    whitelist.checked = !withWhitelist;
-    outputPre.textContent = 'Cannot ' + (withWhitelist ? 'enable' : 'disable') + ' whitelist: ' + e.toString();
+    outputPre.textContent = 'Cannot ' + (whitelist.checked ? 'enable' : 'disable') + ' whitelist: ' + e.toString();
   }
 };
 
 whitelist.addEventListener('click', function () {
   return setEvaluator(whitelist.checked);
 });
-setEvaluator(whitelist.checked);</script>
+whitelist.checked = true;
+setEvaluator(whitelist.checked);
 
-        <pre id="outputPre">
-        </pre>
+if (!evaluator) {
+  whitelist.checked = false;
+  setEvaluator(whitelist.checked);
+}</script>
 
 <script>function _templateObject2() {
   var data = _taggedTemplateLiteral(["Cannot write to ", ": must be -"]);
@@ -151,6 +159,9 @@ var jessie = {};
 
 jessie.harden = Object.freeze;
 loadingMap.set('@agoric/jessie', Promise.resolve(jessie));
+loadingMap.set('@agoric/harden', Promise.resolve({
+  default: jessie.harden
+}));
 loadingMap.set('@michaelfig/slog', Promise.resolve({
   slog: jessica.slog
 }));

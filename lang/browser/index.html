@@ -24,30 +24,38 @@ export default main;</textarea>
         <button id="btnRun">Run</button> <button id="btnParse">Parse</button>
 
 <label for="whitelist">
-            <input type="checkbox" id="whitelist" />
+            <input type="checkbox" id="whitelist" checked=""/>
             Use the Jessie whitelist to limit the SES realm
         </label>
-<script type="text/javascript">
-let evaluator;
-const setEvaluator = (withWhitelist) => {
-    try {
-        const opts = withWhitelist ? {whitelist: jessica.whitelist} : {};
-        const r = jessica.SES.makeSESRootRealm(opts);
-        evaluator = (src) => r.evaluate(src, {$h_define});
-    } catch (e) {
-        console.log(e);
-        whitelist.checked = !withWhitelist;
-        outputPre.textContent = 'Cannot ' +
-            (withWhitelist ? 'enable' : 'disable') +
-            ' whitelist: ' + e.toString();
-    }
-};
-whitelist.addEventListener('click', () => setEvaluator(whitelist.checked));
-setEvaluator(whitelist.checked);
-</script>
 
         <pre id="outputPre">
         </pre>
+
+<script type="text/javascript">
+let evaluator;
+const SES = jessica.SES.makeSESRootRealm();
+const setEvaluator = (withWhitelist) => {
+  try {
+    if (withWhitelist) {
+      throw Error(`not implemented`);
+    }
+    const c = SES.global.Realm.makeCompartment();
+    evaluator = (src) => c.evaluate(src, {$h_define});
+  } catch (e) {
+    console.log(e);
+    outputPre.textContent = 'Cannot ' +
+              (whitelist.checked ? 'enable' : 'disable') +
+              ' whitelist: ' + e.toString();
+  }
+};
+whitelist.addEventListener('click', () => setEvaluator(whitelist.checked));
+whitelist.checked = true;
+setEvaluator(whitelist.checked);
+if (!evaluator) {
+  whitelist.checked = false;
+  setEvaluator(whitelist.checked);
+}
+</script>
 
 <script type="text/javascript">
 btnParse.addEventListener('click', () => doParse(sourceText.value, outputPre));
@@ -113,6 +121,7 @@ const jessie = {};
 // FIXME: We need to synchronize this with the evaluator's harden.
 jessie.harden = Object.freeze;
 loadingMap.set('@agoric/jessie', Promise.resolve(jessie));
+loadingMap.set('@agoric/harden', Promise.resolve({default: jessie.harden}));
 loadingMap.set('@michaelfig/slog', Promise.resolve({slog: jessica.slog}));
 const $h_define = (imports, factory) => {
     const parameters = {
