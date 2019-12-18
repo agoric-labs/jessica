@@ -10,6 +10,16 @@ Jessica is a metacircular Jessie: it is a library designed to compile or interpr
 
 The goal of Jessica is to be broad: providing the minimal Jessie environment for as many different language platforms as possible.
 
+## Grammar
+
+For those coming to Jessica in search of the specific Jessie grammar, the sources can be found in (from top layer to bottom layer):
+
+* [Jessie](lib/quasi-jessie.js.ts) the top-level module grammar.
+* [Justin](lib/quasi-justin.js.ts) the expression grammar.
+* [JSON](lib/quasi-json.js.ts) the base object grammar.
+
+All of these grammars are written in a flavour of PEG (Parsing Expression Grammar), which is [specified in its own syntax](lib/quasi-peg.js.ts).
+
 ## Implementations
 
 It is intended for you to use Jessica's extension language library in your favourite language to add Jessie scripting capabilities in an idiomatic way.
