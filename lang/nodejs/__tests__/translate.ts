@@ -14,7 +14,7 @@ const modParams: IJessicaResourceParameters = {
     targetType: 'module',
 };
 
-test('sanity', async () => {
+test.skip('sanity', async () => {
     const translatedText = `$h_define(
 [],
 () => {
