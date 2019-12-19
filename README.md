@@ -12,11 +12,11 @@ The goal of Jessica is to be broad: providing the minimal Jessie environment for
 
 ## Grammar
 
-For those coming to Jessica in search of the specific Jessie grammar, the sources can be found in (from top layer to bottom layer):
+For those coming to Jessica in search of the specific Jessie grammar, the sources can be found in (from bottom layer to top layer):
 
-* [Jessie](lib/quasi-jessie.js.ts) the top-level module grammar.
-* [Justin](lib/quasi-justin.js.ts) the expression grammar.
 * [JSON](lib/quasi-json.js.ts) the base object grammar.
+* [Justin](lib/quasi-justin.js.ts) the pure expression grammar (no loops).
+* [Jessie](lib/quasi-jessie.js.ts) the top-level module grammar.
 
 All of these grammars are written in a flavour of PEG (Parsing Expression Grammar), which is [specified in its own syntax](lib/quasi-peg.js.ts).
 
