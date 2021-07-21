@@ -2,7 +2,7 @@
 // http://www.ecma-international.org/ecma-262/9.0/#sec-grammar-summary
 
 // Justin is the safe JavaScript expression language, a potentially
-// pure decidable superset of JSON and subset of Jessie, that relieves
+// pure terminating superset of JSON and subset of Jessie, that relieves
 // many of the pain points of using JSON as a data format:
 //   * unquoted indentifier property names.
 //   * comments.
@@ -14,7 +14,7 @@
 // Justin also includes most pure JavaScript expressions. Justin does not
 // include function expressions or variable or function
 // definitions. However, it does include free variable uses and
-// function calls; so the purity and decidability of Justin depends on
+// function calls; so the purity and termination of Justin depends on
 // the endowments provided for these free variable bindings.
 
 // Justin is defined to be extended into the Jessie grammar, which is
@@ -24,7 +24,7 @@
 
 // Justin is defined to be extended into the Chainmail grammar, to
 // provide its expression language in a JS-like style. Chainmail
-// expressions need to be pure and should be decidable.
+// expressions need to be pure and should be terminating.
 
 /// <reference path="peg.d.ts"/>
 
