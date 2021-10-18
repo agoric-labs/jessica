@@ -170,17 +170,17 @@ const makeJessie = (peg: IPegTag<IParserTag<any>>, justinPeg: IPegTag<IParserTag
     block <- LEFT_BRACE body RIGHT_BRACE              ${(_, b, _2) => ['block', b]};
     body <- statementItem*;
 
-    # declaration must come first, so that PEG will prioritize
+    # declarations must come first, so that PEG will prioritize
     # function declarations over exprStatement.
     statementItem <-
       declaration
+    / functionDecl
     / statement;
 
     # No "class" declaration.
     # No generator, async, or async iterator function.
     declaration <-
-      declOp binding ** _COMMA SEMI                    ${(op, decls, _) => [op, decls]}
-    / functionDecl;
+      declOp binding ++ _COMMA SEMI                    ${(op, decls, _) => [op, decls]};
 
     declOp <- ("const" / "let") _WSN;
 

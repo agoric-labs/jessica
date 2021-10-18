@@ -84,7 +84,7 @@ const makeJustin = (peg: IPegTag<IParserTag<any>>) => {
     # Only match if whitespace doesn't contain newline
     _NO_NEWLINE <- ~IDENT [ \t]*     ${_ => SKIP};
 
-    IDENT_NAME <- ~(HIDDEN_PFX / "__proto__") (IDENT / RESERVED_WORD);
+    IDENT_NAME <- ~(HIDDEN_PFX / "__proto__" _WSN) (IDENT / RESERVED_WORD);
 
     IDENT <-
       ~(HIDDEN_PFX / IMPORT_PFX / RESERVED_WORD)
