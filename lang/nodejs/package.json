@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Jessica implementation for Node.js",
   "main": "jesspipe.js",
+  "type": "module",
   "dependencies": {
     "esm": "^3.2.22"
   },

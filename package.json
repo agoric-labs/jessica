@@ -2,6 +2,7 @@
   "name": "jessica",
   "version": "0.0.2",
   "description": "Jessica - the Jessie Compiler Architecture",
+  "type": "module",
   "scripts": {
     "build": "build.bat",
     "check-types": "tsc",
