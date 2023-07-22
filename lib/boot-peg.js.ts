@@ -2,10 +2,12 @@
 // https://github.com/erights/quasiParserGenerator/tree/master/src/bootbnf.js
 
 /// <reference path="peg.d.ts"/>
-import { confineExpr, makeMap, makeWeakMap } from '@agoric/jessie';
+import agjessie from '@agoric/jessie';
 import { slog } from '@michaelfig/slog';
 
 import indent from './indent.js';
+
+const { confineExpr, makeMap, makeWeakMap } = agjessie;
 
 const LEFT_RECUR: PegConstant = {toString: () => 'LEFT_RECUR'};
 
