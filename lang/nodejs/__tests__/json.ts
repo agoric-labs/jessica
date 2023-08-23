@@ -18,6 +18,7 @@ test('data', () => {
   expect(parse('{}')).toEqual(ast(0, 'record', []));
   expect(parse('[]')).toEqual(ast(0, 'array', []));
   expect(parse('123')).toEqual(ast(0, 'data', 123));
+  expect(parse('-12.34')).toEqual(ast(0, 'data', -12.34));
   expect(parse('{"abc": 123}')).toEqual(ast(0, 'record',
     [ast(1, 'prop', ast(1, 'data', 'abc'), ast(8, 'data', 123))]));
   expect(parse('["abc", 123]')).toEqual(ast(0, 'array', [ast(1, 'data', 'abc'), ast(8, 'data', 123)]));
