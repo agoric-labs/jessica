@@ -2,14 +2,13 @@
   "name": "jessica-lang-browser",
   "version": "0.0.1",
   "description": "Jessica implementation for the browser",
-  "main": "dist/jessica.js",
   "devDependencies": {
-    "parcel-bundler": "^1.12.4",
-    "ses": "^0.6.4"
+    "parcel": "^2.16.1",
+    "ses": "^2.0.0"
   },
   "scripts": {
     "build": "build.bat",
-    "start": "parcel serve -d .cache/dist --global jessica index.html"
+    "start": "parcel serve --dist-dir .cache/dist index.html"
   },
   "repository": {
     "type": "git",
@@ -21,5 +20,8 @@
     "url": "https://github.com/michaelfig/jessica/issues"
   },
   "homepage": "https://github.com/michaelfig/jessica#readme",
-  "dependencies": {}
+  "dependencies": {
+    "@agoric/jessie": "file:../../unpublished/agoric-jessie-0.2.0.tgz",
+    "@michaelfig/slog": "0.0.1"
+  }
 }
