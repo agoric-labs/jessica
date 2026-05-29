@@ -32,7 +32,7 @@ test('tildot', () => {
   const oldError = console.error;
   try {
     console.error = (): any => undefined;
-    expect(() => parse(`abc~.1`)).toThrowError('Syntax error at 3 "~" #0:3');
+    expect(() => parse(`abc~.1`)).toThrow('Syntax error at 3 "~" #0:3');
   } finally {
     console.error = oldError;
   }

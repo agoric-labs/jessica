@@ -9,7 +9,6 @@
             width: 100%;
         }
         </style>
-        <script type="text/javascript" src="./jessica.js"></script>
         <h1>Browser-Based Jessica</h1>
 
         <p>Write your Jessie code below:</p>
@@ -31,7 +30,16 @@ export default main;</textarea>
         <pre id="outputPre">
         </pre>
 
-<script type="text/javascript">
+<script type="module">
+import * as jessica from './jessica.js';
+
+const sourceText = document.getElementById('sourceText');
+const btnRun = document.getElementById('btnRun');
+const btnParse = document.getElementById('btnParse');
+const whitelist = document.getElementById('whitelist');
+const outputPre = document.getElementById('outputPre');
+const {slog} = jessica;
+
 let evaluator;
 const SES = jessica.SES.makeSESRootRealm();
 const setEvaluator = (withWhitelist) => {
@@ -55,12 +63,10 @@ if (!evaluator) {
   whitelist.checked = false;
   setEvaluator(whitelist.checked);
 }
-</script>
 
-<script type="text/javascript">
 btnParse.addEventListener('click', () => doParse(sourceText.value, outputPre));
 btnRun.addEventListener('click', () => doRun(sourceText.value, outputPre));
-const doParse = (sourceText, output) => {
+const doParse = (source, output) => {
   output.textContent = '';
     // Make a confined file writer.
     const writeOutput = (fname, str) => {
@@ -70,11 +76,11 @@ const doParse = (sourceText, output) => {
         output.textContent += str;
     };
   writeOutput('-', '[Parsing...]\n');
-  jessica.parse(sourceText, {})
+  jessica.parse(source, {})
     .then(ast => writeOutput('-', JSON.stringify(ast, undefined, 2)))
     .catch(e => writeOutput('-', e));
 };
-const doRun = (sourceText, output) => {
+const doRun = (source, output) => {
     output.textContent = '';
     const parameters = {
         sourceType: 'jessie',
@@ -93,7 +99,7 @@ const doRun = (sourceText, output) => {
     const deps = {
         writeOutput,
     };
-    jessica.translate(sourceText, parameters)
+    jessica.translate(source, parameters)
         .then(translated => evaluator(translated.translatedText))
         .then(result => {
             // Get the default export.

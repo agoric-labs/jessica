@@ -129,7 +129,7 @@ test('error', () => {
   const oldError = console.error;
   try {
     console.error = (): any => undefined;
-    expect(() => parser`abcadbabcadd`).toThrowError('Syntax error at 9 "a" #0:9');
+    expect(() => parser`abcadbabcadd`).toThrow('Syntax error at 9 "a" #0:9');
   } finally {
     console.error = oldError;
   }

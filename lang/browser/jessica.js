@@ -1,4 +1,4 @@
-import SES from './node_modules/ses/dist/ses.esm.js';
+import SES from './node_modules/ses/dist/ses.mjs';
 import {buildWhitelist} from './whitelist.js';
 
 export {translate, parse} from '../../lib/translate.js';
